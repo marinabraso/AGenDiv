@@ -1,0 +1,70 @@
+// set up a neutral simulation with nucleotide sequence
+initialize() {
+	// change defauld mode to nucleotide mode
+	initializeSLiMOptions(nucleotideBased=T);
+
+	// Create a random set of nucleotids of length chrsize
+	initializeAncestralNucleotides(randomNucleotides(chrsize));
+
+	// m1 mutation type: neutral (fixed distribution with a fitness effect of 0.0) with 0.5 of dominance coefficient
+	initializeMutationTypeNuc("m1", 0.5, "f", 0.0);
+
+	// g1 genomic element type: uses m1 for all mutations
+	// Mutation rate matrix (from row to column)
+	// mmJukesCantor(mu/3)
+		//   A    C    G    T
+		// A 0    mu/3 mu/3 mu/3
+		// C mu/3 0    mu/3 mu/3
+		// G mu/3 mu/3 0    mu/3
+		// T mu/3 mu/3 mu/3 0
+		// Mutation rate from any nuc to any other nuc = mu/3*3 = mu
+	initializeGenomicElementType("g1", m1, 1.0, mmJukesCantor(mu/3));
+	
+	// uniform chromosome with uniform recombination
+	initializeGenomicElement(g1, 0, chrsize-1);
+	initializeRecombinationRate(1e-8);
+}
+// END initialize simulation
+
+// START Create two subpopulations with the corresponding Ne
+1 early() {
+	sim.addSubpop("p1", size1);
+	sim.addSubpop("p2", size2);
+	p1.setMigrationRates(c(p2),c(mig21)); // from 2 to 1
+	p2.setMigrationRates(c(p1),c(mig12)); // from 1 to 2
+	writeFile(output, "# Ancestral sequence", append=T);
+	writeFile(output, sim.chromosome.ancestralNucleotides(), append=T);
+}
+// END Create two subpopulations with the corresponding Ne
+
+// START Read previous iteration results
+1 early() {
+	sim.readFromPopulationFile(filePath=input);
+}
+// END Read previous iteration results
+
+// START Print on a range of time points
+XXX late(){
+		writeFile(output1, "# GEN XXX", append=T);
+		p1.outputSample(SampleSize*2, filePath=output1, append=T);
+		writeFile(output2, "# GEN XXX", append=T);
+		p2.outputSample(SampleSize*2, filePath=output2, append=T);
+		sim.outputFull(filePath=outputF, binary=T);
+}
+// END Print on a range of time points
+
+
+// START of print fixed muations
+XXX late(){
+		sim.outputFixedMutations(filePath=outputG, append=T);
+}
+// END of print fixed muations
+
+
+
+
+
+
+
+
+

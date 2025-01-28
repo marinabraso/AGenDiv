@@ -1,0 +1,326 @@
+name: AmphiHetDupExp
+lowermincovthres: 5 # lower threshold on minimum coverage among samples
+uppermincovthres: 20 # upper threshold on minimum coverage among samples
+slidingwindowsize: 100000 # window size for sliding window  
+slidingwindowstep: 10000 # step size for sliding window 
+slidingwindowmincallable: 0.2 # minimum proportion of the sliding window being callable to be accepted as really callable
+windowsize: 1000 # window size for plotting (not sliding)
+maxfreqploymorphism: 0.97 # maximum frequency of the majoritary allele to be considered a polymorphism (0.97 --> 3/72 is considered polym but 2/72 no // 0.98 --> 2/72 polym 1/72 no)
+Blangenerationtime: 2 # years
+Rconfig: config/AmphiHetDupExp_plot.R
+EnsemblRelease: 111 # Caution, genome versions (in SpTreeGenomeVersions) can change if EnsemblRelease is changed
+EnsMetazoaRelease: 58 # For Strongylocentrotus_purpuratus
+BootsCummProp: [ 1, 2, 3, 4, 5 ] # For plotting cummulative proportion of vairation explained
+BootsRandPop: 1000 # For randomizing population samples
+samples:
+    - F10D
+    - F1D
+    - F2D
+    - F3D
+    - F4D
+    - F6D
+    - F7D
+    - F8D
+    - F9D
+    - M2D
+    - M3D
+    - M4D
+    - M5D
+    - M6D
+    - M7D
+    - M8D
+    - M9D
+    - RF10D
+    - RF1D
+    - RF2D
+    - RF3D
+    - RF4D
+    - RF5D
+    - RF6D
+    - RF7D
+    - RF8D
+    - RM10D
+    - RM1D
+    - RM2D
+    - RM3D
+    - RM4D
+    - RM5D
+    - RM6D
+    - RM7D
+    - RM8D
+    - RU5D
+MedSamples:
+    - F10D
+    - F1D
+    - F2D
+    - F3D
+    - F4D
+    - F6D
+    - F7D
+    - F8D
+    - F9D
+    - M2D
+    - M3D
+    - M4D
+    - M5D
+    - M6D
+    - M7D
+    - M8D
+    - M9D
+AtlSamples:
+    - RF10D
+    - RF1D
+    - RF2D
+    - RF3D
+    - RF4D
+    - RF5D
+    - RF6D
+    - RF7D
+    - RF8D
+    - RM10D
+    - RM1D
+    - RM2D
+    - RM3D
+    - RM4D
+    - RM5D
+    - RM6D
+    - RM7D
+    - RM8D
+    - RU5D
+samplelanesHiSeq4000:
+    - F10D_L2
+    - F1D_L2
+    - F2D_L5
+    - F3D_L2
+    - F4D_L2
+    - F6D_L2
+    - F7D_L2
+    - F8D_L2
+    - F9D_L2
+    - M2D_L2
+    - M3D_L2
+    - M4D_L2
+    - M5D_L2
+    - M6D_L2
+    - M7D_L2
+    - M8D_L2
+    - M9D_L2
+    - RF10D_L2
+    - RF1D_L2
+    - RF2D_L2
+    - RF3D_L2
+    - RF4D_L2
+    - RF5D_L2
+    - RF6D_L2
+    - RF7D_L2
+    - RF8D_L2
+    - RM10D_L2
+    - RM1D_L2
+    - RM2D_L2
+    - RM3D_L2
+    - RM4D_L2
+    - RM5D_L2
+    - RM6D_L2
+    - RM7D_L2
+    - RM8D_L2
+    - RU5D_L2
+samplelanesNovaSeq6000_1:
+    - F10D_L1
+    - F1D_L1
+    - F2D_L1
+    - F3D_L1
+    - F4D_L1
+    - F6D_L1
+    - F7D_L1
+    - F8D_L1
+    - F9D_L1
+    - M2D_L1
+    - M3D_L1
+    - M4D_L1
+    - M5D_L1
+    - M6D_L1
+    - M7D_L1
+    - M8D_L1
+    - M9D_L1
+    - RF10D_L1
+    - RF1D_L1
+    - RF2D_L1
+    - RF3D_L1
+    - RF4D_L1
+    - RF5D_L1
+    - RF6D_L1
+    - RF7D_L1
+    - RF8D_L1
+    - RM10D_L1
+    - RM1D_L1
+    - RM2D_L1
+    - RM3D_L1
+    - RM4D_L1
+    - RM5D_L1
+    - RM6D_L1
+    - RM7D_L1
+    - RM8D_L1
+    - RU5D_L1
+samplelanesNovaSeq6000_2:
+    - F10D_L2
+    - F1D_L2
+    - F2D_L2
+    - F3D_L2
+    - F4D_L2
+    - F6D_L2
+    - F7D_L2
+    - F8D_L2
+    - F9D_L2
+    - M2D_L2
+    - M3D_L2
+    - M4D_L2
+    - M5D_L2
+    - M6D_L2
+    - M7D_L2
+    - M8D_L2
+    - M9D_L2
+    - RF10D_L2
+    - RF1D_L2
+    - RF2D_L2
+    - RF3D_L2
+    - RF4D_L2
+    - RF5D_L2
+    - RF6D_L2
+    - RF7D_L2
+    - RF8D_L2
+    - RM10D_L2
+    - RM1D_L2
+    - RM2D_L2
+    - RM3D_L2
+    - RM4D_L2
+    - RM5D_L2
+    - RM6D_L2
+    - RM7D_L2
+    - RM8D_L2
+    - RU5D_L2
+bralan3chrs:
+    - chr1
+    - chr2
+    - chr3
+    - chr4
+    - chr5
+    - chr6
+    - chr7
+    - chr8
+    - chr9
+    - chr10
+    - chr11
+    - chr12
+    - chr13
+    - chr14
+    - chr15
+    - chr16
+    - chr17
+    - chr18
+    - chr19
+ATACseq_SRA_ID_Marletaz2018:
+  - SRR6245277
+  - SRR6245278
+  - SRR6245279
+  - SRR6245280
+  - SRR6245281
+  - SRR6245282
+  - SRR6245283
+  - SRR6245284
+  - SRR6245285
+ChIPseq_SRA_ID_Marletaz2018:
+  - SRR6245306
+  - SRR6245307
+  - SRR6245308
+  - SRR6245309
+  - SRR6245310
+  - SRR6245311
+  - SRR6245312
+  - SRR6245313
+  - SRR6245314
+SpTreeSpecies:
+  - Branchiostoma_lanceolatum # reated sepparately because it doesn't have to be downloaded from ENSEMBL
+  - Branchiostoma_floridae
+  - Homo_sapiens
+  - Mus_musculus
+  - Danio_rerio
+  - Drosophila_melanogaster
+  - Ciona_intestinalis
+  - Strongylocentrotus_purpuratus
+SpTreeGenomeVersions: # Caution, genome versions can change if EnsemblRelease is changed
+  - Branchiostoma_lanceolatum.BraLan3 # not downloaded from ensembl but get internally
+  - Branchiostoma_floridae.Bfl_VNyyK
+  - Homo_sapiens.GRCh38
+  - Mus_musculus.GRCm39
+  - Danio_rerio.GRCz11
+  - Drosophila_melanogaster.BDGP6.46
+  - Ciona_intestinalis.KH
+  - Strongylocentrotus_purpuratus.Spur_5.0
+SpTreeGenePrefix:
+  - Branchiostoma_lanceolatum.BLAN
+  - Branchiostoma_floridae.BFLO
+  - Homo_sapiens.ENS
+  - Mus_musculus.ENSMUS
+  - Danio_rerio.ENSDAR
+  - Drosophila_melanogaster.FBgn
+  - Ciona_intestinalis.ENSCIN
+  - Strongylocentrotus_purpuratus.LOC
+SpTreeConstrainTree: "((((((Homo_sapiens,Mus_musculus),Danio_rerio),Ciona_intestinalis),(Branchiostoma_lanceolatum,Branchiostoma_floridae)),Strongylocentrotus_purpuratus),Drosophila_melanogaster);"
+SpTreeConstrainTree_unroted: "(((((Homo_sapiens,Mus_musculus),Danio_rerio),Ciona_intestinalis),(Branchiostoma_lanceolatum,Branchiostoma_floridae)),Strongylocentrotus_purpuratus,Drosophila_melanogaster);"
+SimulationsOutputTimepoints0: [ 1000, 5000, 10000, 50000, 100000]
+SimulationsOutputTimepoints1: [ 150000, 200000 ]
+SimulationsOutputTimepoints2: [ 250000, 300000 ]
+SimulationsOutputTimepoints3: [ 350000, 400000 ]
+SimulationsOutputTimepoints4: [ 450000, 500000 ]
+SimulationsOutputTimepoints5: [ 550000, 600000 ]
+SimulationsOutputTimepoints6: [ 650000, 700000 ]
+SimulationsOutputTimepoints7: [ 750000, 800000 ]
+SimulationsOutputTimepoints8: [ 850000, 900000 ]
+SimulationsOutputTimepoints9: [ 950000, 1000000 ]
+SimulationsOutputTimepoints10: [ 1050000, 1100000 ]
+SimulationsOutputTimepoints11: [ 1150000, 1200000 ]
+SimulationsOutputTimepoints12: [ 1250000, 1300000 ]
+SimulationsOutputTimepoints13: [ 1350000, 1400000 ]
+SimulationsOutputTimepoints14: [ 1450000, 1500000 ]
+SimulationsOutputTimepoints15: [ 1550000, 1600000 ]
+SimulationsOutputTimepoints16: [ 1650000, 1700000 ]
+SimulationsOutputTimepoints17: [ 1750000, 1800000 ]
+SimulationsOutputTimepoints18: [ 1850000, 1900000 ]
+SimulationsOutputTimepoints19: [ 1950000, 2000000 ]
+SimulationsOutputTimepoints20: [ 2050000, 2100000 ]
+SimulationsOutputTimepoints21: [ 2150000, 2200000 ]
+SimulationsOutputTimepoints22: [ 2250000, 2400000 ]
+SimulationsOutputTimepoints23: [ 2450000, 2500000 ]
+SimulationsOutputTimepoints24: [ 2550000, 2600000 ]
+SimulationsOutputTimepoints25: [ 2650000, 2700000 ]
+SimulationsOutputTimepoints26: [ 2750000, 2800000 ]
+SimulationsOutputTimepoints27: [ 2850000, 2900000 ]
+SimulationsOutputTimepoints28: [ 2950000, 3000000 ]
+SimulationsIterations: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28 ]
+SimulationsSampleSize: 20
+SimulationsChrSize: 1000
+SimulationsReplicates: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+SimulationsRangeMuNe: 
+  #- 3.75e-9_2000000
+  - 5e-9_1500000
+  - 7.5e-9_1000000
+  - 1e-8_750000
+  - 1.5e-8_500000
+  - 7.5e-8_100000
+  - 1e-7_75000
+  - 1.5e-7_50000
+  - 7.5e-7_10000
+  - 1e-6_7500
+  - 1.5e-6_5000
+SimulationsRangeMigration: [ 0, 0.1 ]
+TimesRandomTest: 20
+
+
+
+
+
+
+
+
+
+

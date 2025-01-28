@@ -1,0 +1,16 @@
+name: GeneExpression_BRBSeq_RNA
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - star=2.7.8a
+    - samtools=1.14
+    - openjdk=8
+    - r-base=4.1.2
+    - bioconductor-limma=3.50.0
+    - bioconductor-edgeR=3.36.0
+    - r-ade4=1.7-18
+    - r-matrixStats=0.61.0
+    - r-dplyr=1.0.7
+    - r-slider=0.2.2
+    - r-parallelly=1.30.0

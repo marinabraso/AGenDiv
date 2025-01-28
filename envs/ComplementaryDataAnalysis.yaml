@@ -1,0 +1,9 @@
+name: ComplementaryDataAnalysis
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+  - sra-tools=3.0.8
+#  - samtools
+#  - nucleoatac
+#  - idr

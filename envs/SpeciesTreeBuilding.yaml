@@ -1,0 +1,22 @@
+name: OrthogroupsAndGeneTrees # Marina
+channels:
+    - conda-forge
+    - bioconda
+    - hcc
+    - agbiome
+dependencies:
+    - blast=2.14.1 # for orthologer
+    - swipe=2.1.1 # for orthologer
+    - diamond=2.1.8 # for orthologer
+    - mmseqs2=15.6f452 # for orthologer
+    - cdhit=4.6 # for orthologer
+    - expect=5.45.4 # for orthologer
+    - mafft=7.526
+    - picard=3.3.0
+    - clipkit=2.3.0
+    - paml=4.10.7
+    - seqmagick=0.8.6
+    - treebest=1.9.2_ep78
+
+
+

@@ -1,0 +1,17 @@
+name: VariantCalling_DNA
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - samtools=1.17
+    - bwa=0.7.17
+    - picard=2.26.4
+    - gatk4=4.2.4.0
+    - openjdk=8
+    - tabix=1.11
+    - plink=1.90b6.21
+    - plink2=2.00a2.3
+    - eigensoft=7.2.1
+    - vcftools=0.1.16
+    - bcftools=1.17
+    - bedtools=2.30.0

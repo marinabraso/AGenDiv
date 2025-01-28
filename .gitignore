@@ -1,0 +1,11 @@
+.snakemake
+data
+results
+logs
+benchmarks
+tmp
+.DS_Store
+scripts/GeneExpression_BRBSeq_RNA/BRB-seqTools-master
+scripts/VariantAnalysis_DNA/psmc-master
+scripts/VariantAnalysis_DNA/GONE
+scripts/SpeciesTreeBuilding/orthologer_3.0.5

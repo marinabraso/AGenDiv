@@ -1,0 +1,10 @@
+name: Plotting_DNA
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - r-base=4.3.3
+    - r-phangorn=2.11.1
+    - r-ape=5.7_1
+    - iqtree=2.3.0
+    - bedtools #=

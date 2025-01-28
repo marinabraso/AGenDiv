@@ -1,0 +1,10 @@
+name: VariantAnnotation
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - tabix=1.11
+    - vcftools=0.1.16
+    - bcftools=1.17
+    - bedtools=2.30.0
+    - ensembl-vep=110.1

@@ -1,0 +1,9 @@
+name: SampleClustering
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - r-base
+    - r-ade4
+    - r-umap
+    - r-factominer

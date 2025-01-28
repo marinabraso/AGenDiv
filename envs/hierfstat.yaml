@@ -1,0 +1,10 @@
+name: VariantCalling_DNA
+channels:
+    - conda-forge
+dependencies:
+    - r-base=4.2
+    - r-ade4=1.7_22
+    - r-adegenet=2.1.10
+    - r-gaston=1.5.9
+    - r-gtools=3.9.4
+    - r-hierfstat=0.5_11

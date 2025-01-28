@@ -1,0 +1,346 @@
+#!/usr/bin/env Rscript
+
+Sys.setenv(LANG = "en")
+
+######################################################################
+# Libraries & functions
+library(RColorBrewer)
+library(ade4)
+
+######################################################################
+# Files & folders
+
+args <- commandArgs(trailingOnly=TRUE)
+script <- sub(".*=", "", commandArgs()[4])
+ObsSFSAtl <- args[1]
+ObsSFSMed <- args[2]
+strSimSFS <- args[3]
+ObsNAllelesAtl <- args[4]
+ObsNAllelesMed <- args[5]
+strSimNAlleles <- args[6]
+SamplesOrderInVCF <- args[7]
+Metadata <- args[8]
+PDF <- args[9]
+SimulationsSampleSize <- as.numeric(args[10])
+Rconfig <- args[11]
+
+source(Rconfig)
+system(paste0("mkdir -p $(dirname ", PDF, ")"))
+OutFolder <- system(paste0("echo $(dirname ", PDF, ")"), intern=TRUE)
+SimSFSfiles <- unlist(strsplit(strSimSFS, " "))
+SimNAllelesfiles <- unlist(strsplit(strSimNAlleles, " "))
+
+######################################################################
+# Functions
+
+plot_PropOfBialelic_ObsSim <- function(main, mvec, avec, sdf, colNe, ylim){
+	w <- 0.5
+	adj <- 2
+	uNemu <- unique(paste(sdf$Ne, sdf$mu, sep=" "))
+	Nevalues <- unique(sdf$Ne)[order(unique(sdf$Ne))]
+	muvalues <- unique(sdf$mu)[order(unique(sdf$mu))]
+	print(c(0,length(Nevalues)+2))
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0,length(Nevalues)+3), col=NA)
+	mtext("", side = 1, line = 4, cex=1.2)
+	mtext("", side = 2, line = 4, cex=1.2)
+	mtext(main, side = 3, line = 1, cex=1.2)
+	#points(jitter(rep(1,length(mvec)), amount=0.25), mvec, pch=19, cex=1, col="black")
+	d <- density(mvec, adjust = adj)
+	ynorm <- d$y/max(d$y)*w/2
+	polygon(c(1+ynorm, rev(1-ynorm)), c(d$x,rev(d$x)), col=modif_alpha("black"), border="black", lwd=1)
+	#points(jitter(rep(2,length(avec)), amount=0.25), avec, pch=19, cex=1, col="black")
+	d <- density(avec, adjust = adj)
+	ynorm <- d$y/max(d$y)*w/2
+	polygon(c(2+ynorm, rev(2-ynorm)), c(d$x,rev(d$x)), col=modif_alpha("black"), border="black", lwd=1)
+	for(nm in c(1:length(uNemu))){
+		vec <- c()
+		for(rep in unique(sdf$Rep)){
+			#points(jitter(2+nm, amount=0.25), sdf$PropBial[which(paste(sdf$Ne, sdf$mu, sep=" ")==uNemu[nm] & sdf$Rep==rep)], pch=19, cex=1, col=colNe[nm])
+			vec <- c(vec, sdf$PropBial[which(paste(sdf$Ne, sdf$mu, sep=" ")==uNemu[nm] & sdf$Rep==rep)])
+		}
+		d <- density(vec, adjust = adj)
+		ynorm <- d$y/max(d$y)*w/2
+		polygon(c(2+nm+ynorm, rev(2+nm-ynorm)), c(d$x,rev(d$x)), col=modif_alpha(colNe[nm]), border=colNe[nm], lwd=1)
+	}
+	#axis(1, at = seq(1,length(Nevalues)+1), labels = NA, lwd.ticks=1, las=1, cex.axis=1)
+	#axis(1, at = seq(1,length(Nevalues)+1), labels = c("Real", gsub(" ", "\n", uNemu)), lwd.ticks=NA, lwd=NA, line=1.5, las=1, cex.axis=1)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1)
+	box()
+}
+plot_SFS_ObsSim <- function(main, mdf, adf, sdf, colNe, colvec){
+	ylim <- c(0,100)
+	w <- 0.4
+	adj <- 2
+	uNemu <- unique(paste(sdf$Ne, sdf$mu, sep=" "))
+	Nevalues <- unique(sdf$Ne)[order(unique(sdf$Ne))]
+	muvalues <- unique(sdf$mu)[order(unique(sdf$mu))]
+	print(c(0,length(Nevalues)+2))
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0,length(Nevalues)+3), col=NA)
+	mtext("", side = 1, line = 4, cex=1.2)
+	mtext("", side = 2, line = 4, cex=1.2)
+	mtext(main, side = 3, line = 1, cex=1.2)
+	colwidth <- (w*2)/length(mdf[,1])
+	for( r in c(1:length(mdf[,1]))){
+		vec <- mdf[r,grep("n[0-9]", colnames(mdf))]
+		draw_SFS_column(vec, (1-w)+r*colwidth, colwidth, colvec)
+	}
+	colwidth <- (w*2)/length(adf[,1])
+	for( r in c(1:length(adf[,1]))){
+		vec <- adf[r,grep("n[0-9]", colnames(adf))]
+		draw_SFS_column(vec, (2-w)+r*colwidth, colwidth, colvec)
+	}
+	for(nm in c(1:length(uNemu))){
+		colwidth <- (w*2)/length(unique(sdf$Rep))
+		for(rep in unique(sdf$Rep)){
+			vec <- sdf[which(paste(sdf$Ne, sdf$mu, sep=" ")==uNemu[nm] & sdf$Rep==rep),grep("n[0-9]", colnames(sdf))]
+			draw_SFS_column(vec, (2+nm-w)+rep*colwidth, colwidth, colvec)
+		}
+	}
+	#axis(1, at = seq(1,length(Nevalues)+1), labels = NA, lwd.ticks=1, las=1, cex.axis=1)
+	#axis(1, at = seq(1,length(Nevalues)+1), labels = c("Real", gsub(" ", "\n", uNemu)), lwd.ticks=NA, lwd=NA, line=1.5, las=1, cex.axis=1)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1)
+	box()
+}
+
+draw_SFS_column <- function(v, st, wid, cols){
+	prevyend <- 0
+	for(i in c(1:length(v))){
+		yend <- prevyend + v[i]*100/sum(v)
+		polygon(c(st, st+wid, st+wid, st), c(prevyend, prevyend, yend, yend), col=cols[i], border=NA, lwd=1)
+		prevyend <- yend
+	}
+}
+
+plot_Ne_mu <- function(sdf, colNe, leglabs){
+	uNemu <- unique(paste(sdf$Ne, sdf$mu, sep=" "))
+	Nevalues <- unique(sdf$Ne)[order(unique(sdf$Ne))]
+	muvalues <- unique(sdf$mu)[order(unique(sdf$mu))]
+	rNe <- c(min(log2(sdf$Ne)),max(log2(sdf$Ne)))
+	print(rNe)
+	rmu <- c(min(log2(sdf$mu)),max(log2(sdf$mu)))
+	print(rmu)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(-5,105), xlim=c(0,length(Nevalues)+3), col=NA)
+	mtext("Ne", side = 2, line = 4, cex=1.2)
+	mtext("mu", side = 4, line = 4, cex=1.2, col="darkred")
+	Neline <- c()
+	muline <- c()
+	for(nm in c(1:length(uNemu))){
+		vecNemu <- as.numeric(as.character(unlist(strsplit(uNemu[nm], " "))))
+		points(2+nm, (log2(vecNemu[1])-rNe[1])/(rNe[2]-rNe[1])*100, pch=19, cex=1, col="black")
+		points(2+nm, (log2(vecNemu[2])-rmu[1])/(rmu[2]-rmu[1])*100, pch=19, cex=1, col="darkred")
+		Neline <- c(Neline, vecNemu[1])
+		muline <- c(muline, vecNemu[2])
+	}
+	lines(c(1:length(uNemu))+2, (log2(Neline)-rNe[1])/(rNe[2]-rNe[1])*100, col="black")
+	lines(c(1:length(uNemu))+2, (log2(muline)-rmu[1])/(rmu[2]-rmu[1])*100, col="darkred")
+	axis(1, at = seq(1,length(Nevalues)+2), labels = NA, lwd.ticks=1, las=1, cex.axis=.5)
+	axis(1, at = seq(1,length(Nevalues)+2), labels = c("Mediterranean", "Atlantic", gsub(" ", "\n", uNemu)), lwd.ticks=NA, lwd=NA, line=1, las=1, cex.axis=.5)
+	axis(2, at = (log2(Nevalues)-rNe[1])/(rNe[2]-rNe[1])*100, labels=Nevalues, lwd.ticks=1, las=1, cex.axis=.5)
+	axis(4, at = (log2(muvalues)-rmu[1])/(rmu[2]-rmu[1])*100, labels=muvalues, lwd.ticks=1, las=1, cex.axis=.5, col="darkred", col.axis="darkred")
+	box()
+}
+
+read_set_of_files <- function(files){
+	data <- read.table(files[1], sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+	colnames(data) <- seq(1,length(colnames(data)),1)
+	if(length(files)>1){
+		for(f in c(2:length(files))){
+			fdata <- read.table(files[f], sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+			colnames(fdata) <- seq(1,length(colnames(fdata)),1)
+			data <- rbind(data, fdata)
+		}
+	}
+	return(data)
+}
+
+PCA_calc <- function(Data){
+	pca <- dudi.pca(Data, center=T, scale=T, scannf=F, nf=5)
+	propvar <- 100 * pca$eig/sum(pca$eig)
+	co.df <- as.data.frame(pca$co)
+	li.df <- as.data.frame(pca$li)
+	return(list("pca"=pca, "propvar"=propvar, "co.df"=co.df, "li.df"=li.df))
+}
+
+plot_PCA <- function(main, vec1, lab1, vec2, lab2, colors, samples, legcolors, leglabels, xlim, ylim){
+	vec1 <- as.numeric(vec1)
+	vec2 <- as.numeric(vec2)
+	yflank <- (ylim[2]-ylim[1])*0.1
+	xflank <- (xlim[2]-xlim[1])*0.1
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(ylim[1]-yflank,ylim[2]+yflank), xlim=c(xlim[1]-xflank,xlim[2]+xflank), col=NA)
+	mtext(lab1, side = 1, line = 2, cex=1.5)
+	mtext(lab2, side = 2, line = 2, cex=1.5)
+	mtext(main, side = 3, line = 1, cex=2)
+	points(vec1, vec2, pch=19, col=colors, cex=1.5)
+	text(vec1, vec2, labels=samples, pos=3, font=1, cex=1.5)
+	legend("bottomleft", as.character(leglabels), pch=19, text.col="black", col=legcolors, bty = "n", cex=1, xjust = 0, yjust = 0)
+	#axis(1, at = seq(xlim[1],xlim[2],(xlim[2]-xlim[1])/5), lwd.ticks=1, las=2, cex.axis=1.5)
+	#axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
+	box()
+}
+
+######################################################################
+# Read data
+# Metadata
+MetData <- read.table(Metadata, sep="\t", header=TRUE, check.names = F, stringsAsFactors = F)
+MetData <- unique(MetData[,c("Sample", "Population")])
+Samples <- read.table(SamplesOrderInVCF, sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+MetData <- MetData[match(Samples, MetData$Sample),]
+print(head(MetData)) 
+
+# Observed SFS
+SFSAtl <- read_set_of_files(ObsSFSAtl)
+print(head(SFSAtl))
+SFSAtl <- SFSAtl[,c(4:length(colnames(SFSAtl)))]
+print(head(SFSAtl))
+colnames(SFSAtl) <- paste0("n", seq(length(MetData$Sample[which(MetData$Population=="Roscoff")])*2-1, length(MetData$Sample[which(MetData$Population=="Roscoff")])*2-length(colnames(SFSAtl)), -1))
+SFSAtl$PropSingletons <- SFSAtl[,grep("n[0-9]", colnames(SFSAtl))[1]]/rowSums(SFSAtl[,grep("n[0-9]", colnames(SFSAtl))])
+SFSAtl$PropSingleDoubletons <- rowSums(SFSAtl[,grep("n[0-9]", colnames(SFSAtl))[c(1,2)]])/rowSums(SFSAtl[,grep("n[0-9]", colnames(SFSAtl))])
+print(head(SFSAtl))
+SFSMed <- read_set_of_files(ObsSFSMed)
+SFSMed <- SFSMed[,c(4:length(colnames(SFSMed)))]
+colnames(SFSMed) <- paste0("n", seq(length(MetData$Sample[which(MetData$Population=="Banyuls")])*2-1, length(MetData$Sample[which(MetData$Population=="Banyuls")])*2-length(colnames(SFSMed)), -1))
+SFSMed$PropSingletons <- SFSMed[,grep("n[0-9]", colnames(SFSMed))[1]]/rowSums(SFSMed[,grep("n[0-9]", colnames(SFSMed))])
+SFSMed$PropSingleDoubletons <- rowSums(SFSMed[,grep("n[0-9]", colnames(SFSMed))[c(1,2)]])/rowSums(SFSMed[,grep("n[0-9]", colnames(SFSMed))])
+print(head(SFSMed))
+
+# Observed number of alleles
+NAllelesAtl <- read_set_of_files(ObsNAllelesAtl)
+NAllelesAtl <- NAllelesAtl[,c(4:length(colnames(NAllelesAtl)))]
+colnames(NAllelesAtl) <- paste0("n", c(seq(2,2+length(colnames(NAllelesAtl))-2),"+10"))
+NAllelesAtl$PropBial <- NAllelesAtl$n2 / rowSums(NAllelesAtl)
+print(head(NAllelesAtl))
+NAllelesMed <- read_set_of_files(ObsNAllelesMed)
+NAllelesMed <- NAllelesMed[,c(4:length(colnames(NAllelesMed)))]
+colnames(NAllelesMed) <- paste0("n", c(seq(2,2+length(colnames(NAllelesMed))-2),"+10"))
+NAllelesMed$PropBial <- NAllelesMed$n2 / rowSums(NAllelesMed)
+print(head(NAllelesMed))
+
+# Simulated SFS
+SimSFS <- read_set_of_files(SimSFSfiles)
+SimSFS <- SimSFS[,c(4:length(colnames(SimSFS)))]
+colnames(SimSFS) <- paste0("n", seq(SimulationsSampleSize*2-1, SimulationsSampleSize*2-length(colnames(SimSFS)), -1))
+SimSFS$PropSingletons <- SimSFS[,grep("n[0-9]", colnames(SimSFS))[1]]/rowSums(SimSFS[,grep("n[0-9]", colnames(SimSFS))])
+SimSFS$PropSingleDoubletons <- rowSums(SimSFS[,grep("n[0-9]", colnames(SimSFS))[c(1,2)]])/rowSums(SimSFS[,grep("n[0-9]", colnames(SimSFS))])
+
+# Simulated number of alleles
+SimNAlleles <- read_set_of_files(SimNAllelesfiles)
+SimNAlleles <- SimNAlleles[,c(4:length(colnames(SimNAlleles)))]
+colnames(SimNAlleles) <- paste0("n", c(seq(2,2+length(colnames(SimNAlleles))-2),"+10"))
+SimNAlleles$PropBial <- SimNAlleles$n2 / rowSums(SimNAlleles)
+
+# Add Ne mu & Rep columns
+Nes <- c()
+mus <- c()
+Reps <- c()
+for(f in SimSFSfiles){
+	info <- unlist(strsplit(f, "/"))[5]
+	Nes <- c(Nes, unlist(strsplit(info, "_"))[4])
+	mus <- c(mus, unlist(strsplit(info, "_"))[3])
+	Reps <- c(Reps, unlist(strsplit(unlist(strsplit(f, "/"))[6], "_"))[2])
+}
+SimSFS$Ne <- as.numeric(Nes)
+SimSFS$mu <- as.numeric(mus)
+SimSFS$Rep <- as.numeric(Reps)
+SimNAlleles$Ne <- as.numeric(Nes)
+SimNAlleles$mu <- as.numeric(mus)
+SimNAlleles$Rep <- as.numeric(Reps)
+colfunc <- colorRampPalette(c("gold","forestgreen"))
+colNe <- colfunc(length(unique(SimSFS$Ne)))
+Nemu.combinations <- unique(paste0(format(SimSFS$Ne, scientific = FALSE), "_", format(SimSFS$mu, scientific = FALSE)))
+print(Nemu.combinations)
+print(head(SimSFS))
+print(head(SimNAlleles))
+
+maxcolsSFS <- max(length(SimSFS[1,]), length(SFSAtl[1,]), length(SFSMed[1,]))
+colfunc <- colorRampPalette(c("darkred", "gold"))
+colsSFS <- colfunc(maxcolsSFS)
+
+
+######################################################################
+# PCA analysis of SFS
+rSimSFS <- SimSFS/rowSums(SimSFS[,grep("n[0-9]", colnames(SimSFS))])
+rSFSAtl <- SFSAtl/rowSums(SFSAtl[,grep("n[0-9]", colnames(SFSAtl))])
+rSFSMed <- SFSMed/rowSums(SFSMed[,grep("n[0-9]", colnames(SFSMed))])
+rownames(rSimSFS) <- paste0("Sim_", format(SimSFS$Ne, scientific = FALSE), "_", format(SimSFS$mu, scientific = FALSE), "_", SimSFS$Rep)
+rownames(rSFSAtl) <- paste0("Atl", seq(1, length(rSFSAtl[,1])))
+rownames(rSFSMed) <- paste0("Med", seq(1, length(rSFSMed[,1])))
+minnval <- min(length(grep("n[0-9]", colnames(SimSFS))), length(grep("n[0-9]", colnames(SFSAtl))), length(grep("n[0-9]", colnames(SFSMed))))
+JoinedData <- cbind(t(rSFSAtl[,grep("n[0-9]", colnames(rSFSAtl))[seq(1,minnval)]]), t(rSFSMed[,grep("n[0-9]", colnames(rSFSMed))[seq(1,minnval)]]), t(rSimSFS[,grep("n[0-9]", colnames(rSimSFS))[seq(1,minnval)]]))
+pca <- PCA_calc(JoinedData)
+
+pcacolors <- rep("black", length(colnames(JoinedData)))
+pcacolors[grep("Atl", colnames(JoinedData))] <- population.colors[1]
+pcacolors[grep("Med", colnames(JoinedData))] <- population.colors[2]
+for(c in c(1:length(Nemu.combinations))){
+	pcacolors[grep(paste0("Sim_", Nemu.combinations[c]), colnames(JoinedData))] <- colNe[c]
+}
+
+
+
+
+
+
+
+
+
+
+######################################################################
+# Plotting
+pdf(PDF, width=10, height=15)
+
+# Number alleles 
+print("Plotting Number alleles")
+par(mar=c(0,7,2,7),oma=c(1,1,1,1))
+layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(2), heights=c(1,.5), TRUE)
+plot_ObsSim("", "Propotion of biallelic sites", NAllelesAtl$PropBial, NAllelesMed$PropBial, SimNAlleles, "PropBial", colNe, c(0.8,1))
+par(mar=c(7,7,0,7))
+plot_Ne_mu(SimNAlleles, colNe)
+
+# SFS
+print("Plotting SFS")
+#par(mar=c(0,7,2,7),oma=c(1,1,1,1))
+#layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(2), heights=c(1,.5), TRUE)
+#plot_SFS_ObsSim("", SFSAtl, SFSMed, SimSFS, colNe, colsSFS)
+#par(mar=c(7,7,0,7))
+#plot_Ne_mu(SimNAlleles, colNe)
+
+par(mar=c(0,7,2,7),oma=c(1,1,1,1))
+layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(2), heights=c(1,.5), TRUE)
+plot_ObsSim("", "Propotion of singletons", SFSAtl$PropSingletons, SFSMed$PropSingletons, SimSFS, "PropSingletons", colNe, c(0,1))
+par(mar=c(7,7,0,7))
+plot_Ne_mu(SimNAlleles, colNe)
+
+par(mar=c(0,7,2,7),oma=c(1,1,1,1))
+layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(2), heights=c(1,.5), TRUE)
+plot_ObsSim("", "Propotion of singletons + doubletons", SFSAtl$PropSingleDoubletons, SFSMed$PropSingleDoubletons, SimSFS, "PropSingleDoubletons", colNe, c(0,1))
+par(mar=c(7,7,0,7))
+plot_Ne_mu(SimNAlleles, colNe)
+
+par(mar=c(7,7,2,2),oma=c(1,1,1,1))
+layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(1), heights=c(1,1), TRUE)
+plot_PCA("PCA based on Site Frequency Spectrum", 
+		pca$co.df$Comp1, paste("PC1", round(pca$propvar[1], digits = 2), "%"), 
+		pca$co.df$Comp2, paste("PC2", round(pca$propvar[2], digits = 2), "%"), 
+		pcacolors, NA, c(population.colors, colNe), c("Atlantic", "Mediterranean", Nemu.combinations), c(0,1), c(-0.6,.3))
+plot_PCA("PCA based on Site Frequency Spectrum", 
+		pca$co.df$Comp1[grep("Sim_", colnames(JoinedData))], paste("PC1", round(pca$propvar[1], digits = 2), "%"), 
+		pca$co.df$Comp2[grep("Sim_", colnames(JoinedData))], paste("PC2", round(pca$propvar[2], digits = 2), "%"), 
+		pcacolors[grep("Sim_", colnames(JoinedData))], NA, c(colNe), c(Nemu.combinations), c(0,1), c(-0.6,.3))
+
+
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

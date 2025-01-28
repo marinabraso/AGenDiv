@@ -1,0 +1,8 @@
+name: ComplementaryDataAnalysis
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+  - bowtie2=2.5.1
+  - macs2=2.2.9.1
+  - samtools=1.16.1

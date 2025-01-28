@@ -1,0 +1,6 @@
+name: Simulations
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - slim=4.1
