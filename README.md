@@ -1,7 +1,7 @@
 # AGenDiv
-### Entire source code for the work intended to study in depth the genomic diversity of the European amohioxus
+### Source code for the work intended to study in depth the genomic diversity of the European amohioxus
 
-This code is structured in a snakemake pipeline. It was generated and ran in the UNIL CURNAGL computing cluster. It is deeply dependent on CURNAGL folder structure, data storage system and its Slurm Workload Manager. 
+This code is structured on a snakemake pipeline. It was generated and executed on the UNIL CURNAGL computing cluster. It is heavily dependent on the CURNAGL folder structure, data storage system and its Slurm workload manager.  
 
 ## Basic environment
 - conda 23.1.0

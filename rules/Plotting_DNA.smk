@@ -3,283 +3,11 @@ import re
 import random
 import gzip
 
-# To be written
-rule plot_GeneralVariantFilterStats:
-	'''
-	For all chr. Compute vairant filter statistics & prepare for plotting.
-	'''
-	input:
-		ChrsFilterStats =  expand(rules.VariantFilterStats_PerChr.output.FilterStats, chr=config["bralan3chrs"]),
-		SNPableRegions = rules.r7_callable_regions.output.SNPableRegions,
-		CallableRegions = rules.r7_callable_regions.output.CallableRegions,
-		ExtraCallableRegions = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
-		ChrsCoverageStats = expand(rules.ProcessingCoverageData_PerChr.output.CoverageStats, chr=config["bralan3chrs"]),
-		ChrLengths="data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
-	output:
-		FilterStats = "results/Plotting_DNA/plot_GeneralVariantFilterStats/GeneralVariantFilterStats.txt",
-		plotFilterStats = "results/Plotting_DNA/plot_GeneralVariantFilterStats/GeneralVariantFilterStats.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_GeneralVariantFilterStats/GeneralVariantFilterStats.err",
-		out = "logs/Plotting_DNA/plot_GeneralVariantFilterStats/GeneralVariantFilterStats.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_GeneralVariantFilterStats/GeneralVariantFilterStats.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '10:00:00',
-		name = "pGFSt",
-		threads = 1,
-		mem = 100000,
-		lowermincovthres = config["lowermincovthres"], # for a given position, the minimum coverage among all samples has to be at least lowermincovthres
-		uppermincovthres = config["uppermincovthres"]  # for a given position, the minimum coverage among all samples has to be less or equal to uppermincovthres
-	shell:
-		"./scripts/Plotting_DNA/plot_GeneralVariantFilterStats.R \"{input.ChrsFilterStats}\" {input.SNPableRegions} {input.CallableRegions} {input.ExtraCallableRegions} \"{input.ChrsCoverageStats}\" {input.ChrLengths} {output.FilterStats} {output.plotFilterStats} > {log.out} 2> {log.err}"
-
-rule plot_PCA_short_variants_perGenomicFeature:
-	'''
-	Plot PCA dividing variants per genomic feature (exonic, intronic, promoter, intergenic) for all chrs
-	'''
-	input:
-		Rconfig = config["Rconfig"],
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		chrsGENOTYPEMatrices = expand("results/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr/ShortVariants.filtered.{chr}.genotype.numericmatrix", chr=config["bralan3chrs"]),
-		chrsDividedListExon = expand("results/VariantAnalysis_DNA/Divide_variants_perGenomicFeature_PerChr/ShortVariants.filtered.classified.{chr}_exon.multiallelic.txt", chr=config["bralan3chrs"]),
-		chrsDividedListBiallelic = expand("results/VariantAnalysis_DNA/Divide_variants_perGenomicFeature_PerChr/ShortVariants.filtered.classified.{chr}.biallelic.txt", chr=config["bralan3chrs"]),
-		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt" 
-	output:
-		PCA = "results/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.pdf",
-		PCnumericmatrix = "results/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/Numericmatrix_PCvalues_PerVariant.txt"
-	log:
-		err = "logs/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.err",
-		out = "logs/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '10:00:00',
-		name = "PCA",
-		threads = 1,
-		mem = 500000,
-		chrs = expand("{chr}", chr=config["bralan3chrs"])
-	shell:
-		"./scripts/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature.sh {input.Metadata} \"{input.chrsGENOTYPEMatrices}\" \"{input.chrsDividedListExon}\" {input.SamplesOrderInVCF} {output.PCA} \"{params.chrs}\" {input.Rconfig} > {log.out} 2> {log.err}"
-
-rule plot_PerSiteStats:
-	'''
-	Plot per site stats
-	'''
-	input:
-		Rconfig = config["Rconfig"],
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		ChrsFilterStats =  expand(rules.VariantFilterStats_PerChr.output.FilterStats, chr=config["bralan3chrs"]),
-		Matrices= expand(rules.PerSite_StatsMatrix_PerChr.output.SiteMatrix, chr=config["bralan3chrs"]),
-		GenomicFeaturesExtraCallableBED = rules.Prepare_GenomicFeatures_BED.output.GenomicFeaturesExtraCallable,
-		ExtraCallableRegions = rules.r7_join_extra_callable_regions.output.NonExtraCallableRegions
-	output:
-		PDF = "results/Plotting_DNA/plot_PerSiteStats/plot_PerSiteStats.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_PerSiteStats/plot_PerSiteStats.err",
-		out = "logs/Plotting_DNA/plot_PerSiteStats/plot_PerSiteStats.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_PerSiteStats/plot_PerSiteStats.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '5:00:00',
-		name = "WGpSites",
-		threads = 1,
-		mem = 200000,
-		chrs = expand("{chr}", chr=config["bralan3chrs"])
-	shell:
-		"./scripts/Plotting_DNA/plot_PerSiteStats.R {input.Metadata} \"{input.ChrsFilterStats}\" \"{input.Matrices}\" {input.GenomicFeaturesExtraCallableBED} {input.ExtraCallableRegions} {output.PDF} \"{params.chrs}\" {input.Rconfig} > {log.out} 2> {log.err}"
-
-rule plot_PerFeatureStats:
-	'''
-	Plot per feature stats
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		Matrices= expand("results/VariantAnalysis_DNA/PerFeature_StatsMatrix_PerChr/PerFeatureStats.{chr}.tab.gz", chr=config["bralan3chrs"])
-	output:
-		PDF="results/Plotting_DNA/plot_PerFeatureStats/plot_PerFeatureStats.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_PerFeatureStats/plot_PerFeatureStats.err",
-		out = "logs/Plotting_DNA/plot_PerFeatureStats/plot_PerFeatureStats.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_PerFeatureStats/plot_PerFeatureStats.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '5:00:00',
-		name = "WGpFeature",
-		threads = 1,
-		mem = 30000,
-		chrs = expand("{chr}", chr=config["bralan3chrs"])
-	shell:
-		"./scripts/Plotting_DNA/plot_PerFeatureStats.R {input.Metadata} \"{input.Matrices}\" {output.PDF} \"{params.chrs}\" > {log.out} 2> {log.err}"
-
-rule plot_PerSampleStats:
-	'''
-	Plot per sample stats
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		Matrix = rules.PerSample_StatsMatrix.output.SampleMatrix,
-		chrMatrices = expand(rules.PerSample_StatsMatrix_PerChr.output.SampleMatrix, chr=config["bralan3chrs"]),
-		PCAprop_All = expand(rules.Sample_clustering.output.PCprop, typeClust="PCA", feat="all", polym="all", numall="all", freqint="all"),
-		PCAprop_Polym = expand(rules.Sample_clustering.output.PCprop, typeClust="PCA", feat="all", polym="polymorphic", numall="all", freqint="all"),
-		PCAprop_Bial = expand(rules.Sample_clustering.output.PCprop, typeClust="PCA", feat="all", polym="all", numall="biallelic", freqint="all"),
-		PCAprop_Exons = expand(rules.Sample_clustering.output.PCprop, typeClust="PCA", feat="exon", polym="all", numall="all", freqint="all"),
-		PCAprop_freqint = expand(rules.Sample_clustering.output.PCprop, typeClust="PCA", feat="all", polym="all", numall="all", freqint=("0.5to0.6", "0.6to0.7", "0.7to0.8", "0.8to0.9", "0.9to1")),
-	output:
-		PDF = "results/Plotting_DNA/plot_PerSampleStats/plot_PerSampleStats.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_PerSampleStats/plot_PerSampleStats.err",
-		out = "logs/Plotting_DNA/plot_PerSampleStats/plot_PerSampleStats.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_PerSampleStats/plot_PerSampleStats.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '5:00:00',
-		name = "WGpSample",
-		threads = 1,
-		mem = 30000,
-		chrs = expand("{chr}", chr=config["bralan3chrs"])
-	shell:
-		"./scripts/Plotting_DNA/plot_PerSampleStats.R {input.Metadata} {input.Matrix} \"{input.chrMatrices}\" {input.PCAprop_All} {output.PDF} \"{params.chrs}\" > {log.out} 2> {log.err}"
-
-rule plot_PerWindowStats:
-	'''
-	Plot per window stats
-	'''
-	input:
-		Rconfig = config["Rconfig"],
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		Matrices= expand(rules.PerWindow_StatsMatrix_PerChr.output.WindowMatrix, chr=config["bralan3chrs"], size=config["slidingwindowsize"], step=config["slidingwindowstep"])
-	output:
-		PDF = "results/Plotting_DNA/plot_PerWindowStats/plot_PerWindowStats.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_PerWindowStats/plot_PerWindowStats.err",
-		out = "logs/Plotting_DNA/plot_PerWindowStats/plot_PerWindowStats.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_PerWindowStats/plot_PerWindowStats.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '5:00:00',
-		name = "WGpWindow",
-		threads = 1,
-		mem = 100000,
-		chrs = expand("{chr}", chr=config["bralan3chrs"])
-	shell:
-		"./scripts/Plotting_DNA/plot_PerWindowStats.R {input.Metadata} \"{input.Matrices}\" {output.PDF} \"{params.chrs}\" {input.Rconfig} > {log.out} 2> {log.err}"
-
-rule plot_join_PSMC:
-	'''
-	Plotting PSMC Pairwise Sequentially Markovian Coalescent
-	Li H, Durbin R. Inference of human population history from individual whole-genome sequences. Nature. 2011 Jul 13;475(7357):493-6. doi: 10.1038/nature10231. PMID: 21753753; PMCID: PMC3154645.
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		psmc=expand("results/VariantAnalysis_DNA/PSMC_PerSample/{sample}.psmc", sample=config["samples"]),
-		SeaLevel = "data/Earth_GlacialCycles/SupplementaryTable1_Miller2020.tbl"
-	output:
-		psmc_joinTXT="results/Plotting_DNA/plot_join_PSMC/joined_PSMC.txt",
-		psmc_joinPDF="results/Plotting_DNA/plot_join_PSMC/joined_PSMC.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_join_PSMC/plot_join_PSMC.err",
-		out = "logs/Plotting_DNA/plot_join_PSMC/plot_join_PSMC.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_join_PSMC/plot_join_PSMC.txt"
-	conda:
-		'../envs/hierfstat.yaml'
-	params:
-		time = '3:00:00',
-		name = "pPSMCWG",
-		threads = 1,
-		mem = 10000,
-		samples = expand("{sample}", sample=config["samples"]),
-		Blangenerationtime = config["Blangenerationtime"]
-	shell:
-		"./scripts/Plotting_DNA/plot_join_PSMC.sh {input.Metadata} \"{input.psmc}\" {input.SeaLevel} {output.psmc_joinTXT} {output.psmc_joinPDF} {params.Blangenerationtime} \"{params.samples}\" > {log.out} 2> {log.err}"
-
-rule plot_Circos_Callable_Varsites_Pi_PC1_pFst_sFst_GC:
-	'''
-	Prepare files to do a Circos plot & plot Circos
-	The wildcard "guide" determines which layers to plot and the order from outside to inside. 
-	The rule is prepared to be able to plot:
-		- Callable sites / window length
-		- number of variable sites per window
-		- Pi per window
-		- Average PC1 per window
-		- Average population Fst per window
-		- Average sex Fst per window
-		- Average GC content per window
-	'''
-	input:
-		ChrLen = "data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
-		MatricesWinds= expand("results/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr/PerWindowStats_{size}_{step}.{chr}.tab.gz", chr=config["bralan3chrs"], size=config["slidingwindowsize"], step=config["slidingwindowstep"]),
-		MatricesSites= expand("results/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSiteStats.{chr}.tab.gz", chr=config["bralan3chrs"])
-	output:
-		karyotype = "results/Plotting_DNA/CircosPlots/karyotype_{guide}.txt",
-		conf = "results/Plotting_DNA/CircosPlots/circos_{guide}.conf",
-		SVG = "results/Plotting_DNA/CircosPlots/plot_Circos_{guide}.svg",
-		PNG = "results/Plotting_DNA/CircosPlots/plot_Circos_{guide}.png"
-	log:
-		err = "logs/Plotting_DNA/CircosPlots/plot_Circos_{guide}.err",
-		out = "logs/Plotting_DNA/CircosPlots/plot_Circos_{guide}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CircosPlots/plot_Circos_{guide}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		housekeepingconf="scripts/Plotting_DNA/CircosPlots/Circos_housekeeping_modif.conf",
-		time = '5:00:00',
-		name = "cp{guide}",
-		threads = 1,
-		mem = 100000
-	shell:
-		"./scripts/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi_PC1_pFst_sFst_GC.py {input.ChrLen} \"{input.MatricesWinds}\" \"{input.MatricesSites}\" {output.karyotype} {output.conf} {output.PNG} {params.housekeepingconf} {wildcards.guide} > {log.out} 2> {log.err};"
-		"circos -conf {output.conf} -svg >> {log.out} 2>> {log.err};"
-
-rule plot_Circos_Callable_Varsites_Pi:
-	'''
-	'''
-	input:
-		ChrLen = "data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
-		MatricesWinds= expand("results/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr/PerWindowStats_{size}_{step}.{chr}.tab.gz", chr=config["bralan3chrs"], size=config["slidingwindowsize"], step=config["slidingwindowstep"]),
-		MatricesSites= expand("results/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSiteStats.{chr}.tab.gz", chr=config["bralan3chrs"]),
-		NonExtraCallableRegions = rules.r7_join_extra_callable_regions.output.NonExtraCallableRegions,
-	output:
-		karyotype = "results/Plotting_DNA/CircosPlots/karyotype_Callable_Varsites_Pi.txt",
-		conf = "results/Plotting_DNA/CircosPlots/circos_Callable_Varsites_Pi.conf",
-		SVG = "results/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi.svg",
-		PNG = "results/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi.png"
-	log:
-		err = "logs/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi.err",
-		out = "logs/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		housekeepingconf="scripts/Plotting_DNA/CircosPlots/Circos_housekeeping_modif.conf",
-		time = '5:00:00',
-		name = "cp_Callable_Varsites_Pi",
-		threads = 1,
-		mem = 100000
-	shell:
-		"./scripts/Plotting_DNA/CircosPlots/plot_Circos_Callable_Varsites_Pi.py {input.ChrLen} \"{input.MatricesWinds}\" \"{input.MatricesSites}\" {input.NonExtraCallableRegions} {output.karyotype} {output.conf} {output.PNG} {params.housekeepingconf} > {log.out} 2> {log.err};"
-		"circos -conf {output.conf} -svg >> {log.out} 2>> {log.err};"
-
 
 ########################################
-# Next gen plots
-
-# to be tested
-# nedded downstreem
+# Functions
+########################################
+# Provide bed file name according to the wildcard BED
 def get_bed_file_name(wildcards):
 	if wildcards.BED == "Callable":
 		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions
@@ -319,6 +47,8 @@ def get_bed_file_name(wildcards):
 		return rules.SimualtedChrSizeWindows_BEDs.output.WindowsBED
 	elif wildcards.BED == "SelectedWindowsSimChrSize":
 		return rules.ChooseTreeRegions.output.SelectedBED
+	elif re.match("FixedLengthRegions", wildcards.BED):
+		return 	expand(rules.Windows_AccumulatedCallableSize_BEDs.output.WindowsBED, windowsize=config["windowsize"])
 	elif re.match("Simulated", wildcards.BED):
 		SimParam="_".join(wildcards.ObsExp.split("/")[2].split("_")[1:])
 		Simulationtype=wildcards.ObsExp.split("/")[1]
@@ -334,6 +64,7 @@ def get_bed_file_name(wildcards):
 	else:
 		raise ValueError("Unknown value for BED file in get_bed_file_name: %s" % wildcards.BED)
 
+# Provide list of samples according to wildcard GroupSamples
 def get_group_of_samples(wildcards):
 	if re.match("Rand", wildcards.GroupSamples): 
 		if re.search("AtlSamples", wildcards.GroupSamples):
@@ -358,10 +89,14 @@ def get_group_of_samples(wildcards):
 		raise ValueError("Unknown value for GroupSamples in get_group_of_samples: %s" % wildcards.GroupSamples)
 
 
-# nedded downstreem
+# Provide heterozygosity files according to the wildcard ObsExp
 def get_HetFiles(wildcards):
 	if wildcards.ObsExp == "Observed_Data":
 		return expand(rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile, chr=config["bralan3chrs"])
+	elif wildcards.ObsExp == "Observed_SNPs":
+		return expand(rules.VariantType_BEDs_PerSubsetOfSamples.output.SNPsHetFile, GroupSamples="AllSamples", BED=wildcards.BED)
+	elif wildcards.ObsExp == "Observed_INDELs":
+		return expand(rules.VariantType_BEDs_PerSubsetOfSamples.output.INDELsHetFile, GroupSamples="AllSamples", BED=wildcards.BED)
 	elif re.match("Expected_AsInSimulations", wildcards.ObsExp):
 		SimParam="_".join(wildcards.ObsExp.split("/")[2].split("_")[1:])
 		Simulationtype=wildcards.ObsExp.split("/")[1]
@@ -377,70 +112,7 @@ def get_HetFiles(wildcards):
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_HetFiles: %s" % wildcards.ObsExp)
 
-# nedded downstreem
-rule Heterozygosity_Total_inBEDregions_PerSample:
-	'''
-	Calculate overall heterosygostity for each sample in a set of regions (bed file)
-	Output examples:
-		- results/Plotting_DNA/Expected_AsInSimulations/SLiM_simulation_singlePopulation/SimParam_1000_7.5e-7_10000/Heterozygosity_Total_inSimulated_1_InfiniteAllelesRegions_PerSample.txt
-	'''
-	input:
-		HetFiles = get_HetFiles,
-		BED = get_bed_file_name
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.txt"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "het{BED}",
-		threads = 1,
-		mem = 10000
-	shell:
-		"""
-		output={output.out}
-		mkdir -p $(dirname ${{output}}) 2> {log.err}
-		awk '{{if(NR==FNR){{Tlen+=$3-$2;next}} if(FNR==1){{nsamples=NF}}for(i=1; i<=NF; i++){{a[i]+=$i}}}}END{{str=""; for(i=1; i<=nsamples;i++){{str=str"\t"a[i]/Tlen}} print str}}' <(zcat {input.BED}) <(bedtools intersect -a <(zcat {input.HetFiles}) -b <(zcat {input.BED}) | cut -f5-) | sed 's/^\t//g' > ${{output}} 2>> {log.err}
-		"""
-
-# to be tested
-# nedded downstreem
-rule Heterozygosity_InEachRegion_inBEDregions_PerSample: # why per sample?
-	'''
-	Calculate heterosygostity for each sample and region (bed file)
-	Output examples:
-		- results/Plotting_DNA/Expected_AsInSimulations/SLiM_simulation_singlePopulation/SimParam_1000_7.5e-7_10000/HeterozygosityPerSample_inSimulated_1_InfiniteAllelesRegions.txt
-	'''
-	input:
-		HetFiles = get_HetFiles,
-		BED = get_bed_file_name
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.bed.gz"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "het{BED}",
-		threads = 1,
-		mem = 100000
-	shell:
-		"""
-		output={output.out}
-		mkdir -p $(dirname ${{output}}) 2> {log.err}
-		bedtools intersect -a <(zcat {input.BED}) -b <(zcat {input.HetFiles}) -wao | cut -f1,2,3,8- | rev | cut -f2- | rev | awk '{{if(NR!=1 && reg!=$1"\\t"$2"\\t"$3){{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str; delete a}} reg=$1"\\t"$2"\\t"$3; len=$3-$2+1; for(i=4;i<=NF;i++){{a[i]+=$i}}}}END{{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str;}}' | gzip > ${{output}} 2>> {log.err}
-		"""
-
-# nedded downstreem
+# Provide genotype files according to the wildcard ObsExp
 def get_GenoFiles(wildcards):
 	if wildcards.ObsExp == "Observed_Data":
 		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr=config["bralan3chrs"])
@@ -463,263 +135,7 @@ def get_GenoFiles(wildcards):
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_GenoFiles: %s" % wildcards.ObsExp)
 
-# add watterson estimator
-rule Pi_Total_inBEDregions_PerSubsetOfSamples:
-	'''
-	General average pairwise differences in given regions and group of samples
-	'''
-	input:
-		GenoFiles = get_GenoFiles,
-		BED = get_bed_file_name,
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.txt"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "PIt_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 10000,
-		samples = get_group_of_samples
-	shell:
-		"""
-		output={output.out}
-		mkdir -p $(dirname ${{output}}) 2> {log.err}
-		samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat metadata/SamplesOrderInVCF.chr19.txt | sed 's/\\s/\\n/g') | sed 's/^,//g')
-		totalsites=$(zcat {input.BED} | awk '{{len+=$3-$2+1}}END{{print len}}')
-		bedtools intersect -a <(zcat {input.GenoFiles}) -b <(zcat {input.BED}) | cut -f${{samplelines}} | sed 's/:/\\t/g' | awk -v totalsites=${{totalsites}} '{{if(NR==1){{NS=NF;c=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{c++;a[c]=0}}}}}}comp=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{comp++;if($i!=$j){{a[comp]++}}}}}}}}END{{c=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{c++;sum+=a[c]/totalsites}}}}print sum/c}}' 2> {log.err} > ${{output}}
-		"""
-
-# add watterson estimator
-# add printing last region!
-rule Pi_InEachRegion_inBEDregions_PerSubsetOfSamples:
-	'''
-	Average pairwise differences for each region, for a group of samples
-	'''
-	input:
-		GenoFiles = get_GenoFiles,
-		BED = get_bed_file_name,
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.txt.gz"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "PIr_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 10000,
-		samples = get_group_of_samples
-	shell:
-		"""
-		output={output.out}
-		mkdir -p $(dirname ${{output%.gz}}) 2> {log.err}
-		samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat metadata/SamplesOrderInVCF.chr19.txt | sed 's/\\s/\\n/g') | sed 's/^,//g')
-		awk '{{if(FNR==NR){{a[$1"_"$2"_"$3]=$4;next}}if(a[$1"_"$2"_"$3]){{print a[$1"_"$2"_"$3]}}else{{print 0}}}}'  <(bedtools intersect -a <(zcat {input.GenoFiles} | cut -f1,2,3,${{samplelines}}) -b <(zcat {input.BED} | cut -f1,2,3) -wo | awk '{{chr=NF-3; st=NF-2; end=NF-1; str=$chr"\\t"$st"\\t"$end; for(i=4; i<chr; i++){{str=str"\\t"$i}} print str}}' | sed 's/:/\\t/g' | awk '{{if(NR==1){{ns=NF-3;}}if(chr"_"st"_"end != $1"_"$2"_"$3){{sum=0;for(i=4;i<ns+3;i++){{for(j=i+1;j<=ns+3;j++){{sum+=a[i"_"j]; a[i"_"j]=0}}}} if(NR>1){{if(sum>0){{sum=sum/length(a)/(end-st+1)}} print chr"\\t"st"\\t"end"\\t"sum}} chr=$1; st=$2; end=$3}}else{{for(i=4;i<ns+3;i++){{for(j=i+1;j<=ns+3;j++){{if($i!=$j){{a[i"_"j]++}}}}}}}}}}') <(zcat {input.BED}) | gzip 2> {log.err} > ${{output}} 
-		"""
-
-# to be tested
-rule Windows_AccumulatedCallableSize_BEDs:
-	'''
-	'''
-	input:
-		CallableBED = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
-	output:
-		WindowsBED = "results/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.bed.gz"
-	log:
-		err = "logs/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.err",
-		out = "logs/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "WindBED",
-		threads = 1,
-		mem = 10000
-	shell:
-		"""
-		zcat {input.CallableBED} | awk -v wlen={wildcards.windowsize} '{{if(chr != $1){{end=st+len; print chr"\\t"st"\\t"end; len=0; chr=$1; st=$2}} if(len + $3-$2 >= wlen){{end=$2+100-len; while(end < $3){{print chr"\\t"st"\\t"end; st=end+1;end=st+wlen; len=0}}if(end==$3){{print chr"\\t"st"\\t"end;len=0}}else{{len=$3-st}}}}else{{if(len==0){{st=$2}}len=len+$3-$2}}}}' | tail -n +2 | gzip > {output.WindowsBED} 2> {log.err}
-		"""
-
-rule Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples:
-	'''
-	Average pairwise differences for each region, for a group of samples
-	'''
-	input:
-		GenoFiles = get_GenoFiles,
-		BED = expand(rules.Windows_AccumulatedCallableSize_BEDs.output.WindowsBED, windowsize=config["windowsize"]),
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples/Pi_InEachRegion_FixedLengthRegions_Per{GroupSamples}.txt.gz"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples/Pi_InEachRegion_FixedLengthRegions_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples/Pi_InEachRegion_FixedLengthRegions_Per{GroupSamples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples/Pi_InEachRegion_FixedLengthRegions_Per{GroupSamples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "PIr_FixLen_{GroupSamples}",
-		threads = 1,
-		mem = 10000,
-		samples = get_group_of_samples,
-		windowsize=config["windowsize"]
-	shell:
-		"""
-		output={output.out}
-		mkdir -p $(dirname ${{output%.gz}}) 2> {log.err}
-		samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat metadata/SamplesOrderInVCF.chr19.txt | sed 's/\\s/\\n/g') | sed 's/^,//g')
-		awk '{{if(FNR==NR){{a[$1"_"$2"_"$3]=$4;next}}if(a[$1"_"$2"_"$3]){{print a[$1"_"$2"_"$3]}}else{{print 0}}}}'  <(bedtools intersect -a <(zcat {input.GenoFiles} | cut -f1,2,3,${{samplelines}}) -b <(zcat {input.BED} | cut -f1,2,3) -wo | awk '{{chr=NF-3; st=NF-2; end=NF-1; str=$chr"\\t"$st"\\t"$end; for(i=4; i<chr; i++){{str=str"\\t"$i}} print str}}' | sed 's/:/\\t/g' | awk -v reglen={params.windowsize} '{{if(NR==1){{ns=NF-3;}}if(chr"_"st"_"end != $1"_"$2"_"$3){{sum=0;for(i=4;i<ns+3;i++){{for(j=i+1;j<=ns+3;j++){{sum+=a[i"_"j]; a[i"_"j]=0}}}} if(NR>1){{if(sum>0){{sum=sum/length(a)/reglen}} print chr"\\t"st"\\t"end"\\t"sum}} chr=$1; st=$2; end=$3}}else{{for(i=4;i<ns+3;i++){{for(j=i+1;j<=ns+3;j++){{if($i!=$j){{a[i"_"j]++}}}}}}}}}}') <(zcat {input.BED}) | gzip 2> {log.err} > ${{output}} 
-		"""
-
-rule TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples_Bootstrapped:
-	'''
-
-	'''
-	input:
-		GenoFiles = get_GenoFiles,
-		BED = get_bed_file_name,
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/TotalCummulativePropOfDiversityExplained_Bootstrapped_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.txt"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/TotalCummulativePropOfDiversityExplained_Bootstrapped_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/TotalCummulativePropOfDiversityExplained_Bootstrapped_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/TotalCummulativePropOfDiversityExplained_Bootstrapped_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "CumDiv{boots}_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 4000,
-		samples = get_group_of_samples
-	shell:
-		"./scripts/Plotting_DNA/TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples_Bootstrapped.sh \"{input.GenoFiles}\" {input.BED} {input.SamplesOrderInVCF} {output.out} \"{params.samples}\" > {log.out} 2> {log.err}"
-
-# in dev
-rule CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples_Bootstrapped:
-	'''
-
-	'''
-	input:
-		GenoFiles = get_GenoFiles,
-		BED = get_bed_file_name,
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		out = "results/Plotting_DNA/{ObsExp}/CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples/CummulativePropOfDiversityExplained_Bootstrapped_InEachRegion_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.bed.gz"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples/CummulativePropOfDiversityExplained_Bootstrapped_InEachRegion_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples/CummulativePropOfDiversityExplained_Bootstrapped_InEachRegion_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples/CummulativePropOfDiversityExplained_Bootstrapped_InEachRegion_in{BED}Regions_Per{GroupSamples}_bootstrap{boots}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "CumDiv{boots}_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 4000,
-		samples = get_group_of_samples
-	shell:
-		"./scripts/Plotting_DNA/CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples_Bootstrapped.sh \"{input.GenoFiles}\" {input.BED} {input.SamplesOrderInVCF} {output.out} \"{params.samples}\" > {log.out} 2> {log.err}"
-
-# in dev
-rule HeatMapSharedGenotypes_inBEDregions_PerSubsetOfSamples:
-	'''
-	'''
-	input:
-		GenoFiles = get_GenoFiles,
-		BED = get_bed_file_name,
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		out = "results/Plotting_DNA/HeatMapSharedGenotypes_inBEDregions_PerSubsetOfSamples/HeatMapSharedGenotypes_in{BED}Regions_Per{GroupSamples}.txt"
-	log:
-		err = "logs/Plotting_DNA/HeatMapSharedGenotypes_inBEDregions_PerSubsetOfSamples/HeatMapSharedGenotypes_in{BED}Regions_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/HeatMapSharedGenotypes_inBEDregions_PerSubsetOfSamples/HeatMapSharedGenotypes_in{BED}Regions_Per{GroupSamples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/HeatMapSharedGenotypes_inBEDregions_PerSubsetOfSamples/HeatMapSharedGenotypes_in{BED}Regions_Per{GroupSamples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "Heatmap_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 4000,
-		samples = get_group_of_samples
-	shell:
-		"""
-		output={output.out}
-		mkdir -p $(dirname ${{output}}) 2> {log.err}
-		samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat metadata/SamplesOrderInVCF.chr19.txt | sed 's/\\s/\\n/g') | sed 's/^,//g')
-		totalsites=$(zcat {input.BED} | awk '{{len+=$3-$2}}END{{print len}}')
-		bedtools intersect -a <(zcat {input.GenoFiles}) -b <(zcat {input.BED}) | cut -f${{samplelines}} | sed 's/:/\t/g' | awk -v totalsites=${{totalsites}} '{{if(NR==1){{NS=NF;c=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{c++;a[c]=0}}}}}}comp=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{comp++;if($i!=$j){{a[comp]++}}}}}}}}END{{c=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{c++;sum+=a[c]/totalsites}}}}print sum/c}}' 2> {log.err} > ${{output}}
-		"""
-
-rule Prepare_PopulationSamples_Files:
-	'''
-	Calculate the frequencey of each allele in each posistion for a subset of regions (bed file) and a subset of samples (AllSamples, AtlSamples or MedSamples)
-	'''
-	input:
-		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
-	output:
-		outAll = "results/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_AllSamples_{boots}.txt",
-		outAtl = "results/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_AtlSamples_{boots}.txt",
-		outMed = "results/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_MedSamples_{boots}.txt"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_PopulationSamples_{boots}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_PopulationSamples_{boots}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_PopulationSamples_{boots}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "Prepare_PopFile_{RandObsSim}_{boots}",
-		threads = 1,
-		mem = 10000,
-		samplesAtl = config["AtlSamples"],
-		samplesMed = config["MedSamples"],
-		SimSSize = config["SimulationsSampleSize"]
-	shell:
-		"""
-		mkdir -p $(dirname {output.outAll}) 2> {log.err}
-		RandObsSim={wildcards.RandObsSim}
-		if [[ ${{RandObsSim}} == "Rand" ]]
-		then
-			numA=$(echo {params.samplesAtl} | sed 's/ /\\n/g' | awk '{{}}END{{print NR}}' )
-			numM=$(echo {params.samplesMed} | sed 's/ /\\n/g' | awk '{{}}END{{print NR}}' )
-			shufled=$(cat {input.SamplesOrderInVCF} | sed 's/\\t/\\n/g' | shuf)
-			echo ${{shufled}} | sed 's/ /\\n/g'  > {output.outAll}
-			echo ${{shufled}} | sed 's/ /\\n/g' | tac | head -${{numA}} > {output.outAtl}
-			echo ${{shufled}} | sed 's/ /\\n/g' | head -${{numM}} > {output.outMed}
-		elif [[ ${{RandObsSim}} == "Obs" ]]
-		then
-			echo {params.samplesMed} {params.samplesAtl} | sed 's/ /\\n/g' > {output.outAll}
-			echo {params.samplesAtl} | sed 's/ /\\n/g' > {output.outAtl}
-			echo {params.samplesMed} | sed 's/ /\\n/g' > {output.outMed}
-		else
-			if [[ -s {output.outAll} ]];then rm {output.outAll}; fi
-			for i in `seq 0 1 {params.SimSSize}`; do echo $i >> {output.outAll}; done
-			touch {output.outAtl} {output.outMed}
-		fi
-		"""
-
+# Provide file with list of samples according to wildcard GroupSamples
 def get_group_of_samples_file(wildcards):
 	if re.match("Rand", wildcards.GroupSamples): 
 		if re.search("AtlSamples", wildcards.GroupSamples):
@@ -740,7 +156,37 @@ def get_group_of_samples_file(wildcards):
 		return expand(rules.Prepare_PopulationSamples_Files.output.outAll, ObsExp=wildcards.ObsExp, RandObsSim="Sim", boots=0)
 	else:
 		raise ValueError("Unknown value for GroupSamples in get_group_of_samples_file: %s" % wildcards.GroupSamples)
+# Provide file with Frequency per site depending on BED, GroupSamples and ObsExp
+def get_freq_file_Pops_randPops(wildcards):
+	if wildcards.ObsOrBoots == "Observed":
+		return expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples=["AllSamples","AtlSamples","MedSamples"], ObsExp="Observed_Data")
+	elif re.match("Rand", wildcards.ObsOrBoots):
+		b=wildcards.ObsOrBoots.split("_")[1]
+		return expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples="AllSamples", ObsExp="Observed_Data") + expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples=["RandAtlSamples_%s" % b,"RandMedSamples_%s" % b], ObsExp="Observed_Data")
+	else:
+		raise ValueError("Unknown value for ObsOrBoots in get_freq_file_Pops_randPops: %s" % wildcards.ObsOrBoots)
 
+# Provide 2 BED file names for intersection 
+def get_bed_files_names_for_intersection(wildcards):
+	if wildcards.Name1 == "Callable" and wildcards.Name2 == "Exons":
+		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Exons
+	if wildcards.Name1 == "Callable" and  wildcards.Name2 == "Introns":
+		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Introns
+	if wildcards.Name1 == "Callable" and  wildcards.Name2 == "Promoters":
+		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Promoters
+	if wildcards.Name1 == "Callable" and  wildcards.Name2 == "Intergenic":
+		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Intergenic
+	else:
+		raise ValueError("Unknown values for BED files in get_bed_files_names_for_intersection: %s & %s" % (wildcards.Name1, wildcards.Name2))
+#
+
+
+
+
+########################################
+#### Rules preparing BED files
+########################################
+# Compute the frequencey of each allele in each posistion for a subset of BED regions and group of samples 
 rule FrequencyPerSite_inBEDregions_PerSubsetOfSamples:
 	'''
 	Calculate the frequencey of each allele in each posistion for a subset of regions (bed file) and a subset of samples (AllSamples, AtlSamples or MedSamples)
@@ -778,9 +224,6 @@ rule FrequencyPerSite_inBEDregions_PerSubsetOfSamples:
 		rm ${{output%.gz}}.tmp
 		"""
 
-# LD
-# Fst
-
 # to test 
 rule SynonymousNonSynonymous_BEDs:
 	'''
@@ -815,9 +258,8 @@ rule SynonymousNonSynonymous_BEDs:
 		"""
 
 
-############################
-#### Rules generating BED files
 
+# Create bed files for Exons, Introns, Promoters & Intergenic regions
 rule FunctionalFeatures_BEDs:
 	'''
 	'''
@@ -846,7 +288,6 @@ rule FunctionalFeatures_BEDs:
 	shell:
 		"scripts/Plotting_DNA/FunctionalFeatures_BEDs.sh {input.ChrLengths} {input.GTF} {input.Freqfile} {output.Exons} {output.Introns} {output.Promoters} {output.Intergenic} {output.PerSite_FeatureType} > {log.out} 2> {log.err}"
 
-# Nedded downstreem
 rule SimualtedChrSizeWindows_BEDs:
 	'''
 	'''
@@ -878,6 +319,7 @@ rule VariantType_BEDs_PerSubsetOfSamples:
 	'''
 	input:
 		GenoFiles = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr=config["bralan3chrs"]),
+		HetFiles = expand(rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile, chr=config["bralan3chrs"]),
 		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
 	output:
 		SNPs = "results/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/SNPs_Per{GroupSamples}.bed.gz",
@@ -885,6 +327,8 @@ rule VariantType_BEDs_PerSubsetOfSamples:
 		PerSite_VariantType = "results/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/PerSite_VariantType_Per{GroupSamples}.txt.gz",
 		SNPsGenotype = "results/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/SNPs_Per{GroupSamples}.genotype.bed.gz",
 		INDELsGenotype = "results/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/INDELs_Per{GroupSamples}.genotype.bed.gz",
+		SNPsHetFile = "results/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/SNPs_Per{GroupSamples}.0hom1het.bed.gz",
+		INDELsHetFile = "results/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/INDELs_Per{GroupSamples}.0hom1het.bed.gz",
 	log:
 		err = "logs/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/VariantType_BEDs_Per{GroupSamples}.err",
 		out = "logs/Plotting_DNA/VariantType_BEDs_PerSubsetOfSamples/VariantType_BEDs_Per{GroupSamples}.out"
@@ -907,9 +351,10 @@ rule VariantType_BEDs_PerSubsetOfSamples:
 		zcat < {output.PerSite_VariantType} | awk '{{if($4 ~/INDEL/){{print $1"\\t"$2"\\t"$3}}}}' | gzip > {output.INDELs} 2> {log.err}
 		awk '{{if(NR==FNR){{a[$1"_"$2"_"$3]; next}}if(a[$1"_"$2"_"$3]=1){{print $0}}}}' <(zcat {output.SNPs}) <(for i in {input.GenoFiles}; do zcat < $i; done) | gzip > {output.SNPsGenotype} 2> {log.err}
 		awk '{{if(NR==FNR){{a[$1"_"$2"_"$3]; next}}if(a[$1"_"$2"_"$3]=1){{print $0}}}}' <(zcat {output.INDELs}) <(for i in {input.GenoFiles}; do zcat < $i; done) | gzip > {output.INDELsGenotype} 2> {log.err}
+		awk '{{if(NR==FNR){{a[$1"_"$2"_"$3]; next}}if(a[$1"_"$2"_"$3]=1){{print $0}}}}' <(zcat {output.SNPs}) <(for i in {input.HetFiles}; do zcat < $i; done) | gzip > {output.SNPsHetFile} 2> {log.err}
+		awk '{{if(NR==FNR){{a[$1"_"$2"_"$3]; next}}if(a[$1"_"$2"_"$3]=1){{print $0}}}}' <(zcat {output.INDELs}) <(for i in {input.HetFiles}; do zcat < $i; done) | gzip > {output.INDELsHetFile} 2> {log.err}
 		"""
 
-# + intermediate freq variants?
 rule VariantFrequency_BEDs_PerSubsetOfSamples:
 	'''
 	'''
@@ -989,15 +434,6 @@ rule VariantAlleleNumber_BEDs_PerSubsetOfSamples:
 		zcat < {input.Freqfile} | awk '{{n=split($4,a,","); if(n>4){{print $0}}}}' | gzip > {output.PentaPlusAllelic}
 		"""
 
-def get_freq_file_Pops_randPops(wildcards):
-	if wildcards.ObsOrBoots == "Observed":
-		return expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples=["AllSamples","AtlSamples","MedSamples"], ObsExp="Observed_Data")
-	elif re.match("Rand", wildcards.ObsOrBoots):
-		b=wildcards.ObsOrBoots.split("_")[1]
-		return expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples="AllSamples", ObsExp="Observed_Data") + expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples=["RandAtlSamples_%s" % b,"RandMedSamples_%s" % b], ObsExp="Observed_Data")
-	else:
-		raise ValueError("Unknown value for ObsOrBoots in get_freq_file_Pops_randPops: %s" % wildcards.ObsOrBoots)
-
 rule SharedPrivatePopulation_BEDs:
 	'''
 	'''
@@ -1065,20 +501,6 @@ rule SharedPrivatePopulation_BEDs:
 		#rm $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
 		"""
 
-# to be tested
-def get_bed_files_names_for_intersection(wildcards):
-	if wildcards.Name1 == "Callable" and wildcards.Name2 == "Exons":
-		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Exons
-	if wildcards.Name1 == "Callable" and  wildcards.Name2 == "Introns":
-		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Introns
-	if wildcards.Name1 == "Callable" and  wildcards.Name2 == "Promoters":
-		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Promoters
-	if wildcards.Name1 == "Callable" and  wildcards.Name2 == "Intergenic":
-		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions, rules.FunctionalFeatures_BEDs.output.Intergenic
-	else:
-		raise ValueError("Unknown values for BED files in get_bed_files_names_for_intersection: %s & %s" % (wildcards.Name1, wildcards.Name2))
-
-# to be tested
 rule Intersection2BEDs:
 	'''
 	'''
@@ -1106,6 +528,251 @@ rule Intersection2BEDs:
 		bedtools intersect -a <(zcat ${{BED1}} | cut -f1,2,3) -b <(zcat ${{BED2}} | cut -f1,2,3) | gzip > {output.Intersection}
 		"""
 
+# add group of samples!!!! we need co compute the two pop separately
+rule Calc_NumAlleles_MajorFreq_InEachRegion_inBEDregions:
+	'''
+	'''
+	input:
+		ChrGenotypesFile=get_GenoFiles,
+		BED = get_bed_file_name,
+		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt"
+	output:
+		OutMajorFreq = "results/Plotting_DNA/{ObsExp}/in{BED}Regions_Per{GroupSamples}.MajorFreq.gz",
+		OutNumAlleles = "results/Plotting_DNA/{ObsExp}/in{BED}Regions_Per{GroupSamples}.NumAlleles.gz"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Calc_NumAlleles_MajorFreq_InEachRegion_in{BED}Regions_Per{GroupSamples}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Calc_NumAlleles_MajorFreq_InEachRegion_in{BED}Regions_Per{GroupSamples}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Calc_NumAlleles_MajorFreq_InEachRegion_in{BED}Regions_Per{GroupSamples}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '3:00:00',
+		name = "MajFNumAll_{ObsExp}_{BED}_{GroupSamples}",
+		threads = 1,
+		mem = 100000,
+		samples = get_group_of_samples,
+	shell:
+		"""
+		outMF={output.OutMajorFreq}
+		if [[ {wildcards.GroupSamples} == "SimSamples" ]]
+		then
+			samplelines=$(awk '{{str=str","$1+4}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') | sed 's/^,//g')
+		else
+			samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat {input.SamplesOrderInVCF} | sed 's/\\s/\\n/g') | sed 's/^,//g')
+		fi
+		echo ${{samplelines}} > {log.out}
+ 		bedtools intersect -a <(zcat {input.BED}) -b <(zcat {input.ChrGenotypesFile}) -wao | cut -f1,2,3,7- | rev | cut -f2- | rev | cut -f1,2,3,4,${{samplelines}} | gzip > ${{outMF%.MajorFreq.gz}}.bed.gz 2> {log.err};
+		scripts/Plotting_DNA/Calc_NumAlleles_MajorFreq_InEachRegion_inBEDregions.py ${{outMF%.MajorFreq.gz}}.bed.gz {output.OutMajorFreq} {output.OutNumAlleles} >> {log.out} 2>> {log.err};
+		"""
+# Build a BED file with windows with exactely windowsize callable length
+rule Windows_AccumulatedCallableSize_BEDs:
+	'''
+	'''
+	input:
+		CallableBED = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
+	output:
+		WindowsBED = "results/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.bed.gz"
+	log:
+		err = "logs/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.err",
+		out = "logs/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/Windows_AccumulatedCallableSize_BEDs/Windows_AccumulatedCallableSize_{windowsize}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '03:00:00',
+		name = "WindBED",
+		threads = 1,
+		mem = 10000
+	shell:
+		"""
+		zcat {input.CallableBED} | awk -v wlen={wildcards.windowsize} '{{if(chr != $1){{end=st+len; print chr"\\t"st"\\t"end; len=0; chr=$1; st=$2}} if(len + $3-$2 >= wlen){{end=$2+100-len; while(end < $3){{print chr"\\t"st"\\t"end; st=end+1;end=st+wlen; len=0}}if(end==$3){{print chr"\\t"st"\\t"end;len=0}}else{{len=$3-st}}}}else{{if(len==0){{st=$2}}len=len+$3-$2}}}}' | tail -n +2 | gzip > {output.WindowsBED} 2> {log.err}
+		"""
+
+#
+
+########################################
+# Rules computing statistics
+########################################
+# Compute total heterozygosity in a set of BED regions for each sample
+rule Heterozygosity_Total_inBEDregions_PerSample:
+	'''
+	Calculate overall heterosygostity for each sample in a set of regions (bed file)
+	Output examples:
+		- results/Plotting_DNA/Expected_AsInSimulations/SLiM_simulation_singlePopulation/SimParam_1000_7.5e-7_10000/Heterozygosity_Total_inSimulated_1_InfiniteAllelesRegions_PerSample.txt
+	'''
+	input:
+		HetFiles = get_HetFiles,
+		BED = get_bed_file_name
+	output:
+		out = "results/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Heterozygosity_Total_in{BED}Regions_PerSample.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '03:00:00',
+		name = "het{BED}",
+		threads = 1,
+		mem = 10000
+	shell:
+		"""
+		output={output.out}
+		mkdir -p $(dirname ${{output}}) 2> {log.err}
+		awk '{{if(NR==FNR){{Tlen+=$3-$2;next}} if(FNR==1){{nsamples=NF}}for(i=1; i<=NF; i++){{a[i]+=$i}}}}END{{str=""; for(i=1; i<=nsamples;i++){{str=str"\t"a[i]/Tlen}} print str}}' <(zcat {input.BED}) <(bedtools intersect -a <(zcat {input.HetFiles}) -b <(zcat {input.BED}) | cut -f5-) | sed 's/^\t//g' > ${{output}} 2>> {log.err}
+		"""
+
+# Compute heterozygosity for each one of a set of BED regions for each sample
+# to be tested
+rule Heterozygosity_InEachRegion_inBEDregions_PerSample:
+	'''
+	Calculate heterosygostity for each sample and region (bed file)
+	Output examples:
+		- results/Plotting_DNA/Expected_AsInSimulations/SLiM_simulation_singlePopulation/SimParam_1000_7.5e-7_10000/HeterozygosityPerSample_inSimulated_1_InfiniteAllelesRegions.txt
+	'''
+	input:
+		HetFiles = get_HetFiles,
+		BED = get_bed_file_name
+	output:
+		out = "results/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.bed.gz"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_in{BED}Regions_PerSample.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '03:00:00',
+		name = "het{BED}",
+		threads = 1,
+		mem = 100000
+	shell:
+		"""
+		output={output.out}
+		mkdir -p $(dirname ${{output}}) 2> {log.err}
+		bedtools intersect -a <(zcat {input.BED}) -b <(zcat {input.HetFiles}) -wao | cut -f1,2,3,8- | rev | cut -f2- | rev | awk '{{if(NR!=1 && reg!=$1"\\t"$2"\\t"$3){{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str; delete a}} reg=$1"\\t"$2"\\t"$3; len=$3-$2+1; for(i=4;i<=NF;i++){{a[i]+=$i}}}}END{{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str;}}' | gzip > ${{output}} 2>> {log.err}
+		"""
+
+# Compute total average pairwise differences in a set of BED regions and a group of samples
+rule Pi_Total_inBEDregions_PerSubsetOfSamples:
+	'''
+	General average pairwise differences in given regions and group of samples
+	'''
+	input:
+		GenoFiles = get_GenoFiles,
+		BED = get_bed_file_name,
+		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
+	output:
+		out = "results/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Pi_Total_inBEDregions_PerSubsetOfSamples/Pi_Total_in{BED}Regions_Per{GroupSamples}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '20:00:00',
+		name = "PIt_{BED}_{GroupSamples}",
+		threads = 1,
+		mem = 10000,
+		samples = get_group_of_samples
+	shell:
+		"""
+		output={output.out}
+		mkdir -p $(dirname ${{output}}) 2> {log.err}
+		samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat metadata/SamplesOrderInVCF.chr19.txt | sed 's/\\s/\\n/g') | sed 's/^,//g')
+		totalsites=$(zcat {input.BED} | awk '{{len+=$3-$2+1}}END{{print len}}')
+		bedtools intersect -a <(zcat {input.GenoFiles}) -b <(zcat {input.BED}) | cut -f${{samplelines}} | sed 's/:/\\t/g' | awk -v totalsites=${{totalsites}} '{{if(NR==1){{NS=NF;c=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{c++;a[c]=0}}}}}}comp=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{comp++;if($i!=$j){{a[comp]++}}}}}}}}END{{c=0;for(i=1;i<NS;i++){{for(j=i+1;j<=NS;j++){{c++;sum+=a[c]/totalsites}}}}print sum/c}}' 2> {log.err} > ${{output}}
+		"""
+
+# Compute average pairwise differences for each one of a set of BED regions, for a group of samples
+rule Pi_InEachRegion_inBEDregions_PerSubsetOfSamples:
+	'''
+	Average pairwise differences for each region, for a group of samples
+	'''
+	input:
+		GenoFiles = get_GenoFiles,
+		BED = get_bed_file_name,
+		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
+	output:
+		out = "results/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.txt.gz"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Pi_InEachRegion_inBEDregions_PerSubsetOfSamples/Pi_InEachRegion_in{BED}Regions_Per{GroupSamples}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '20:00:00',
+		name = "PIr_{BED}_{GroupSamples}",
+		threads = 1,
+		mem = 10000,
+		samples = get_group_of_samples
+	shell:
+		"""
+		output={output.out}
+		mkdir -p $(dirname ${{output%.gz}}) 2> {log.err}
+		samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat metadata/SamplesOrderInVCF.chr19.txt | sed 's/\\s/\\n/g') | sed 's/^,//g')
+		awk '{{if(FNR==NR){{a[$1"_"$2"_"$3]=$4;next}}if(a[$1"_"$2"_"$3]){{print a[$1"_"$2"_"$3]}}else{{print 0}}}}'  <(bedtools intersect -a <(zcat {input.GenoFiles} | cut -f1,2,3,${{samplelines}}) -b <(zcat {input.BED} | cut -f1,2,3) -wo | awk '{{chr=NF-3; st=NF-2; end=NF-1; str=$chr"\\t"$st"\\t"$end; for(i=4; i<chr; i++){{str=str"\\t"$i}} print str}}' | sed 's/:/\\t/g' | awk '{{if(NR==1){{ns=NF-3;}}if(chr"_"st"_"end != $1"_"$2"_"$3){{sum=0;for(i=4;i<ns+3;i++){{for(j=i+1;j<=ns+3;j++){{sum+=a[i"_"j]; a[i"_"j]=0}}}} if(NR>1){{if(sum>0){{sum=sum/length(a)/(end-st+1)}} print chr"\\t"st"\\t"end"\\t"sum}} chr=$1; st=$2; end=$3}}else{{for(i=4;i<ns+3;i++){{for(j=i+1;j<=ns+3;j++){{if($i!=$j){{a[i"_"j]++}}}}}}}}}}') <(zcat {input.BED}) | gzip 2> {log.err} > ${{output}} 
+		"""
+# Build files with a list of samples corresponding to the wildcard RandObsSim (including simulated samples and randomized samples)
+rule Prepare_PopulationSamples_Files:
+	'''
+	Calculate the frequencey of each allele in each posistion for a subset of regions (bed file) and a subset of samples (AllSamples, AtlSamples or MedSamples)
+	'''
+	input:
+		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
+	output:
+		outAll = "results/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_AllSamples_{boots}.txt",
+		outAtl = "results/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_AtlSamples_{boots}.txt",
+		outMed = "results/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_MedSamples_{boots}.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_PopulationSamples_{boots}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_PopulationSamples_{boots}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Prepare_PopulationSamples_Files/{RandObsSim}_PopulationSamples_{boots}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '03:00:00',
+		name = "Prepare_PopFile_{RandObsSim}_{boots}",
+		threads = 1,
+		mem = 10000,
+		samplesAtl = config["AtlSamples"],
+		samplesMed = config["MedSamples"],
+		SimSSize = config["SimulationsSampleSize"]
+	shell:
+		"""
+		mkdir -p $(dirname {output.outAll}) 2> {log.err}
+		RandObsSim={wildcards.RandObsSim}
+		if [[ ${{RandObsSim}} == "Rand" ]]
+		then
+			numA=$(echo {params.samplesAtl} | sed 's/ /\\n/g' | awk '{{}}END{{print NR}}' )
+			numM=$(echo {params.samplesMed} | sed 's/ /\\n/g' | awk '{{}}END{{print NR}}' )
+			shufled=$(cat {input.SamplesOrderInVCF} | sed 's/\\t/\\n/g' | shuf)
+			echo ${{shufled}} | sed 's/ /\\n/g'  > {output.outAll}
+			echo ${{shufled}} | sed 's/ /\\n/g' | tac | head -${{numA}} > {output.outAtl}
+			echo ${{shufled}} | sed 's/ /\\n/g' | head -${{numM}} > {output.outMed}
+		elif [[ ${{RandObsSim}} == "Obs" ]]
+		then
+			echo {params.samplesMed} {params.samplesAtl} | sed 's/ /\\n/g' > {output.outAll}
+			echo {params.samplesAtl} | sed 's/ /\\n/g' > {output.outAtl}
+			echo {params.samplesMed} | sed 's/ /\\n/g' > {output.outMed}
+		else
+			if [[ -s {output.outAll} ]];then rm {output.outAll}; fi
+			for i in `seq 0 1 {params.SimSSize}`; do echo $i >> {output.outAll}; done
+			touch {output.outAtl} {output.outMed}
+		fi
+		"""
+
+# Compute total callable spand of exons, introns, promoters and intergenic regions
 rule get_FunctionalRegionsCallableSpand:
 	'''
 	'''
@@ -1143,8 +810,115 @@ rule get_FunctionalRegionsCallableSpand:
 		done
 		"""
 
+#
+
+
+#
+#
+
+################################################
+## 1. Estimate and describe genomic diversity
+################################################
+# add synonymous/non-synonymous, other het estimates
+rule plot_Figure1_GenomicDiversity:
+	'''
+
+	'''
+	input:
+		Rconfig = config["Rconfig"],
+		PiPerRegFiles = expand(rules.Pi_InEachRegion_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "FixedLengthRegions"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
+		PiTotalFiles = expand(rules.Pi_Total_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
+		HetPerRegFiles = expand(rules.Heterozygosity_InEachRegion_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "FixedLengthRegions"]),
+		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"]),
+		FreqPerSiteFiles = expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
+		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19"),
+		MapImage = "metadata/MapSampling.png"
+	output:
+		PDF = "results/Plotting_DNA/plot_Figure1_GenomicDiversity.pdf",
+		REPORT = "results/Plotting_DNA/plot_Figure1_GenomicDiversity_report.txt"
+	log:
+		err = "logs/Plotting_DNA/plot_Figure1_GenomicDiversity.err",
+		out = "logs/Plotting_DNA/plot_Figure1_GenomicDiversity.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/plot_Figure1_GenomicDiversity.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '1:00:00',
+		name = "pFig1",
+		threads = 1,
+		mem = 2000,
+		AtlSamples=config["AtlSamples"],
+		MedSamples=config["MedSamples"]
+	shell:
+		"./scripts/Plotting_DNA/plot_Figure1_GenomicDiversity.R \"{input.PiPerRegFiles}\" \"{input.PiTotalFiles}\" \"{input.HetPerRegFiles}\" \"{input.HetTotalFiles}\" \"{input.FreqPerSiteFiles}\" {input.SamplesOrderInVCF} {input.MapImage} {output.PDF}  {output.REPORT} \"{params.AtlSamples}\" \"{params.MedSamples}\" {input.Rconfig} > {log.out} 2> {log.err}"
+#
+
+
+
+
+
 ############################
-#### Rules plotting inBEDregions_PerSubsetOfSamples
+#### Deprecated plots
+rule plot_PCA_short_variants_perGenomicFeature:
+	'''
+	Plot PCA dividing variants per genomic feature (exonic, intronic, promoter, intergenic) for all chrs
+	'''
+	input:
+		Rconfig = config["Rconfig"],
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+		chrsGENOTYPEMatrices = expand("results/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr/ShortVariants.filtered.{chr}.genotype.numericmatrix", chr=config["bralan3chrs"]),
+		chrsDividedListExon = expand("results/VariantAnalysis_DNA/Divide_variants_perGenomicFeature_PerChr/ShortVariants.filtered.classified.{chr}_exon.multiallelic.txt", chr=config["bralan3chrs"]),
+		chrsDividedListBiallelic = expand("results/VariantAnalysis_DNA/Divide_variants_perGenomicFeature_PerChr/ShortVariants.filtered.classified.{chr}.biallelic.txt", chr=config["bralan3chrs"]),
+		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt" 
+	output:
+		PCA = "results/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.pdf",
+		PCnumericmatrix = "results/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/Numericmatrix_PCvalues_PerVariant.txt"
+	log:
+		err = "logs/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.err",
+		out = "logs/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature/plot_PCA_short_variants_perGenomicFeature.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '10:00:00',
+		name = "PCA",
+		threads = 1,
+		mem = 500000,
+		chrs = expand("{chr}", chr=config["bralan3chrs"])
+	shell:
+		"./scripts/Plotting_DNA/plot_PCA_short_variants_perGenomicFeature.sh {input.Metadata} \"{input.chrsGENOTYPEMatrices}\" \"{input.chrsDividedListExon}\" {input.SamplesOrderInVCF} {output.PCA} \"{params.chrs}\" {input.Rconfig} > {log.out} 2> {log.err}"
+
+rule plot_join_PSMC:
+	'''
+	Plotting PSMC Pairwise Sequentially Markovian Coalescent
+	Li H, Durbin R. Inference of human population history from individual whole-genome sequences. Nature. 2011 Jul 13;475(7357):493-6. doi: 10.1038/nature10231. PMID: 21753753; PMCID: PMC3154645.
+	'''
+	input:
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+		psmc=expand("results/VariantAnalysis_DNA/PSMC_PerSample/{sample}.psmc", sample=config["samples"]),
+		SeaLevel = "data/Earth_GlacialCycles/SupplementaryTable1_Miller2020.tbl"
+	output:
+		psmc_joinTXT="results/Plotting_DNA/plot_join_PSMC/joined_PSMC.txt",
+		psmc_joinPDF="results/Plotting_DNA/plot_join_PSMC/joined_PSMC.pdf"
+	log:
+		err = "logs/Plotting_DNA/plot_join_PSMC/plot_join_PSMC.err",
+		out = "logs/Plotting_DNA/plot_join_PSMC/plot_join_PSMC.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/plot_join_PSMC/plot_join_PSMC.txt"
+	conda:
+		'../envs/hierfstat.yaml'
+	params:
+		time = '3:00:00',
+		name = "pPSMCWG",
+		threads = 1,
+		mem = 10000,
+		samples = expand("{sample}", sample=config["samples"]),
+		Blangenerationtime = config["Blangenerationtime"]
+	shell:
+		"./scripts/Plotting_DNA/plot_join_PSMC.sh {input.Metadata} \"{input.psmc}\" {input.SeaLevel} {output.psmc_joinTXT} {output.psmc_joinPDF} {params.Blangenerationtime} \"{params.samples}\" > {log.out} 2> {log.err}"
+
 
 rule plot_PerSite_inBEDregions_PerSubsetOfSamples:
 	'''
@@ -1171,58 +945,6 @@ rule plot_PerSite_inBEDregions_PerSubsetOfSamples:
 		mem = 50000
 	shell:
 		"./scripts/Plotting_DNA/plot_PerSite_inBEDregions_PerSubsetOfSamples.R {input.Freqfile} {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
-
-rule plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples:
-	'''
-	'''
-	input:
-		Rconfig = config["Rconfig"],
-		CumPropfiles=expand(rules.TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples_Bootstrapped.output.out, boots=config["BootsCummProp"], ObsExp="{ObsExp}", BED="{BED}", GroupSamples="{GroupSamples}")
-	output:
-		PDF = "results/Plotting_DNA/{ObsExp}/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.pdf"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '1:00:00',
-		name = "pCumProp_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 2000
-	shell:
-		"./scripts/Plotting_DNA/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples.R \"{input.CumPropfiles}\" {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
-
-#in dev
-# + simulations?
-#rule plot_Pi_inFunctionalFeatures_PerPopulation:
-	#'''
-	#'''
-	#input:
-	#	Rconfig = config["Rconfig"],
-	#	PiPerRegFiles = expand(rules.Pi_InEachRegion_inBEDregions_PerSubsetOfSamples.output.out, BED=["Exons", "Introns", "Promoters", "Intergenic"], GroupSamples=["AtlSamples", "MedSamples"]),
-	#	PiTotalFiles = expand(rules.Pi_Total_inBEDregions_PerSubsetOfSamples.output.out, BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"])
-	#output:
-	#	PDF = "results/Plotting_DNA/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.pdf"
-	#log:
-	#	err = "logs/Plotting_DNA/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.err",
-	#	out = "logs/Plotting_DNA/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.out"
-	#benchmark:
-	#	"benchmarks/Plotting_DNA/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples/plot_CummulativePropOfDiversityExplained_in{BED}Regions_Per{GroupSamples}.txt"
-	#conda:
-	#	'../envs/Plotting_DNA.yaml'
-	#params:
-	#	time = '1:00:00',
-	#	name = "pPiFeatPop",
-	#	threads = 1,
-	#	mem = 2000
-	#shell:
-	#	"./scripts/Plotting_DNA/plot_CummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples.R \"{input.CumPropfiles}\" {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
-
-# build table all against all?
-# shared privA privM SNPs INDELs Exonic Intronic Prom Intergenic Singletons...
 
 # in dev
 # plot het distribution across samples
@@ -1285,7 +1007,7 @@ rule plot_PiPerFixedWindows:
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		PiWObs=expand(rules.Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples.output.out, GroupSamples=["AllSamples", "AtlSamples", "MedSamples"], ObsExp="Observed_Data"),
+		PiWObs=expand(rules.Pi_InEachRegion_inBEDregions_PerSubsetOfSamples.output.out, BED="FixedLengthRegions", GroupSamples=["AllSamples", "AtlSamples", "MedSamples"], ObsExp="Observed_Data"),
 		BED = expand(rules.Windows_AccumulatedCallableSize_BEDs.output.WindowsBED, windowsize=config["windowsize"]),
 		NonExtraCallableRegions=rules.r7_join_extra_callable_regions.output.NonExtraCallableRegions,
 		ChrLen = "data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
@@ -1306,34 +1028,6 @@ rule plot_PiPerFixedWindows:
 	shell:
 		"./scripts/Plotting_DNA/plot_PiPerFixedWindows.R \"{input.PiWObs}\" {input.BED} {input.NonExtraCallableRegions} {input.ChrLen} {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
 
-
-# in dev
-# add SNPs/INDELs? 
-# to test with windows of chr size!
-rule plot_CummulativePropOfDiversityExplained:
-	'''
-	'''
-	input:
-		Rconfig = config["Rconfig"],
-		CPropDataAll=expand(rules.CummulativePropOfDiversityExplained_InEachRegion_inBEDregions_PerSubsetOfSamples_Bootstrapped.output.out, boots=config["BootsCummProp"], BED="WindowsSimChrSize", GroupSamples="AllSamples", ObsExp="Observed_Data"),
-		CPropSim1=expand(rules.TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples_Bootstrapped.output.out, boots=config["BootsCummProp"], BED=["Simulated_%d_FiniteAlleles" % i for i in config["SimulationsReplicates"]], GroupSamples="SimSamples", ObsExp="Expected_AsInSimulations/SLiM_simulation_singlePopulation/SimParam_1000_7.5e-7_10000"),
-		CPropSim2=expand(rules.TotalCummulativePropOfDiversityExplained_inBEDregions_PerSubsetOfSamples_Bootstrapped.output.out, boots=config["BootsCummProp"], BED=["Simulated_%d_FiniteAlleles" % i for i in config["SimulationsReplicates"]], GroupSamples="SimSamples", ObsExp="Expected_AsInSimulations/SLiM_simulation_singlePopulation/SimParam_1000_1e-8_750000")
-	output:
-		PDF = "results/Plotting_DNA/plot_CummulativePropOfDiversityExplained/plot_CummulativePropOfDiversityExplained.pdf"
-	log:
-		err = "logs/Plotting_DNA/plot_CummulativePropOfDiversityExplained/plot_CummulativePropOfDiversityExplained.err",
-		out = "logs/Plotting_DNA/plot_CummulativePropOfDiversityExplained/plot_CummulativePropOfDiversityExplained.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/plot_CummulativePropOfDiversityExplained/plot_CummulativePropOfDiversityExplained.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '1:00:00',
-		name = "pCumProp",
-		threads = 1,
-		mem = 2000
-	shell:
-		"./scripts/Plotting_DNA/plot_CummulativePropOfDiversityExplained.R \"{input.CPropDataAll}\" \"{input.CPropSim1}\" \"{input.CPropSim2}\" {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
 
 # add significance test
 rule plot_SharedPrivate_Populations:
@@ -1450,162 +1144,6 @@ rule plot_GOEnrichment:
 		"./scripts/Plotting_DNA/plot_GOEnrichment.R \"{input.FeatMatrices}\" {input.GOAnnotations} {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
 ####
 
-################
-# Compare Distance tree shape with simulations
-rule ChooseTreeRegions:
-	'''
-	'''
-	input:
-		BigBED = rules.SimualtedChrSizeWindows_BEDs.output.WindowsBED
-	output:
-		SelectedBED = "results/Plotting_DNA/CompareTreeShape/ChooseTreeRegions/Selected_SimChromSizeRegions.bed.gz"
-	log:
-		err = "logs/Plotting_DNA/CompareTreeShape/ChooseTreeRegions.err",
-		out = "logs/Plotting_DNA/CompareTreeShape/ChooseTreeRegions.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CompareTreeShape/ChooseTreeRegions.txt"
-	conda:
-		'../envs/Phylogenetics.yaml'
-	params:
-		time = '02:00:00',
-		name = "SelectBED",
-		threads = 1,
-		mem = 2000,
-		TimesRandomTest = config["TimesRandomTest"]
-	shell:
-		"""
-		outfile={output.SelectedBED}
-		mkdir -p $(dirname ${{outfile}})
-		if [[ -s ${{outfile}} ]]
-		then
-			rm ${{outfile}} 2> ~/null
-		fi
-		for c in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19; do zcat {input.BigBED} | grep -w "chr"$c | shuf | head -{params.TimesRandomTest}; done | gzip -c > ${{outfile}}
-		"""
-
-checkpoint SplittingBED_for_DistanceTrees:
-	'''
-	'''
-	input:
-		GeneralBED = rules.ChooseTreeRegions.output.SelectedBED
-	output:
-		SmallBEDsFolder = directory("results/Plotting_DNA/CompareTreeShape/SplittingBED_for_DistanceTrees/")
-	log:
-		err = "logs/Plotting_DNA/CompareTreeShape/SplittingBED_for_DistanceTrees/SplittingBED_for_DistanceTrees.err",
-		out = "logs/Plotting_DNA/CompareTreeShape/SplittingBED_for_DistanceTrees/SplittingBED_for_DistanceTrees.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CompareTreeShape/SplittingBED_for_DistanceTrees/SplittingBED_for_DistanceTrees.txt"
-	conda:
-		'../envs/Phylogenetics.yaml'
-	params:
-		time = '02:00:00',
-		name = "SplittingBED",
-		threads = 1,
-		mem = 2000
-	shell:
-		"""
-		mkdir -p {output.SmallBEDsFolder}
-		zcat {input.GeneralBED} | while read l; do
-			file=$(echo {output.SmallBEDsFolder}/${{l}}.bed | sed 's/\s/_/g')
-			echo ${{l}} | sed 's/\\s\\+/\\t/g' > ${{file}}
-		done
-		"""
-
-
-def get_ConsensusSeqs_PerGRoupOfSamples(wildcards):
-	if wildcards.samples == "All":
-		return expand(rules.Build_ConsensusSequences_PerSample.output.ConsensusSeq, sample=config["samples"])
-	elif wildcards.samples == "Atl":
-		return expand(rules.Build_ConsensusSequences_PerSample.output.ConsensusSeq, sample=config["AtlSamples"])
-	elif wildcards.samples == "Med":
-		return expand(rules.Build_ConsensusSequences_PerSample.output.ConsensusSeq, sample=config["MedSamples"])
-	else:
-		raise ValueError("Unknown values for samples in get_ConsensusSeqs_PerGRoupOfSamples: %s" % (wildcards.samples))
-rule Build_DistanceTree_InSpecificRegion:
-	'''
-	'''
-	input:
-		ConsensusSeq = get_ConsensusSeqs_PerGRoupOfSamples,
-		BED = "results/Plotting_DNA/CompareTreeShape/SplittingBED_for_DistanceTrees/{coord}.bed"
-	output:
-		tree = "results/Plotting_DNA/CompareTreeShape/Build_DistanceTree_InSpecificRegion/{coord}_{samples}.treefile",
-		alnfa = "results/Plotting_DNA/CompareTreeShape/Build_DistanceTree_InSpecificRegion/{coord}_{samples}.fa"
-	log:
-		err = "logs/Plotting_DNA/CompareTreeShape/Build_DistanceTree_InSpecificRegion/Build_DistanceTree_{coord}_{samples}.err",
-		out = "logs/Plotting_DNA/CompareTreeShape/Build_DistanceTree_InSpecificRegion/Build_DistanceTree_{coord}_{samples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CompareTreeShape/Build_DistanceTree_InSpecificRegion/Build_DistanceTree_{coord}_{samples}.txt"
-	conda:
-		'../envs/Phylogenetics.yaml'
-	params:
-		time = '02:00:00',
-		name = "treeR_{coord}",
-		threads = 1,
-		mem = 2000
-	shell:
-		"scripts/Plotting_DNA/Build_DistanceTree_InSpecificRegion.sh \"{input.ConsensusSeq}\" {input.BED} {output.tree} {output.alnfa} {params.threads} > {log.out} 2> {log.err}"
-
-def get_TreeFiles(wildcards):
-	checkpoint_output = checkpoints.SplittingBED_for_DistanceTrees.get(**wildcards).output.SmallBEDsFolder
-	return expand(rules.Build_DistanceTree_InSpecificRegion.output.tree, coord=glob_wildcards(os.path.join(checkpoint_output, '{coord}.bed')).coord, samples=wildcards.samples)
-
-rule DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs:
-	'''
-	'''
-	input:
-		TreeFiles = get_TreeFiles,
-	output:
-		EvsIRatio = "results/Plotting_DNA/CompareTreeShape/DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs_{samples}.tab"
-	log:
-		err = "logs/Plotting_DNA/CompareTreeShape/DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs_{samples}.err",
-		out = "logs/Plotting_DNA/CompareTreeShape/DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs_{samples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CompareTreeShape/DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs_{samples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '05:00:00',
-		name = "TreesRatios",
-		threads = 1,
-		mem = 100000
-	shell:
-		"scripts/Plotting_DNA/DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs.sh \"{input.TreeFiles}\" {output.EvsIRatio} > {log.out} 2> {log.err}"
-
-rule plot_CompareTreeShape_SimulationsVsRealData:
-	'''
-	'''
-	input:
-		Rconfig = config["Rconfig"],
-		SimRatios = rules.plot_DistanceTree_ExternalVsInternalBranchLengthsRatio_RangeNe_RangeMu_singlePopulation.output.BranchLengths,
-		AtlRealRatios = expand(rules.DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs.output.EvsIRatio, samples="Atl"),
-		MedRealRatios = expand(rules.DistanceTree_ExternalVsInternalBranchLengthsRatio_Obs.output.EvsIRatio, samples="Med"),
-	output:
-		PDF="results/Plotting_DNA/CompareTreeShape/plot_CompareTreeShape_SimulationsVsRealData.pdf"
-	log:
-		err = "logs/Plotting_DNA/CompareTreeShape/plot_CompareTreeShape_SimulationsVsRealData.err",
-		out = "logs/Plotting_DNA/CompareTreeShape/plot_CompareTreeShape_SimulationsVsRealData.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/CompareTreeShape/plot_CompareTreeShape_SimulationsVsRealData.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '3:00:00',
-		name = "pCompTree",
-		threads = 1,
-		mem = 2000,
-		TimesRandomTest = config["TimesRandomTest"]
-	shell:
-		"scripts/Plotting_DNA/plot_CompareTreeShape_SimulationsVsRealData.R {input.SimRatios} {input.AtlRealRatios} {input.MedRealRatios} {output.PDF} {params.TimesRandomTest} {input.Rconfig} > {log.out} 2> {log.err}"
-
-
-
-
-
-###
-
-############################
-#### Compare heterozygosity and its variation with simulations
-
 rule plot_HeterozygosityDistribution_vsSimulations:
 	'''
 	'''
@@ -1632,44 +1170,6 @@ rule plot_HeterozygosityDistribution_vsSimulations:
 	shell:
 		"./scripts/Plotting_DNA/plot_HeterozygosityDistribution_vsSimulations.R {input.ObsHet} \"{input.SimHet}\" {input.SamplesOrderInVCF} {input.Metadata} {output.PDF} {input.Rconfig} > {log.out} 2> {log.err}"
 
-
-# add group of samples!!!! we need co compute the two pop separately
-rule Calc_NumAlleles_MajorFreq_InEachRegion_inBEDregions:
-	'''
-	'''
-	input:
-		ChrGenotypesFile=get_GenoFiles,
-		BED = get_bed_file_name,
-		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt"
-	output:
-		OutMajorFreq = "results/Plotting_DNA/{ObsExp}/in{BED}Regions_Per{GroupSamples}.MajorFreq.gz",
-		OutNumAlleles = "results/Plotting_DNA/{ObsExp}/in{BED}Regions_Per{GroupSamples}.NumAlleles.gz"
-	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Calc_NumAlleles_MajorFreq_InEachRegion_in{BED}Regions_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Calc_NumAlleles_MajorFreq_InEachRegion_in{BED}Regions_Per{GroupSamples}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Calc_NumAlleles_MajorFreq_InEachRegion_in{BED}Regions_Per{GroupSamples}.txt"
-	conda:
-		'../envs/Plotting_DNA.yaml'
-	params:
-		time = '3:00:00',
-		name = "MajFNumAll_{ObsExp}_{BED}_{GroupSamples}",
-		threads = 1,
-		mem = 100000,
-		samples = get_group_of_samples,
-	shell:
-		"""
-		outMF={output.OutMajorFreq}
-		if [[ {wildcards.GroupSamples} == "SimSamples" ]]
-		then
-			samplelines=$(awk '{{str=str","$1+4}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') | sed 's/^,//g')
-		else
-			samplelines=$(awk '{{if(NR==FNR){{a[$1]=1;next}}if(a[$1]){{str=str","FNR+4}}}}END{{print str}}' <(echo {params.samples} | sed 's/\\s/\\n/g') <(cat {input.SamplesOrderInVCF} | sed 's/\\s/\\n/g') | sed 's/^,//g')
-		fi
-		echo ${{samplelines}} > {log.out}
- 		bedtools intersect -a <(zcat {input.BED}) -b <(zcat {input.ChrGenotypesFile}) -wao | cut -f1,2,3,7- | rev | cut -f2- | rev | cut -f1,2,3,4,${{samplelines}} | gzip > ${{outMF%.MajorFreq.gz}}.bed.gz 2> {log.err};
-		scripts/Plotting_DNA/Calc_NumAlleles_MajorFreq_InEachRegion_inBEDregions.py ${{outMF%.MajorFreq.gz}}.bed.gz {output.OutMajorFreq} {output.OutNumAlleles} >> {log.out} 2>> {log.err};
-		"""
 
 rule plot_SFS_NumAlleles_vsSimulations:
 	'''

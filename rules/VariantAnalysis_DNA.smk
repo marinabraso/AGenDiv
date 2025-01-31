@@ -1,90 +1,3 @@
-
-################################################
-## Filtering analysis
-################################################
-
-rule VariantFilterStats_PerChr:
-	'''
-	Per chr variant-to-table to extract statistics on variant filters
-	'''
-	input:
-		VCF = rules.r8_filter_VCF_for_extra_callable_regions_PerChr.output.chrVCFHardExtraCallableFiltered
-	output:
-		FilterStats = "results/VariantAnalysis_DNA/VariantFilterStats_PerChr/ShortVariant_FilterStats.{chr}.tab.gz"
-	log:
-		err = "logs/VariantAnalysis_DNA/VariantFilterStats_PerChr/VariantFilterStats_PerChr.{chr}.err",
-		out = "logs/VariantAnalysis_DNA/VariantFilterStats_PerChr/VariantFilterStats_PerChr.{chr}.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/VariantFilterStats_PerChr/VariantFilterStats_PerChr.{chr}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "FiltSt{chr}",
-		threads = 1,
-		mem = 5000
-	shell:
-		"./scripts/VariantAnalysis_DNA/VariantFilterStats_PerChr.sh {input.VCF} {output.FilterStats} > {log.out} 2> {log.err}"
-
-rule ProcessingCoverageData_PerChr:
-	'''
-	From raw coverage values to statistics per window
-	'''
-	input:
-		Coverage = rules.r7_join_coverage_per_site.output.covgenome,
-		ChrLengths="data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt"
-	output:
-		CoverageStats = "results/VariantAnalysis_DNA/ProcessingCoverageData/CoverageWindowStats_{chr}.bed.gz"
-	log:
-		err = "logs/VariantAnalysis_DNA/ProcessingCoverageData/ProcessingCoverageData_{chr}.err",
-		out = "logs/VariantAnalysis_DNA/ProcessingCoverageData/ProcessingCoverageData_{chr}.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/ProcessingCoverageData/ProcessingCoverageData_{chr}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "pCov{chr}",
-		threads = 1,
-		mem = 20000,
-		slidingwindowsize=config["slidingwindowsize"], # window size for sliding window calculations 
-		slidingwindowstep=config["slidingwindowstep"] # step size for sliding window calculations
-	shell:
-		"./scripts/VariantAnalysis_DNA/ProcessingCoverageData.sh {input.Coverage} {input.ChrLengths} {output.CoverageStats} {params.slidingwindowsize} {params.slidingwindowstep} {wildcards.chr} > {log.out} 2> {log.err}"
-
-# To be written
-rule Coocurrence_of_BED_Regions_with_Several_features:
-	'''
-	Statistically study the coocurrence of bed formated regions (eg. callable regions) with other features:
-	- Coverage
-	- GC content
-	- Repeats
-	- Functional features (exons, introns, promoters...)
-	'''
-	input:
-		#Regions = ,
-		#SNPableRegions = rules.r7_callable_regions.output.SNPableRegions,
-		#NonCallableRegions = rules.r7_callable_regions.output.NonCallableRegions,
-		#NonExtraCallableRegions = rules.r7_extra_callable_regions.output.NonExtraCallableRegions
-	output:
-		CoocurrenceOutput = "results/VariantAnalysis_DNA/Coocurrence_of_BED_Regions_with_Several_features/Coocurrence_of_BED_Regions_with_Several_features.{type}.txt"
-	log:
-		err = "logs/VariantAnalysis_DNA/Coocurrence_of_BED_Regions_with_Several_features/Coocurrence_of_BED_Regions_with_Several_features.{type}.err",
-		out = "logs/VariantAnalysis_DNA/Coocurrence_of_BED_Regions_with_Several_features/Coocurrence_of_BED_Regions_with_Several_features.{type}.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/Coocurrence_of_BED_Regions_with_Several_features/Coocurrence_of_BED_Regions_with_Several_features.{type}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '03:00:00',
-		name = "Coo{type}",
-		threads = 1,
-		mem = 5000,
-		lowermincovthres = config["lowermincovthres"], # for a given position, the minimum coverage among all samples has to be at least lowermincovthres
-		uppermincovthres = config["uppermincovthres"]  # for a given position, the minimum coverage among all samples has to be less or equal to uppermincovthres
-	shell:
-		"./scripts/VariantAnalysis_DNA/Coocurrence_of_BED_Regions_with_Several_features.sh {input.ChrsFilterStats} {input.extraVCFs} {output.statsTXT} > {log.out} 2> {log.err}"
-
 ################################################
 ## Variant analysis
 ################################################
@@ -119,6 +32,7 @@ rule mask_callable_regions_from_genome:
 		picard NormalizeFasta -I ${{out%fa}}unnorm.fa -O ${{out}} >> {log.out} 2>> {log.err}
 		'''
 
+# Read VCF and build genotype, numericmatrix and 0hom1het files
 rule Prepare_basic_analysis_files_PerChr:
 	'''
 	Prepare files for further analysis:
@@ -236,8 +150,8 @@ rule Sample_clustering:
 	shell:
 		"./scripts/VariantAnalysis_DNA/Sample_clustering.R \"{input.chrsGENOTYPEMatrices}\" {input.SamplesOrderInVCF} \"{input.DividedSites}\" {output.PCsites} {output.PCsamples} {output.PCprop} \"{params.chrs}\" {wildcards.typeClust} {wildcards.feat} {wildcards.polym} {wildcards.numall} {wildcards.freqint} > {log.out} 2> {log.err}"
 
-# Check the translations were done propperly
-# Check NSD matrix
+# !Check the translations were done propperly
+# !Check NSD matrix
 rule Synonyms_and_nonsynonymous_fromGTF:
 	'''
 	Extract which sites are synonymous and which are nonsynonymous from GTF 
@@ -265,178 +179,6 @@ rule Synonyms_and_nonsynonymous_fromGTF:
 		ProtfromSeq = "scripts/VariantAnalysis_DNA/ProteinSeq_fromTranscriptSeq.pl"
 	shell:
 		"./scripts/VariantAnalysis_DNA/Synonyms_and_nonsynonymous_fromGTF.sh {input.GTF} {input.ExtraCallableRegions} {input.genomeFA} {output.SynNonSynBED} {output.SynNonSynBED_callable} {params.SnSfromSeq} {params.ProtfromSeq} > {log.out} 2> {log.err}"
-
-rule PerSite_StatsMatrix_PerChr:
-	'''
-	Calculate popgen stats x site, put them in a big matrix file
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		chrVCF = rules.r8_filter_VCF_for_extra_callable_regions_PerChr.output.chrVCFHardExtraCallableFiltered,
-		chrGENOTYPE = rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE,
-		HeterozygosityFile = rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile,
-		MinCoverage = rules.r7_join_coverage_per_site.output.mincov,
-		SamplesOrderInVCF = rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF,
-		GenomicFeatureDivision = rules.Divide_variants_perGenomicFeature_PerChr.output.chrDividedGENOTYPEs,
-		SynNonSynBED_callable = rules.Synonyms_and_nonsynonymous_fromGTF.output.SynNonSynBED_callable,
-		PCA_All = expand(rules.Sample_clustering.output.PCsites, typeClust="PCA", feat="all", polym="all", numall="all", freqint="all"),
-		PCA_Polym = expand(rules.Sample_clustering.output.PCsites, typeClust="PCA", feat="all", polym="polymorphic", numall="all", freqint="all"),
-		PCA_Bial = expand(rules.Sample_clustering.output.PCsites, typeClust="PCA", feat="all", polym="all", numall="biallelic", freqint="all"),
-		PCA_Exons = expand(rules.Sample_clustering.output.PCsites, typeClust="PCA", feat="exon", polym="all", numall="all", freqint="all"),
-		PCA_freqint = expand(rules.Sample_clustering.output.PCsites, typeClust="PCA", feat="all", polym="all", numall="all", freqint=("0.5to0.6", "0.6to0.7", "0.7to0.8", "0.8to0.9", "0.9to1"))
-	output:
-		SiteMatrix="results/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSiteStats.{chr}.tab.gz"
-	log:
-		err = "logs/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSite_StatsMatrix.{chr}.err",
-		out = "logs/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSite_StatsMatrix.{chr}.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSite_StatsMatrix.{chr}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '15:00:00',
-		name = "{chr}Site",
-		threads = 1,
-		mem = 150000,
-		maxfreqploymorphism=config["maxfreqploymorphism"] # maximum frequency of the majoritary allele to be considered a polymorphism (0.97 --> 3/72 is considered polym but 2/72 no // 0.98 --> 2/72 polym 1/72 no)
-	shell:
-		"./scripts/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr.sh {input.Metadata} {input.chrVCF} {input.chrGENOTYPE} {input.MinCoverage} {input.SamplesOrderInVCF} {input.GenomicFeatureDivision} {input.SynNonSynBED_callable} {input.PCA_All} {output.SiteMatrix} {params.maxfreqploymorphism} {wildcards.chr} > {log.out} 2> {log.err}"
-
-rule PerSample_StatsMatrix:
-	'''
-	Calculate popgen stats x sample, put them in a matrix file
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		VCF = rules.r9_run_all_chr.output.unifiedVCF,
-		chrshomhetFiles = expand(rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile, chr=config["bralan3chrs"]),
-		ExtraCallableRegions = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
-		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
-		chrsSiteMatrices=expand(rules.PerSite_StatsMatrix_PerChr.output.SiteMatrix, chr=config["bralan3chrs"]),
-		PCA_All = expand(rules.Sample_clustering.output.PCsamples, typeClust="PCA", feat="all", polym="all", numall="all", freqint="all"),
-		PCA_Polym = expand(rules.Sample_clustering.output.PCsamples, typeClust="PCA", feat="all", polym="polymorphic", numall="all", freqint="all"),
-		PCA_Bial = expand(rules.Sample_clustering.output.PCsamples, typeClust="PCA", feat="all", polym="all", numall="biallelic", freqint="all"),
-		PCA_Exons = expand(rules.Sample_clustering.output.PCsamples, typeClust="PCA", feat="exon", polym="all", numall="all", freqint="all"),
-		PCA_freqint = expand(rules.Sample_clustering.output.PCsamples, typeClust="PCA", feat="all", polym="all", numall="all", freqint=("0.5to0.6", "0.6to0.7", "0.7to0.8", "0.8to0.9", "0.9to1")),
-		UMAP_All = expand(rules.Sample_clustering.output.PCsamples, typeClust="UMAP", feat="all", polym="all", numall="all", freqint="all")
-	output:
-		SampleMatrix="results/VariantAnalysis_DNA/PerSample_StatsMatrix/PerSampleStats.tab.gz"
-	log:
-		err = "logs/VariantAnalysis_DNA/PerSample_StatsMatrix/PerSample_StatsMatrix.err",
-		out = "logs/VariantAnalysis_DNA/PerSample_StatsMatrix/PerSample_StatsMatrix.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/PerSample_StatsMatrix/PerSample_StatsMatrix.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '15:00:00',
-		name = "WGSample",
-		threads = 1,
-		mem = 25000,
-		chrs = expand("{chr}", chr=config["bralan3chrs"])
-	shell:
-		"./scripts/VariantAnalysis_DNA/PerSample_StatsMatrix.sh {input.Metadata} {input.VCF} \"{input.chrshomhetFiles}\" {input.ExtraCallableRegions} {input.SamplesOrderInVCF} \"{input.chrsSiteMatrices}\" {input.PCA_All} {input.UMAP_All} {output.SampleMatrix} \"{params.chrs}\" > {log.out} 2> {log.err}"
-
-rule PerSample_StatsMatrix_PerChr:
-	'''
-	Calculate popgen stats x sample, put them in a matrix file
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		chrVCF = rules.r8_filter_VCF_for_extra_callable_regions_PerChr.output.chrVCFHardExtraCallableFiltered,
-		chrGENOTYPE = rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE,
-		chrGENOTYPEMatrix = rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix,
-		HeterozygosityFile = rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile,
-		ExtraCallableRegions = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
-		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.{chr}.txt",
-		SiteMatrix = rules.PerSite_StatsMatrix_PerChr.output.SiteMatrix
-	output:
-		SampleMatrix="results/VariantAnalysis_DNA/PerSample_StatsMatrix_PerChr/PerSampleStats.{chr}.tab"
-	log:
-		err = "logs/VariantAnalysis_DNA/PerSample_StatsMatrix_PerChr/PerSample_StatsMatrix.{chr}.err",
-		out = "logs/VariantAnalysis_DNA/PerSample_StatsMatrix_PerChr/PerSample_StatsMatrix.{chr}.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/PerSample_StatsMatrix_PerChr/PerSample_StatsMatrix.{chr}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '15:00:00',
-		name = "{chr}Sample",
-		threads = 1,
-		mem = 25000
-	shell:
-		"./scripts/VariantAnalysis_DNA/PerSample_StatsMatrix_PerChr.sh {input.Metadata} {input.chrVCF} {input.chrGENOTYPE} {input.ExtraCallableRegions} {input.SamplesOrderInVCF} {input.SiteMatrix} {output.SampleMatrix} {wildcards.chr} > {log.out} 2> {log.err}"
-
-rule PerWindow_StatsMatrix_PerChr:
-	'''
-	Calculate popgen stats x window, put them in a big matrix file
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		ChrLengths="data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
-		chrVCF = rules.r8_filter_VCF_for_extra_callable_regions_PerChr.output.chrVCFHardExtraCallableFiltered,
-		chrGENOTYPE = rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE,
-		HeterozygosityFile = rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile,
-		ExtraCallableRegions = rules.r7_extra_callable_regions_PerChr.output.ExtraCallableRegions,
-		ValidWindows = rules.r7_extra_callable_regions_PerChr.output.ValidWindows,
-		GenomicFeaturesExtraCallable = rules.Prepare_GenomicFeatures_BED.output.GenomicFeaturesExtraCallable,
-		SamplesOrderInVCF="metadata/SamplesOrderInVCF.{chr}.txt",
-		SiteMatrix=rules.PerSite_StatsMatrix_PerChr.output.SiteMatrix,
-		MaskedGenome = rules.mask_callable_regions_from_genome.output.MaskedGenome
-	output:
-		WindowMatrix = expand("results/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr/PerWindowStats_{size}_{step}.{{chr}}.tab.gz", size=config["slidingwindowsize"], step=config["slidingwindowstep"])
-	log:
-		err = expand("logs/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr/PerWindow_StatsMatrix_{size}_{step}.{{chr}}.err", size=config["slidingwindowsize"], step=config["slidingwindowstep"]),
-		out = expand("logs/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr/PerWindow_StatsMatrix_{size}_{step}.{{chr}}.out", size=config["slidingwindowsize"], step=config["slidingwindowstep"])
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr/PerWindow_StatsMatrix.{chr}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '15:00:00',
-		name = "{chr}Window",
-		threads = 1,
-		mem = 25000,
-		slidingwindowsize=config["slidingwindowsize"], # window size for sliding window calculations 
-		slidingwindowstep=config["slidingwindowstep"], # step size for sliding window calculations
-		maxfreqploymorphism=config["maxfreqploymorphism"] # maximum frequency of the majoritary allele to be considered a polymorphism (0.97 --> 3/72 is considered polym but 2/72 no // 0.98 --> 2/72 polym 1/72 no)
-	shell:
-		"./scripts/VariantAnalysis_DNA/PerWindow_StatsMatrix_PerChr.sh {input.Metadata} {input.ChrLengths} {input.chrVCF} {input.chrGENOTYPE} {input.ExtraCallableRegions} {input.ValidWindows} {input.GenomicFeaturesExtraCallable} {input.SamplesOrderInVCF} {input.SiteMatrix} {input.MaskedGenome} {output.WindowMatrix} {params.slidingwindowsize} {params.slidingwindowstep} {params.maxfreqploymorphism} {wildcards.chr} > {log.out} 2> {log.err}"
-
-rule PerFeature_StatsMatrix_PerChr:
-	'''
-	Calculate popgen stats x genomic feature, put them in a big matrix file
-	'''
-	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		ChrLengths="data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
-		chrVCF = rules.r8_filter_VCF_for_extra_callable_regions_PerChr.output.chrVCFHardExtraCallableFiltered,
-		chrGENOTYPE = rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE,
-		HeterozygosityFile = rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile,
-		ExtraCallableRegions = rules.r7_extra_callable_regions_PerChr.output.ExtraCallableRegions,
-		SNPableRegions ="results/VariantCalling_DNA/7_callable_regions/SNPableRegions.bed.gz",
-		GenomicFeatures = "results/VariantAnalysis_DNA/Prepare_GenomicFeatures_BED/Branchiostoma_lanceolatum.BraLan3_strong_GenomicFeatures.bed",
-		GenomicFeaturesExtraCallable = "results/VariantAnalysis_DNA/Prepare_GenomicFeatures_BED/Branchiostoma_lanceolatum.BraLan3_strong_GenomicFeatures_ExtraCallableRegions.bed",
-		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.{chr}.txt",
-		SynNonSynBED = "results/VariantAnalysis_DNA/Synonyms_and_nonsynonymous_fromGTF/SND_positions_callable.bed",
-		SiteMatrix="results/VariantAnalysis_DNA/PerSite_StatsMatrix_PerChr/PerSiteStats.{chr}.tab.gz"
-	output:
-		FeatureMatrix="results/VariantAnalysis_DNA/PerFeature_StatsMatrix_PerChr/PerFeatureStats.{chr}.tab.gz"
-	log:
-		err = "logs/VariantAnalysis_DNA/PerFeature_StatsMatrix_PerChr/PerFeature_StatsMatrix.{chr}.err",
-		out = "logs/VariantAnalysis_DNA/PerFeature_StatsMatrix_PerChr/PerFeature_StatsMatrix.{chr}.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/PerFeature_StatsMatrix_PerChr/PerFeature_StatsMatrix.{chr}.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '15:00:00',
-		name = "{chr}Feature",
-		threads = 1,
-		mem = 25000,
-		maxfreqploymorphism=config["maxfreqploymorphism"] # maximum frequency of the majoritary allele to be considered a polymorphism (0.97 --> 3/72 is considered polym but 2/72 no // 0.98 --> 2/72 polym 1/72 no)
-	shell:
-		"./scripts/VariantAnalysis_DNA/PerFeature_StatsMatrix_PerChr.sh {input.Metadata} {input.ChrLengths} {input.chrVCF} {input.chrGENOTYPE} {input.ExtraCallableRegions} {input.SNPableRegions} {input.GenomicFeatures} {input.GenomicFeaturesExtraCallable} {input.SamplesOrderInVCF} {input.SynNonSynBED} {input.SiteMatrix} {output.FeatureMatrix} {params.maxfreqploymorphism} {wildcards.chr} > {log.out} 2> {log.err}"
 
 rule Prepare_FSTAT_file:
 	'''
@@ -636,39 +378,5 @@ rule calling_stats_GATK_PerChr:
 	shell:
 		"./scripts/VariantAnalysis_DNA/calling_stats_GATK_PerChr.sh {input.chrVCF} {output.statsTXT} > {log.out} 2> {log.err}"
 
-rule GONE_Recent_Demographic_History:
-	'''
-	GONE analysis of Recent Demographic History
-	Santiago, E., Novo, I., Pardiñas, A. F. Saura, M., Wang, J., Caballero, A. (2020). Recent demographic history inferred by high-resolution analysis of linkage disequilibrium. Molecular Biology and Evolution 37: 3642–3653.
-	Code from https://github.com/esrud/GONE downloaded on 07/09/2023
-	'''
-	input:
-		genomeFA = "data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_genome.fa",
-		VCF = "results/VariantCalling_DNA/9_run_all_chr/ShortVariants_HardCallableFiltered.vcf.gz"
-	output:
-		goneout="results/VariantAnalysis_DNA/GONE_Recent_Demographic_History/OUTPUT_GONE_Recent_Demographic_History"
-	log:
-		err = "logs/VariantAnalysis_DNA/GONE_Recent_Demographic_History/GONE.err",
-		out = "logs/VariantAnalysis_DNA/GONE_Recent_Demographic_History/GONE.out"
-	benchmark:
-		"benchmarks/VariantAnalysis_DNA/GONE_Recent_Demographic_History/GONE.txt"
-	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
-	params:
-		time = '20:00:00',
-		name = "GONE",
-		threads = 1,
-		mem = 5000000,
-		gone="scripts/VariantAnalysis_DNA/GONE/script_GONE_debug.sh",
-		gone_INPUT_params="scripts/VariantAnalysis_DNA/GONE/INPUT_PARAMETERS_FILE",
-		gone_PROGRAM_folder="scripts/VariantAnalysis_DNA/GONE/PROGRAMMES"
-	shell:
-		"./scripts/VariantAnalysis_DNA/GONE_Recent_Demographic_History.sh {input.genomeFA} {input.VCF} {output.goneout} {params.gone} {params.gone_INPUT_params} {params.gone_PROGRAM_folder} > {log.out} 2> {log.err}"
-
-
-
-
-#################################################
-## Deprecated rules
-
-
+#
+#

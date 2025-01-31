@@ -5,8 +5,8 @@ localrules: copy_fastq_NAS_data, DownloadProteinSeq_from_Ensembl, BuildOGs_withO
 
 include: 'rules/VariantCalling_DNA.smk'
 include: 'rules/VariantAnalysis_DNA.smk'
-include: 'rules/Simulations.smk'
 include: 'rules/Plotting_DNA.smk'
+include: 'rules/Simulations.smk'
 include: 'rules/SpeciesTreeBuilding.smk'
 
 
