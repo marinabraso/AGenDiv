@@ -3,10 +3,10 @@
 ppal.color <- "slateblue3"
 ppal.color2 <- "orangered"
 
-types.of.features <- c("intergenic", "promoter", "exon", "intron")
+types.of.features <- c("Exon", "Intron", "Promoter", "Intergenic")
 types.of.CodingSites <- c("S", "N", "D")
 
-types.of.features.color <- c("#B2533E", "#FCE09B", "#B5CB99", "#186F65")
+types.of.features.color <- c("#B5CB99", "#186F65", "#FCE09B", "#B2533E")
 types.of.CodingSites.color <- c("#B5CB99", "#B5CB99", "#B5CB99")
 
 pvalthresh <- 0.001

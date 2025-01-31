@@ -73,48 +73,24 @@ plot_HetPerPop <- function(Hetdf, atls, meds, pivalues, ylab, zlab, xlabs, ylim)
 plot_PiPerRegionPerPop <- function(RegFiles, TotalFiles, ylab, xlabs, ylim){
 	w <- 0.2
     distPop <- 0.3
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0.5, 4.5), col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0, 10), col=NA, xaxs = "i", yaxs = "i")
 	mtext(ylab, side = 2, line = 4, cex=1.5)
     # Exon
-    PiRegAtl.Exons <- read.table(grep("Observed_Data.*Exons.*AtlSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTAtl.Exons <- read.table(grep("Observed_Data.*Exons.*AtlSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    PiRegMed.Exons <- read.table(grep("Observed_Data.*Exons.*MedSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTMed.Exons <- read.table(grep("Observed_Data.*Exons.*MedSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    violin(PiRegAtl.Exons*100, 1-distPop/2, w, modif_alpha(population.colors[1]), population.colors[1], 2)
-	points(1-distPop/2, PiTAtl.Exons*100, pch=19, col=population.colors[1], cex=2)
-    violin(PiRegMed.Exons*100, 1+distPop/2, w, modif_alpha(population.colors[2]), population.colors[2], 2)
- 	points(1+distPop/2, PiTMed.Exons*100, pch=19, col=population.colors[2], cex=2)
-    # geometric distribution!
-    cdf_vals <- pgeom(PiTAtl.Exons*100, prob = p_values[i])  # Compute CDF
-    lines(x_vals, cdf_vals, type = "o", col = colors[i], pch = 16, lty = 1)
-
+    PiRegAll.Exons <- read.table(grep("Observed_Data.*Exons.*AllSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+    PiTAll.Exons <- read.table(grep("Observed_Data.*Exons.*AllSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+    lines(ecdf(PiRegAll.Exons*100), col = types.of.features.color[1], lwd=2, lty = 1)
     # Intron
-    PiRegAtl.Introns <- read.table(grep("Observed_Data.*Introns.*AtlSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTAtl.Introns <- read.table(grep("Observed_Data.*Introns.*AtlSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    PiRegMed.Introns <- read.table(grep("Observed_Data.*Introns.*MedSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTMed.Introns <- read.table(grep("Observed_Data.*Introns.*MedSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    violin(PiRegAtl.Introns*100, 2-distPop/2, w, modif_alpha(population.colors[1]), population.colors[1], 2)
-	points(2-distPop/2, PiTAtl.Introns*100, pch=19, col=population.colors[1], cex=2)
-    violin(PiRegMed.Introns*100, 2+distPop/2, w, modif_alpha(population.colors[2]), population.colors[2], 2)
- 	points(2+distPop/2, PiTMed.Introns*100, pch=19, col=population.colors[2], cex=2)
+    PiRegAll.Introns <- read.table(grep("Observed_Data.*Introns.*AllSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+    PiTAll.Introns <- read.table(grep("Observed_Data.*Introns.*AllSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+   lines(ecdf(PiRegAll.Introns*100), col = types.of.features.color[2], lwd=2, lty = 1)
     # Promoter
-    PiRegAtl.Promoters <- read.table(grep("Observed_Data.*Promoters.*AtlSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTAtl.Promoters <- read.table(grep("Observed_Data.*Promoters.*AtlSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    PiRegMed.Promoters <- read.table(grep("Observed_Data.*Promoters.*MedSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTMed.Promoters <- read.table(grep("Observed_Data.*Promoters.*MedSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    violin(PiRegAtl.Promoters*100, 3-distPop/2, w, modif_alpha(population.colors[1]), population.colors[1], 2)
-	points(3-distPop/2, PiTAtl.Promoters*100, pch=19, col=population.colors[1], cex=2)
-    violin(PiRegMed.Promoters*100, 3+distPop/2, w, modif_alpha(population.colors[2]), population.colors[2], 2)
- 	points(3+distPop/2, PiTMed.Promoters*100, pch=19, col=population.colors[2], cex=2)
+    PiRegAll.Promoters <- read.table(grep("Observed_Data.*Promoters.*AllSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+    PiTAll.Promoters <- read.table(grep("Observed_Data.*Promoters.*AllSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+    lines(ecdf(PiRegAll.Promoters*100), col = types.of.features.color[3], lwd=2, lty = 1)
     # Intergenic
-    PiRegAtl.Intergenic <- read.table(grep("Observed_Data.*Intergenic.*AtlSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTAtl.Intergenic <- read.table(grep("Observed_Data.*Intergenic.*AtlSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    PiRegMed.Intergenic <- read.table(grep("Observed_Data.*Intergenic.*MedSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-    PiTMed.Intergenic <- read.table(grep("Observed_Data.*Intergenic.*MedSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-    violin(PiRegAtl.Intergenic*100, 4-distPop/2, w, modif_alpha(population.colors[1]), population.colors[1], 2)
-	points(4-distPop/2, PiTAtl.Intergenic*100, pch=19, col=population.colors[1], cex=2)
-    violin(PiRegMed.Intergenic*100, 4+distPop/2, w, modif_alpha(population.colors[2]), population.colors[2], 2)
- 	points(4+distPop/2, PiTMed.Intergenic*100, pch=19, col=population.colors[2], cex=2)
+    PiRegAll.Intergenic <- read.table(grep("Observed_Data.*Intergenic.*AllSamples", RegFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+    PiTAll.Intergenic <- read.table(grep("Observed_Data.*Intergenic.*AllSamples", TotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
+    lines(ecdf(PiRegAll.Intergenic*100), col = types.of.features.color[4], lwd=2, lty = 1)
 	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=2)
 	axis(1, at = c(1:length(xlabs)), labels=NA, lwd.ticks=1, las=1, cex.axis=2)
 	axis(1, at = c(1:length(xlabs)), labels=xlabs, lwd=NA, las=1, line=2, cex.axis=2)
@@ -164,7 +140,7 @@ write(paste(PiTAll, PiTAtl, PiTMed, sep="\t"), file = REPORT, append = TRUE)
 
 ### C
 ## Plots of pi on different regions (Exons, Introns, Promoters, Intergenic)
-plot_PiPerRegionPerPop(PiPerRegFiles, PiTotalFiles, "Average pairwise differences (%)", RegionTypes, c(0,5))
+plot_PiPerRegionPerPop(PiPerRegFiles, PiTotalFiles, "Average pairwise differences (%)", RegionTypes, c(0,1))
 
 
 
