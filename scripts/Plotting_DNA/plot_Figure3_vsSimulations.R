@@ -68,8 +68,9 @@ plot_ObsSim <- function(ylab, mvec, avec, sdf, column, colNe, ylim){
 	uNemu <- unique(paste(sdf$Ne, sdf$mu, sep=" "))
 	Nevalues <- unique(sdf$Ne)[order(unique(sdf$Ne))]
 	muvalues <- unique(sdf$mu)[order(unique(sdf$mu))]
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0,length(Nevalues)+3), col=NA)
-	mtext(ylab, side = 2, line = 4, cex=.5)
+	ylimw <- ylim[2]-ylim[1]
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(ylim[1]-ylimw/10,ylim[2]+ylimw/10), xlim=c(0,length(Nevalues)+3), col=NA)
+	mtext(ylab, side = 2, line = 4, cex=.9)
 	# Plot Atlantic windows
 	d <- density(avec, adjust = adj)
 	ynorm <- d$y/max(d$y)*w/2
@@ -93,7 +94,7 @@ plot_ObsSim <- function(ylab, mvec, avec, sdf, column, colNe, ylim){
 	}
 	#axis(1, at = seq(1,length(Nevalues)+2), labels = NA, lwd.ticks=1, las=1, cex.axis=.5)
 	#axis(1, at = seq(1,length(Nevalues)+2), labels = c("Atlantic", "Mediterranean", gsub(" ", "\n", uNemu)), lwd.ticks=NA, lwd=NA, line=1, las=1, cex.axis=.5)
-	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/2), lwd.ticks=1, las=1, cex.axis=1)
 	box()
 }
 
@@ -131,10 +132,10 @@ plot_mu <- function(sdf, colNe, leglabs){
 	muvalues <- unique(sdf$mu)[order(unique(sdf$mu))]
 	rmu <- c(min(log2(sdf$mu)),max(log2(sdf$mu)))
 	print(rmu)
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(-10,110), xlim=c(0,length(muvalues)+3), col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(-20,120), xlim=c(0,length(muvalues)+3), col=NA)
 	mtext("mu", side = 2, line = 4, cex=1)
 	for(nm in c(1:length(umu))){
-		points(2+nm, (log2(umu[nm])-rmu[1])/(rmu[2]-rmu[1])*100, pch=19, cex=1, col=colNe[nm])
+		points(2+nm, (log2(umu[nm])-rmu[1])/(rmu[2]-rmu[1])*100, pch=19, cex=1.5, col=colNe[nm])
 	}
 	axis(2, at = (log2(muvalues)-rmu[1])/(rmu[2]-rmu[1])*100, labels=muvalues, lwd.ticks=1, las=1, cex.axis=1)
 	#axis(1, at = seq(1,length(muvalues))+2, labels = c(gsub(" ", "\n", umu)), lwd.ticks=NA, lwd=NA, las=1, cex.axis=1)
@@ -146,28 +147,32 @@ plot_Ne <- function(sdf, colNe, leglabs){
 	Nevalues <- unique(sdf$Ne)[order(unique(sdf$Ne))]
 	rNe <- c(min(log2(sdf$Ne)),max(log2(sdf$Ne)))
 	print(rNe)
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(-10,110), xlim=c(0,length(Nevalues)+3), col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(-20,120), xlim=c(0,length(Nevalues)+3), col=NA)
 	mtext("Ne", side = 2, line = 4, cex=1)
 	for(nm in c(1:length(uNe))){
-		points(2+nm, (log2(uNe[nm])-rNe[1])/(rNe[2]-rNe[1])*100, pch=19, cex=1, col=colNe[nm])
+		points(2+nm, (log2(uNe[nm])-rNe[1])/(rNe[2]-rNe[1])*100, pch=19, cex=1.5, col=colNe[nm])
 	}
 	axis(2, at = (log2(Nevalues)-rNe[1])/(rNe[2]-rNe[1])*100, labels=Nevalues, lwd.ticks=1, las=1, cex.axis=1)
 	#axis(1, at = seq(1,length(Nevalues))+2, labels = c(gsub(" ", "\n", uNe)), lwd.ticks=NA, lwd=NA, las=1, cex.axis=1)
 	box()
 }
 
-plot_PCA <- function(main, vec1, lab1, vec2, lab2, colors, pch, samples, legcolors, leglabels, xlim, ylim){
+plot_PCA <- function(main, vec1, lab1, vec2, lab2, colors, pch, cexpt, samples, legcolors, leglabels, xlim, ylim){
 	vec1 <- as.numeric(vec1)
 	vec2 <- as.numeric(vec2)
-	yflank <- (ylim[2]-ylim[1])*0.1
-	xflank <- (xlim[2]-xlim[1])*0.1
+	ylim <- c(min(vec2), max(vec2))
+	yflank <- (ylim[2]-ylim[1])*0.03
+	xlim <- c(min(vec1), max(vec1))
+	xflank <- (xlim[2]-xlim[1])*0.03
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(ylim[1]-yflank,ylim[2]+yflank), xlim=c(xlim[1]-xflank,xlim[2]+xflank), col=NA)
-	mtext(lab1, side = 1, line = 2, cex=1.5)
-	mtext(lab2, side = 2, line = 2, cex=1.5)
+	mtext(lab1, side = 1, line = 2, cex=.9)
+	mtext(lab2, side = 2, line = 2, cex=.9)
 	mtext(main, side = 3, line = 1, cex=2)
-	points(vec1, vec2, pch=pch, col=colors, cex=1.5)
-	text(vec1, vec2, labels=samples, pos=3, font=1, cex=1.5)
-	legend("bottomleft", as.character(leglabels), pch=19, text.col="black", col=legcolors, bty = "n", cex=1, xjust = 0, yjust = 0)
+	points(vec1, vec2, pch=pch, col=colors, cex=cexpt)
+	#text(vec1, vec2, labels=samples, pos=3, font=1, cex=1.5)
+	if(length(which(leglabels %in% c("Atlantic","Mediterranean")))>0){
+		legend("bottomleft", c("Atlantic","Mediterranean"), pch=c(3,4), text.col="black", col="black", bty = "n", cex=1, xjust = 0, yjust = 0)
+	}
 	#axis(1, at = seq(xlim[1],xlim[2],(xlim[2]-xlim[1])/5), lwd.ticks=1, las=2, cex.axis=1.5)
 	#axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
@@ -264,34 +269,19 @@ maxcolsSFS <- max(length(SimSFS[1,]), length(SFSAtl[1,]), length(SFSMed[1,]))
 colfunc <- colorRampPalette(c("darkred", "gold"))
 colsSFS <- colfunc(maxcolsSFS)
 
-#NeVal <- 		c(1500000, 					1000000, 				750000, 				  500000, 				  100000, 				  75000, 					50000, 					10000, 					7500, 				  5000)
-#NeValForm <- 	c(expression("1.5·10" ^ 6), expression("1·10" ^ 6), expression("7.5·10" ^ 5), expression("5·10" ^ 5), expression("10" ^ 5), expression("7.5·10" ^ 4), expression("5·10" ^ 4), expression("10" ^ 4), expression("7.5·10" ^ 3), expression("5·10" ^ 3))
-#SimHet$NeFormat <- SimHet$Ne
-#for(i in unique(Nes)){
-#	print(paste(i , NeValForm[match(i, NeVal)]))
-#	SimHet$NeFormat[which(SimHet$Ne==i)] <- NeValForm[match(i, NeVal)]
-#}
-#print(head(SimHet))
-#quit()
-#SimSFS$NeFormat <- NeValForm[match(SimSFS$Ne, NeVal)]
-#SimNAlleles$NeFormat <- NeValForm[match(SimNAlleles$Ne, NeVal)]
-##_0.0000000050
-##_0.0000000075
-##_0.0000000100
-##_0.0000000150
-##_0.0000000750
-##_0.0000001000
-##_0.0000001500
-##_0.0000007500
-##_0.0000010000
-##_0.0000015000
-#print(head(SimSFS))
-#print(head(SimNAlleles))
+NeVal <- 		c(1500000, 					1000000, 				750000, 				  500000, 				  100000, 				  75000, 					50000, 					10000, 					7500, 				  5000)
+NeValForm <- 	c(expression("1.5·10" ^ 6), expression("1·10" ^ 6), expression("7.5·10" ^ 5), expression("5·10" ^ 5), expression("10" ^ 5), expression("7.5·10" ^ 4), expression("5·10" ^ 4), expression("10" ^ 4), expression("7.5·10" ^ 3), expression("5·10" ^ 3))
+muVal <- c(0.0000000050, 				0.0000000075, 				0.0000000100, 		  0.0000000150, 			 0.0000000750, 				0.0000001000, 		   0.0000001500, 			  0.0000007500, 			 0.0000010000, 			0.0000015000)
+muValForm <- c(expression("5·10" ^ -9), expression("7.5·10" ^ -9), expression("10" ^ -8), expression("1.5·10" ^ -8), expression("7.5·10" ^ -8), expression("10" ^ -7), expression("1.5·10" ^ -7), expression("7.5·10" ^ -7), expression("10" ^ -6), expression("1.5·10" ^ -6))
+
+print(head(SimHet))
+print(head(SimSFS))
+print(head(SimNAlleles))
 ######################################################################
 # PCA analysis of SFS
-rSimSFS <- SimSFS/rowSums(SimSFS[,grep("n[0-9]", colnames(SimSFS))])
-rSFSAtl <- SFSAtl/rowSums(SFSAtl[,grep("n[0-9]", colnames(SFSAtl))])
-rSFSMed <- SFSMed/rowSums(SFSMed[,grep("n[0-9]", colnames(SFSMed))])
+rSimSFS <- SimSFS[,grep("n[0-9]", colnames(SimSFS))]/rowSums(SimSFS[,grep("n[0-9]", colnames(SimSFS))])
+rSFSAtl <- SFSAtl[,grep("n[0-9]", colnames(SFSAtl))]/rowSums(SFSAtl[,grep("n[0-9]", colnames(SFSAtl))])
+rSFSMed <- SFSMed[,grep("n[0-9]", colnames(SFSMed))]/rowSums(SFSMed[,grep("n[0-9]", colnames(SFSMed))])
 rownames(rSimSFS) <- paste0("Sim_", format(SimSFS$Ne, scientific = FALSE), "_", format(SimSFS$mu, scientific = FALSE), "_", SimSFS$Rep)
 rownames(rSFSAtl) <- paste0("Atl", seq(1, length(rSFSAtl[,1])))
 rownames(rSFSMed) <- paste0("Med", seq(1, length(rSFSMed[,1])))
@@ -305,11 +295,12 @@ pcacolors[grep("Med", colnames(JoinedData))] <- "black" # population.colors[2]
 pcapch <- rep(1, length(colnames(JoinedData)))
 pcapch[grep("Atl", colnames(JoinedData))] <- 3
 pcapch[grep("Med", colnames(JoinedData))] <- 4
+pcacex <- rep(.5, length(colnames(JoinedData)))
 for(c in c(1:length(Nemu.combinations))){
 	pcacolors[grep(paste0("Sim_", Nemu.combinations[c]), colnames(JoinedData))] <- colNe[c]
 	pcapch[grep(paste0("Sim_", Nemu.combinations[c]), colnames(JoinedData))] <- 19
+	pcacex[grep(paste0("Sim_", Nemu.combinations[c]), colnames(JoinedData))] <- 1.5
 }
-
 
 ######################################################################
 # Plotting
@@ -351,35 +342,44 @@ layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(1), heights=c(1,1), TRUE)
 plot_PCA("PCA based on Site Frequency Spectrum", 
 		pca$co.df$Comp1, paste("PC1", round(pca$propvar[1], digits = 2), "%"), 
 		pca$co.df$Comp2, paste("PC2", round(pca$propvar[2], digits = 2), "%"), 
-		pcacolors, pcapch, NA, c(population.colors, colNe), c("Atlantic", "Mediterranean", Nemu.combinations), c(0,1), c(-0.6,.3))
+		pcacolors, pcapch, pcacex, NA, c(population.colors, colNe), c("Atlantic", "Mediterranean", Nemu.combinations), c(0,1), c(-0.6,.3))
 plot_PCA("PCA based on Site Frequency Spectrum", 
 		pca$co.df$Comp1[grep("Sim_", colnames(JoinedData))], paste("PC1", round(pca$propvar[1], digits = 2), "%"), 
 		pca$co.df$Comp2[grep("Sim_", colnames(JoinedData))], paste("PC2", round(pca$propvar[2], digits = 2), "%"), 
-		pcacolors[grep("Sim_", colnames(JoinedData))], pcapch[grep("Sim_", colnames(JoinedData))], NA, c(colNe), c(Nemu.combinations), c(0,1), c(-0.6,.3))
+		pcacolors[grep("Sim_", colnames(JoinedData))], pcapch[grep("Sim_", colnames(JoinedData))], pcacex[grep("Sim_", colnames(JoinedData))], NA, c(colNe), c(Nemu.combinations), c(0,1), c(-0.6,.3))
 
 
 par(oma=c(1,1,1,1))
-layout(matrix(c(1,2,3,4,5,5,5,5),nrow=4,ncol=2,byrow=F), widths=c(4,4), heights=c(1,1,1,1), TRUE)
-# A
-par(mar=c(0,7,2,2))
-plot_Ne(SimHet, colNe)
-par(mar=c(2,7,0,2))
-plot_mu(SimHet, colNe)
-uNemu <- unique(paste(SimHet$Ne, SimHet$mu, sep="\n"))
-axis(1, at = seq(1,length(uNemu))+2, labels = uNemu, lwd.ticks=NA, lwd=NA, line=1, las=1, cex.axis=1)
+layout(matrix(c(1,2,3,4,4,4),nrow=3,ncol=2,byrow=F), widths=c(6,6), heights=c(2,2,2), TRUE)
 
+
+# A
+par(mar=c(0,8,4,5))
+plot_ObsSim("Standard deviation\nof heterozygosity", ObsDataM$sd, ObsDataA$sd, SimHet, "sd", colNe, c(0,.1))
+writePlotLabel("A")
 # B
-par(mar=c(0,7,5,2))
-plot_ObsSim("Standard deviation of the heterozygosity", ObsDataM$sd, ObsDataA$sd, SimHet, "sd", colNe, c(0,.1))
-par(mar=c(5,7,0,2))
-plot_ObsSim("Propotion of singletons + doubletons", SFSAtl$PropSingleDoubletons, SFSMed$PropSingleDoubletons, SimSFS, "PropSingleDoubletons", colNe, c(0,1))
+par(mar=c(0,8,4,5))
+plot_ObsSim("Propotion of\nsingletons + doubletons", SFSAtl$PropSingleDoubletons, SFSMed$PropSingleDoubletons, SimSFS, "PropSingleDoubletons", colNe, c(0,1))
+writePlotLabel("B")
+# Legend
+uNe <- unique(SimHet$Ne)
+umu <- unique(SimHet$mu)
+w <- .5
+par(mar=c(0,7,0,5))
+plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", xlim=c(0,length(uNe)+3), col=NA)
+for(i in c(1:length(uNe))){
+	text(i+2, 7, labels = NeValForm[which(NeVal==uNe[i])], xpd=NA)
+	text(i+2, 5, labels = muValForm[which(muVal==umu[i])], xpd=NA)
+	polygon(c(i+2-w/2, i+2+w/2, i+2+w/2, i+2-w/2), c(1, 1, 1+w*2, 1+w*2), col=colNe[i], border=NA, lwd=1)
+}
 
 # C
-par(mar=c(5,7,2,2))
+par(mar=c(4,4,4,4))
 plot_PCA("", 
-		pca$co.df$Comp1, paste("PC1", round(pca$propvar[1], digits = 2), "%"), 
-		pca$co.df$Comp2, paste("PC2", round(pca$propvar[2], digits = 2), "%"), 
-		pcacolors, pcapch, NA, c("black", "black", colNe), c("Atlantic", "Mediterranean", Nemu.combinations), c(0,1), c(-0.6,.3))
+		pca$co.df$Comp1, paste0("PC1 (", round(pca$propvar[1], digits = 2), "%)"), 
+		pca$co.df$Comp2, paste0("PC2 (", round(pca$propvar[2], digits = 2), "%)"), 
+		pcacolors, pcapch, pcacex, NA, c("black", "black", colNe), c("Atlantic", "Mediterranean", Nemu.combinations), c(0,1), c(-0.6,.3))
+writePlotLabel("C")
 
 
 
