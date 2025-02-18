@@ -372,6 +372,11 @@ for(i in c(1:length(uNe))){
 	text(i+2, 5, labels = muValForm[which(muVal==umu[i])], xpd=NA)
 	polygon(c(i+2-w/2, i+2+w/2, i+2+w/2, i+2-w/2), c(1, 1, 1+w*2, 1+w*2), col=colNe[i], border=NA, lwd=1)
 }
+text(1, 7, labels = expression("N"["e"]), xpd=NA)
+text(1, 5, labels = expression(mu), xpd=NA)
+text(1, 10, labels = "Atlantic", xpd=NA)
+text(2, 10, labels = "Mediterranean", xpd=NA)
+text(6, 10, labels = "Simulations", xpd=NA)
 
 # C
 par(mar=c(4,4,4,4))
