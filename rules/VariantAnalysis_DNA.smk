@@ -2,6 +2,7 @@
 ## Variant analysis
 ################################################
 
+# Mask non-callable regions from genome reference 
 rule mask_callable_regions_from_genome:
 	'''
 	Mask all non-callable regions of the genome
@@ -205,7 +206,6 @@ rule Prepare_FSTAT_file:
 		chrs = expand("{chr}", chr=config["bralan3chrs"])
 	shell:
 		"./scripts/VariantAnalysis_DNA/Prepare_FSTAT_file.sh {input.Metadata} \"{input.chrsGENOTYPEMatrices}\" {input.SamplesOrderInVCF} {output.FstatDataFile} \"{params.chrs}\" > {log.out} 2> {log.err}"
-
 rule Hierfstat_statistics:
 	'''
 	Goudet, J. (2005) Hierfstat, a package for R to compute and test hierarchical F-statistics. Molecular Ecology Notes. 5: 184-186 [pdf]. Latest version available at github .
@@ -235,7 +235,7 @@ rule Hierfstat_statistics:
 		zcat {input.chrGENOTYPEs} | sed 's/:/\\t/g' | cut -f5- | awk '{{num=0;for(i=1;i<=NF;i++){{if(!a[$i]){{a[$i]=num;num++}}}}; str=""; for(i=1;i<=NF;i++){{if(a[$i]<9){{str=str"\\t0"a[$i]}}else{{str=str"\\t"a[$i]}}}}print str; delete a}}' | sed 's/^\\t//g' | awk '{{str=$1$2; for(i=3;i<NF;i+=2){{j=i+1; str=str"\\t"$i$j}}print str}}' | gzip > {output.HierFstatInput} 2>> {log.err}
 		./scripts/VariantAnalysis_DNA/Hierfstat_statistics.R {input.Metadata} {input.SamplesOrderInVCF} {output.HierFstatInput} {output.OverallStats} > {log.out} 2>> {log.err}
 		"""
-
+# Build consensus sequence per sample (only with SNPs)
 rule Build_ConsensusSequences_PerSample:
 	'''
 	Only SNPs
@@ -262,6 +262,7 @@ rule Build_ConsensusSequences_PerSample:
 	shell:
 		"./scripts/VariantAnalysis_DNA/Build_ConsensusSequences_PerSample.sh {input.genomeFA} {input.VCF} {output.ConsensusSeq} {output.ConcatenatedConsensusSeq} {wildcards.sample} > {log.out} 2> {log.err}"
 
+# Join all consensus seuqences
 rule Join_ConsensusSequences:
 	'''
 	Make sure all the sequences have the same length
@@ -286,6 +287,7 @@ rule Join_ConsensusSequences:
 	shell:
 		"./scripts/VariantAnalysis_DNA/Join_ConsensusSequences.sh \"{input.ConcatenatedConsensusSeqs}\" {output.JoinedConsensusSeqs} > {log.out} 2> {log.err}"
 
+# Build samples distance tree
 rule Build_DistanceTree_Samples:
 	'''
 	'''

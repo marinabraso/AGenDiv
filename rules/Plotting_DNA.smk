@@ -37,12 +37,6 @@ def get_bed_file_name(wildcards):
 		return rules.VariantAlleleNumber_BEDs_PerSubsetOfSamples.output.TetraAllelic
 	elif wildcards.BED == "PentaPlusAllelic":
 		return rules.VariantAlleleNumber_BEDs_PerSubsetOfSamples.output.PentaPlusAllelic
-	elif wildcards.BED == "PrivateA":
-		return rules.SharedPrivatePopulation_BEDs.output.PrivateA
-	elif wildcards.BED == "PrivateM":
-		return rules.SharedPrivatePopulation_BEDs.output.PrivateM
-	elif wildcards.BED == "Shared":
-		return rules.SharedPrivatePopulation_BEDs.output.Shared
 	elif wildcards.BED == "WindowsSimChrSize":
 		return rules.SimualtedChrSizeWindows_BEDs.output.WindowsBED
 	elif wildcards.BED == "SelectedWindowsSimChrSize":
@@ -435,6 +429,7 @@ rule VariantAlleleNumber_BEDs_PerSubsetOfSamples:
 		zcat < {input.Freqfile} | awk '{{n=split($4,a,","); if(n>4){{print $0}}}}' | gzip > {output.PentaPlusAllelic}
 		"""
 
+# Determine the proportion of Private variants, Shared...
 rule SharedPrivatePopulation_BEDs:
 	'''
 	'''
@@ -442,11 +437,6 @@ rule SharedPrivatePopulation_BEDs:
 		Freqfiles = get_freq_file_Pops_randPops
 	output:
 		AllVarBothPop = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/AllVariants_BothPopulations_{ObsOrBoots}.bed.gz",
-		PrivateA = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/PrivateA_{ObsOrBoots}.bed.gz",
-		PrivateM = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/PrivateM_{ObsOrBoots}.bed.gz",
-		VariantShared = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/VariantShared_{ObsOrBoots}.bed.gz",
-		VariantDifferent = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/VariantDifferent_{ObsOrBoots}.bed.gz",
-		FixedDifferent = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/FixedDifferent_{ObsOrBoots}.bed.gz",
 		Numbers = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/Numbers_{ObsOrBoots}.txt"		
 	log:
 		err = "logs/Plotting_DNA/SharedPrivatePopulation_BEDs/SharedPrivatePopulation_BEDs_{ObsOrBoots}.err",
@@ -462,44 +452,19 @@ rule SharedPrivatePopulation_BEDs:
 		mem = 100000
 	shell:
 		"""
-		mkdir -p $(dirname {output.PrivateA}) 2> {log.err}
+		mkdir -p $(dirname {output.AllVarBothPop}) 2> {log.err}
 
-		echo {output.AllVarBothPop} {output.PrivateA} {output.PrivateM} {output.VariantShared} {output.VariantDifferent} {output.FixedDifferent} {output.Numbers}
+		echo {output.AllVarBothPop} {output.Numbers}
 		inputs=( $(echo {input.Freqfiles} | sed 's/ /\\n/g') )
 		inputAll=${{inputs[0]}}
 		inputAtl=${{inputs[1]}}
 		inputMed=${{inputs[2]}}
-		awk '{{if(FNR==1){{file++}}if(file==1){{a[$1"\\t"$2"\\t"$3]=$4; next}}if(file==2){{m[$1"\\t"$2"\\t"$3]=$4;next}} print $0"\\t"a[$1"\\t"$2"\\t"$3]"\\t"m[$1"\\t"$2"\\t"$3]}}' <(zcat ${{inputAtl}}) <(zcat ${{inputMed}}) <(zcat ${{inputAll}}) > $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp
-		cat $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp | sed 's/:[0-9]\\+//g' | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t$/\\t./g' | awk '{{a=$5; m=$6; if(a=="." && m!="."){{print $0"\\tPrivateM"}}else if(a!="." && m=="."){{print $0"\\tPrivateA"}}else if(a=="." && m=="."){{print $0"\\tFixedDifferent"}}else{{split(a,aAl,",");split(m,mAl,",");commAl=0; for(i in aAl){{for(j in mAl){{if(mAl[j]==aAl[i]){{commAl++}}}}}}if(commAl<=1){{print $0"\\tVariantDifferent"}}else{{print $0"\\tVariantShared"}}}}}}' > $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
-		paste <(cat $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp | cut -f-6) <(cat $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2 | cut -f7) | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t\\t/\\t.\\t/g' | gzip > {output.AllVarBothPop}
-		if [[ $(zcat {output.AllVarBothPop} | grep 'PrivateA' | wc -l) -gt 0 ]]; then
-			zcat {output.AllVarBothPop} | grep 'PrivateA' | cut -f1,2,3 | gzip > {output.PrivateA}
-		else
-			touch {output.PrivateA}
-		fi
-		if [[ $(zcat {output.AllVarBothPop} | grep 'PrivateM' | wc -l) -gt 0 ]]; then
-			zcat {output.AllVarBothPop} | grep 'PrivateM' | cut -f1,2,3 | gzip > {output.PrivateM}
-		else
-			touch {output.PrivateM}
-		fi
-		if [[ $(zcat {output.AllVarBothPop} | grep 'VariantShared' | wc -l) -gt 0 ]]; then
-			zcat {output.AllVarBothPop} | grep 'VariantShared' | cut -f1,2,3 | gzip > {output.VariantShared}
-		else
-			touch {output.VariantShared}
-		fi
-		if [[ $(zcat {output.AllVarBothPop} | grep 'VariantDifferent' | wc -l) -gt 0 ]]; then
-			zcat {output.AllVarBothPop} | grep 'VariantDifferent' | cut -f1,2,3 | gzip > {output.VariantDifferent}
-		else
-			touch {output.VariantDifferent}
-		fi
-		if [[ $(zcat {output.AllVarBothPop} | grep 'FixedDifferent' | wc -l) -gt 0 ]]; then
-			zcat {output.AllVarBothPop} | grep 'FixedDifferent' | cut -f1,2,3 | gzip > {output.FixedDifferent}
-		else
-			touch {output.FixedDifferent}
-		fi
+		awk '{{if(FNR==1){{file++}}if(file==1){{a[$1"\\t"$2"\\t"$3]=$4; next}}if(file==2){{m[$1"\\t"$2"\\t"$3]=$4;next}} print $0"\\t"a[$1"\\t"$2"\\t"$3]"\\t"m[$1"\\t"$2"\\t"$3]}}' <(zcat ${{inputAtl}}) <(zcat ${{inputMed}}) <(zcat ${{inputAll}}) > $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp
+		cat $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp | sed 's/:[0-9]\\+//g' | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t$/\\t./g' | awk '{{a=$5; m=$6; if(a=="." && m!="."){{print $0"\\tPrivateM"}}else if(a!="." && m=="."){{print $0"\\tPrivateA"}}else if(a=="." && m=="."){{print $0"\\tFixedDifferent"}}else{{split(a,aAl,",");split(m,mAl,",");commAl=0; for(i in aAl){{for(j in mAl){{if(mAl[j]==aAl[i]){{commAl++}}}}}}if(commAl<=1){{print $0"\\tVariantDifferent"}}else{{print $0"\\tVariantShared"}}}}}}' > $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
+		paste <(cat $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp | cut -f-6) <(cat $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2 | cut -f7) | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t\\t/\\t.\\t/g' | gzip > {output.AllVarBothPop}
 		zcat {output.AllVarBothPop} | cut -f7 | sort | uniq -c | sed 's/\\s\\+/\\t/g' | sed 's/^\\t//g' > {output.Numbers}
-		#rm $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp
-		#rm $(dirname {output.PrivateA})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
+		rm $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp
+		rm $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
 		"""
 
 rule Intersection2BEDs:
@@ -983,6 +948,52 @@ rule plot_Figure1_GenomicDiversity:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 #
+rule plot_Figure2_PopulationStructure:
+	'''
+	
+	Plotting PSMC Pairwise Sequentially Markovian Coalescent
+	Li H, Durbin R. Inference of human population history from individual whole-genome sequences. Nature. 2011 Jul 13;475(7357):493-6. doi: 10.1038/nature10231. PMID: 21753753; PMCID: PMC3154645.
+	'''
+	input:
+		Rconfig = config["Rconfig"],
+		chrsGENOTYPEMatrices = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3chrs"]),
+		chrsDividedGENOTYPEs = expand(rules.Divide_variants_perGenomicFeature_PerChr.output.chrDividedGENOTYPEs, chr=config["bralan3chrs"]),
+		ObsShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots="Observed"),
+		RandShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots=["Rand_%d" % i for i in range(config["BootsRandPop"])]),
+		PSMC=expand(rules.PSMC_PerSample.output.psmc, sample=config["samples"]),
+		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+	output:
+		PDF = "results/Plotting_DNA/plot_Figure2_PopulationStructure.pdf",
+		REPORT = "results/Plotting_DNA/plot_Figure2_PopulationStructure_report.txt"
+	log:
+		err = "logs/Plotting_DNA/plot_Figure2_PopulationStructure.err",
+		out = "logs/Plotting_DNA/plot_Figure2_PopulationStructure.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/plot_Figure2_PopulationStructure.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '1:00:00',
+		name = "pFig2",
+		threads = 1,
+		mem = 50000,
+		chrs = config["bralan3chrs"]
+	shell:
+		"""
+		./scripts/Plotting_DNA/plot_Figure2_PopulationStructure.R \
+		\"{input.chrsGENOTYPEMatrices}\" \
+		\"{input.chrsDividedGENOTYPEs}\" \
+		\"{input.ObsShPriv}\" \
+		\"{input.RandShPriv}\" \
+		\"{input.PSMC}\" \
+		{input.SamplesOrderInVCF} \
+		{input.Metadata} \
+		{output.PDF} \
+		{output.REPORT} \
+		\"{params.chrs}\" \
+		{input.Rconfig} > {log.out} 2> {log.err}
+		"""
 # 
 rule plot_Figure3_vsSimulations:
 	'''

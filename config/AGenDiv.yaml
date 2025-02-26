@@ -11,7 +11,7 @@ Rconfig: config/AmphiHetDupExp_plot.R
 EnsemblRelease: 111 # Caution, genome versions (in SpTreeGenomeVersions) can change if EnsemblRelease is changed
 EnsMetazoaRelease: 58 # For Strongylocentrotus_purpuratus
 BootsCummProp: [ 1, 2, 3, 4, 5 ] # For plotting cummulative proportion of vairation explained
-BootsRandPop: 1000 # For randomizing population samples
+BootsRandPop: 10000 # For randomizing population samples
 samples:
     - F10D
     - F1D
