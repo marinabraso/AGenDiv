@@ -41,6 +41,10 @@ def get_bed_file_name(wildcards):
 		return rules.SimualtedChrSizeWindows_BEDs.output.WindowsBED
 	elif wildcards.BED == "SelectedWindowsSimChrSize":
 		return rules.SelectRegions_SimualtedChrSize.output.SelectedBED
+	elif re.match("AbsFreq", wildcards.BED):
+		Afreq = wildcards.BED.split("_")[1]
+		BiAll = wildcards.BED.split("_")[2]
+		return 	expand(rules.VariantFrequency_BEDs_PerAllSamples.output.VariantList, Afreq=Afreq, BiAll=BiAll)
 	elif re.match("FixedLengthRegions", wildcards.BED):
 		return 	expand(rules.Windows_AccumulatedCallableSize_BEDs.output.WindowsBED, windowsize=config["windowsize"])
 	elif re.match("Simulated", wildcards.BED):
@@ -350,27 +354,27 @@ rule VariantType_BEDs_PerSubsetOfSamples:
 		awk '{{if(NR==FNR){{a[$1"_"$2"_"$3]=1; next}}if(a[$1"_"$2"_"$3]==1){{print $0}}}}' <(zcat {output.INDELs}) <(for i in {input.HetFiles}; do zcat < $i; done) | gzip > {output.INDELsHetFile} 2> {log.err}
 		"""
 
-rule VariantFrequency_BEDs_PerSubsetOfSamples:
+rule SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples:
 	'''
 	'''
 	input:
 		Freqfile = expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples="{GroupSamples}", ObsExp="Observed_Data")
 	output:
-		Singletons = "results/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/Singletons_Per{GroupSamples}.bed.gz",
-		DoubletonsBial = "results/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/Doubletons_Biallelic_Per{GroupSamples}.bed.gz",
-		DoubletonsMultial = "results/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/Doubletons_Multiallelic_Per{GroupSamples}.bed.gz",
-		TripletonsBial = "results/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/Tripletons_Biallelic_Per{GroupSamples}.bed.gz",
-		TripletonsMultial = "results/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/Tripletons_Multiallelic_Per{GroupSamples}.bed.gz",
+		Singletons = "results/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/Singletons_Per{GroupSamples}.bed.gz",
+		DoubletonsBial = "results/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/Doubletons_Biallelic_Per{GroupSamples}.bed.gz",
+		DoubletonsMultial = "results/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/Doubletons_Multiallelic_Per{GroupSamples}.bed.gz",
+		TripletonsBial = "results/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/Tripletons_Biallelic_Per{GroupSamples}.bed.gz",
+		TripletonsMultial = "results/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/Tripletons_Multiallelic_Per{GroupSamples}.bed.gz",
 	log:
-		err = "logs/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/VariantFrequency_BEDs_Per{GroupSamples}.err",
-		out = "logs/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/VariantFrequency_BEDs_Per{GroupSamples}.out"
+		err = "logs/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/VariantFrequency_BEDs_Per{GroupSamples}.err",
+		out = "logs/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/VariantFrequency_BEDs_Per{GroupSamples}.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/VariantFrequency_BEDs_PerSubsetOfSamples/VariantFrequency_BEDs_Per{GroupSamples}.txt"
+		"benchmarks/Plotting_DNA/SingletonsDoubletonsTripletons_BEDs_PerSubsetOfSamples/VariantFrequency_BEDs_Per{GroupSamples}.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '03:00:00',
-		name = "Vfreq_{GroupSamples}",
+		name = "Singl_{GroupSamples}",
 		threads = 1,
 		mem = 10000,
 		samples = get_group_of_samples
@@ -396,6 +400,36 @@ rule VariantFrequency_BEDs_PerSubsetOfSamples:
 		echo ${{nsamp}}
 		zcat < {input.Freqfile} | awk '{{if(split($4,a,",")==2){{print $0}}}}' | sed 's/\\t\\S*\\:\\([0-9]*\\)$/\\t\\1/g' | grep -P "\\t${{nsamp}}$" | cut -f1,2,3 | gzip > {output.TripletonsBial} 2> {log.err}
 		zcat < {input.Freqfile} | awk '{{if(split($4,a,",")>2){{print $0}}}}' | sed 's/\\t\\S*\\:\\([0-9]*\\)$/\\t\\1/g' | grep -P "\\t${{nsamp}}$" | cut -f1,2,3 | gzip > {output.TripletonsMultial} 2> {log.err}
+		"""
+# Divide variants per frequency
+rule VariantFrequency_BEDs_PerAllSamples:
+	'''
+	'''
+	input:
+		Freqfile = expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples="AllSamples", ObsExp="Observed_Data")
+	output:
+		VariantList = "results/Plotting_DNA/VariantFrequency_BEDs_PerAllSamples/Variants_AbsFreq_{Afreq}_{BiAll}.bed.gz",
+	log:
+		err = "logs/Plotting_DNA/VariantFrequency_BEDs_PerAllSamples/Variants_AbsFreq_{Afreq}_{BiAll}.err",
+		out = "logs/Plotting_DNA/VariantFrequency_BEDs_PerAllSamples/Variants_AbsFreq_{Afreq}_{BiAll}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/VariantFrequency_BEDs_PerAllSamples/Variants_AbsFreq_{Afreq}_{BiAll}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '03:00:00',
+		name = "Vfreq_{Afreq}_{BiAll}",
+		threads = 1,
+		mem = 10000,
+	shell:
+		"""
+		mkdir -p $(dirname {output.VariantList}) 2> {log.err}
+		if [ {wildcards.BiAll} == "Biallelic" ]
+		then
+			zcat < {input.Freqfile} | awk -v freq={wildcards.Afreq} '{{n=split($4,a,","); split(a[length(a)],b,":"); if(n==2 && b[2]==freq){{print $0}}}}' | cut -f1,2,3 | gzip > {output.VariantList} 2> {log.err}
+		else
+			zcat < {input.Freqfile} | awk -v freq={wildcards.Afreq} '{{n=split($4,a,","); split(a[length(a)],b,":"); if(b[2]==freq){{print $0}}}}' | cut -f1,2,3 | gzip > {output.VariantList} 2> {log.err}
+		fi
 		"""
 
 rule VariantAlleleNumber_BEDs_PerSubsetOfSamples:
@@ -436,7 +470,6 @@ rule SharedPrivatePopulation_BEDs:
 	input:
 		Freqfiles = get_freq_file_Pops_randPops
 	output:
-		AllVarBothPop = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/AllVariants_BothPopulations_{ObsOrBoots}.bed.gz",
 		Numbers = "results/Plotting_DNA/SharedPrivatePopulation_BEDs/Numbers_{ObsOrBoots}.txt"		
 	log:
 		err = "logs/Plotting_DNA/SharedPrivatePopulation_BEDs/SharedPrivatePopulation_BEDs_{ObsOrBoots}.err",
@@ -452,19 +485,18 @@ rule SharedPrivatePopulation_BEDs:
 		mem = 100000
 	shell:
 		"""
-		mkdir -p $(dirname {output.AllVarBothPop}) 2> {log.err}
+		mkdir -p $(dirname {output.Numbers}) 2> {log.err}
 
-		echo {output.AllVarBothPop} {output.Numbers}
 		inputs=( $(echo {input.Freqfiles} | sed 's/ /\\n/g') )
 		inputAll=${{inputs[0]}}
 		inputAtl=${{inputs[1]}}
 		inputMed=${{inputs[2]}}
-		awk '{{if(FNR==1){{file++}}if(file==1){{a[$1"\\t"$2"\\t"$3]=$4; next}}if(file==2){{m[$1"\\t"$2"\\t"$3]=$4;next}} print $0"\\t"a[$1"\\t"$2"\\t"$3]"\\t"m[$1"\\t"$2"\\t"$3]}}' <(zcat ${{inputAtl}}) <(zcat ${{inputMed}}) <(zcat ${{inputAll}}) > $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp
-		cat $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp | sed 's/:[0-9]\\+//g' | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t$/\\t./g' | awk '{{a=$5; m=$6; if(a=="." && m!="."){{print $0"\\tPrivateM"}}else if(a!="." && m=="."){{print $0"\\tPrivateA"}}else if(a=="." && m=="."){{print $0"\\tFixedDifferent"}}else{{split(a,aAl,",");split(m,mAl,",");commAl=0; for(i in aAl){{for(j in mAl){{if(mAl[j]==aAl[i]){{commAl++}}}}}}if(commAl<=1){{print $0"\\tVariantDifferent"}}else{{print $0"\\tVariantShared"}}}}}}' > $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
-		paste <(cat $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp | cut -f-6) <(cat $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2 | cut -f7) | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t\\t/\\t.\\t/g' | gzip > {output.AllVarBothPop}
-		zcat {output.AllVarBothPop} | cut -f7 | sort | uniq -c | sed 's/\\s\\+/\\t/g' | sed 's/^\\t//g' > {output.Numbers}
-		rm $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp
-		rm $(dirname {output.AllVarBothPop})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2
+		awk '{{if(FNR==1){{file++}}if(file==1){{a[$1"\\t"$2"\\t"$3]=$4; next}}if(file==2){{m[$1"\\t"$2"\\t"$3]=$4;next}} print $0"\\t"a[$1"\\t"$2"\\t"$3]"\\t"m[$1"\\t"$2"\\t"$3]}}' <(zcat ${{inputAtl}}) <(zcat ${{inputMed}}) <(zcat ${{inputAll}}) | gzip > $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp.gz
+		zcat $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp.gz | sed 's/:[0-9]\\+//g' | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t$/\\t./g' | awk '{{a=$5; m=$6; if(a=="." && m!="."){{print $0"\\tPrivateM"}}else if(a!="." && m=="."){{print $0"\\tPrivateA"}}else if(a=="." && m=="."){{print $0"\\tFixedDifferent"}}else{{split(a,aAl,",");split(m,mAl,",");commAl=0; for(i in aAl){{for(j in mAl){{if(mAl[j]==aAl[i]){{commAl++}}}}}}if(commAl<=1){{print $0"\\tVariantDifferent"}}else{{print $0"\\tVariantShared"}}}}}}' | gzip > $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2.gz
+		paste <(zcat $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp.gz | cut -f-6) <(zcat $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2.gz | cut -f7) | sed 's/\\t\\t/\\t.\\t/g' | sed 's/\\t\\t/\\t.\\t/g' | gzip > $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp3.gz
+		rm $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp.gz $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp2.gz
+		zcat $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp3.gz | cut -f7 | sort | uniq -c | sed 's/\\s\\+/\\t/g' | sed 's/^\\t//g' > {output.Numbers}
+		rm $(dirname {output.Numbers})/AllVariants_BothPopulations_{wildcards.ObsOrBoots}.tmp3.gz
 		"""
 
 rule Intersection2BEDs:
@@ -880,7 +912,47 @@ rule get_FunctionalRegionsCallableSpand:
 		done
 		"""
 
-#
+# Compute PCA for short variants genotypes for a specific set of variants 
+rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
+	'''
+	'''
+	input:
+		GenoFiles = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr=config["bralan3chrs"]),
+		chrsGENOTYPEMatrices = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3chrs"]),
+		BED = get_bed_file_name,
+		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt" 
+	output:
+		PCA_PerSample = "results/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples/PCA_PerSample_in{BED}Regions_Per{GroupSamples}.txt.gz",
+		PCA_PerVariant = "results/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples/PCA_PerVariant_in{BED}Regions_Per{GroupSamples}.txt.gz",
+		PCA_PropVariance = "results/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples/PCA_PropVariance_in{BED}Regions_Per{GroupSamples}.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples/PCA_short_variants_in{BED}Regions_Per{GroupSamples}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples/PCA_short_variants_in{BED}Regions_Per{GroupSamples}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples/PCA_short_variants_in{BED}Regions_Per{GroupSamples}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '10:00:00',
+		name = "cPCA_{BED}_{GroupSamples}",
+		threads = 1,
+		mem = 500000,
+		samples = get_group_of_samples,
+	shell:
+		"""
+		output={output.PCA_PerSample}
+		mkdir -p $(dirname ${{output%.gz}}) 2> {log.err}
+		awk '{{if(NR==FNR){{a[$1]=1; next}}if(a[1]){{print $0}}}}' <(bedtools intersect -a <(zcat {input.GenoFiles} | cut -f1,2,3,4) -b <(zcat {input.BED} | cut -f1,2,3) -wa | cut -f4) <(zcat {input.chrsGENOTYPEMatrices}) | gzip > ${{output%.txt.gz}}_IncludedVariants.tmp.gz 2> {log.err}
+		./scripts/Plotting_DNA/PCA_short_variants_inBEDregions_PerSubsetOfSamples.R \
+		${{output%.txt.gz}}_IncludedVariants.tmp.gz \
+		{input.SamplesOrderInVCF} \
+		{output.PCA_PerSample} \
+		{output.PCA_PerVariant} \
+		{output.PCA_PropVariance} \
+		\"{params.samples}\" > {log.out} 2> {log.err}
+		#rm ${{output%.txt.gz}}_IncludedVariants.tmp.gz
+		"""
+
 
 
 #
@@ -956,8 +1028,8 @@ rule plot_Figure2_PopulationStructure:
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		chrsGENOTYPEMatrices = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3chrs"]),
-		chrsDividedGENOTYPEs = expand(rules.Divide_variants_perGenomicFeature_PerChr.output.chrDividedGENOTYPEs, chr=config["bralan3chrs"]),
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic",), GroupSamples="AllSamples"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic"), GroupSamples="AllSamples"),
 		ObsShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots="Observed"),
 		RandShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots=["Rand_%d" % i for i in range(config["BootsRandPop"])]),
 		PSMC=expand(rules.PSMC_PerSample.output.psmc, sample=config["samples"]),
@@ -1259,7 +1331,7 @@ rule plot_PerSite_VarTypes_FuncRegions_Populations:
 		FreqObs=expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, BED="Callable", GroupSamples="AllSamples", ObsExp="Observed_Data"),
 		TypesOfVariants=expand(rules.VariantType_BEDs_PerSubsetOfSamples.output.PerSite_VariantType, GroupSamples="AllSamples"),
 		FunctionalFeatOfVariants=rules.FunctionalFeatures_BEDs.output.PerSite_FeatureType,
-		SharedPrivatePop=expand(rules.SharedPrivatePopulation_BEDs.output.AllVarBothPop, ObsOrBoots="Observed"),
+		#SharedPrivatePop=expand(rules.SharedPrivatePopulation_BEDs.output.AllVarBothPop, ObsOrBoots="Observed"),
 		SynNonSyn=rules.SynonymousNonSynonymous_BEDs.output.AllVar_SynNonSyn,
 		SpanFuncRegions=rules.get_FunctionalRegionsCallableSpand.output.out
 	output:

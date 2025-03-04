@@ -63,8 +63,8 @@ print(head(MetData))
 
 # Reading gentoype matrices
 cat("----> Reading gentoype matrices\n")
-for(c in c(1:length(chrs)){
-	cat(paste0(chrs[c],"\n"))
+for(c in c(1:length(chrs))){
+	cat(paste0(chrs[c], "\t", chrsGENOTYPEMatrices[c], "\t", chrsDividedGENOTYPEs[c],"\n"))
 	mat <- read.table(chrsGENOTYPEMatrices[c], h=FALSE, sep = " ", check.names = F, stringsAsFactors = F)
 	var <- read.table(chrsDividedGENOTYPEs[c], h=FALSE, sep = " ", check.names = F, stringsAsFactors = F)
 	print(length(mat[,1]))
