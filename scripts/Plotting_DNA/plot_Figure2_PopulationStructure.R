@@ -12,8 +12,8 @@ library(ade4)
 
 args <- commandArgs(trailingOnly=TRUE)
 script <- sub(".*=", "", commandArgs()[4])
-strchrsGENOTYPEMatrices <- args[1]
-strchrsDividedGENOTYPEs <- args[2]
+strPCAValues_files <- args[1]
+strPCAPropVar_files <- args[2]
 strObsShPriv <- args[3]
 strRandShPriv <- args[4]
 strPSMC <- args[5]
@@ -28,8 +28,8 @@ script <- sub(".*=", "", commandArgs()[4])
 source(Rconfig)
 system(paste0("mkdir -p $(dirname ", PDF, ")"))
 OutFolder <- system(paste0("echo $(dirname ", PDF, ")"), intern=TRUE)
-chrsGENOTYPEMatrices <- unlist(strsplit(strchrsGENOTYPEMatrices, " "))
-chrsDividedGENOTYPEs <- unlist(strsplit(strchrsDividedGENOTYPEs, " "))
+PCAValues_files <- unlist(strsplit(strPCAValues_files, " "))
+PCAPropVar_files <- unlist(strsplit(strPCAPropVar_files, " "))
 ObsShPriv <- unlist(strsplit(strObsShPriv, " "))
 RandShPriv <- unlist(strsplit(strRandShPriv, " "))
 PSMC <- unlist(strsplit(strPSMC, " "))
@@ -61,15 +61,22 @@ Samples <- read.table(SamplesOrderInVCF, sep="\t", header=FALSE, check.names = F
 MetData <- MetData[match(Samples, MetData$Sample),]
 print(head(MetData)) 
 
-# Reading gentoype matrices
-cat("----> Reading gentoype matrices\n")
-for(c in c(1:length(chrs))){
-	cat(paste0(chrs[c], "\t", chrsGENOTYPEMatrices[c], "\t", chrsDividedGENOTYPEs[c],"\n"))
-	mat <- read.table(chrsGENOTYPEMatrices[c], h=FALSE, sep = " ", check.names = F, stringsAsFactors = F)
-	var <- read.table(chrsDividedGENOTYPEs[c], h=FALSE, sep = " ", check.names = F, stringsAsFactors = F)
-	print(length(mat[,1]))
-	print(length(var[,1]))
+# Reading PCA results for several goups of variants
+cat("----> Reading PCA results for several goups of variants\n")
+PCAresults <- data.frame(matrix(ncol = 0, nrow = length(Samples)))
+rownames(PCAresults) <- Samples
+TypesOfRegions <- c()
+for(f in c(1:length(PCAValues_files))){
+	TypeRegions <- unlist(strsplit(unlist(strsplit(PCAValues_files[f], "PerSample_in"))[2], "Regions_PerAllSamples"))[1]
+	val <- read.table(PCAValues_files[f], h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)
+	pvar <- read.table(PCAPropVar_files[f], h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)
+	colnames(val) <- paste(TypeRegions, colnames(val), sep="_")
+	colnames(pvar) <- paste(TypeRegions, "PropVar", sep="_")
+	PCAresults <- cbind(PCAresults, val, pvar)
+	TypesOfRegions <- c(TypesOfRegions, TypeRegions)
 }
+print(head(PCAresults))
+print(TypesOfRegions)
 quit()
 
 ######################################################################

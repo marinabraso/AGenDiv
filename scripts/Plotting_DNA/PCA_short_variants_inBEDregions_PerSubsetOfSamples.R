@@ -16,13 +16,15 @@ SamplesOrderInVCF <- args[2]
 PCA_PerSample <- args[3]
 PCA_PerVariant <- args[4]
 PCA_PropVariance <- args[5]
-strsamples <- args[6]
+strchrs <- args[6]
+strsamples <- args[7]
 script <- sub(".*=", "", commandArgs()[4])
 
-system(paste0("mkdir -p $(dirname ", PCA_RData, ")"))
-OutFolder <- system(paste0("echo $(dirname ", PCA_RData, ")"), intern=TRUE)
+system(paste0("mkdir -p $(dirname ", PCA_PerSample, ")"))
+OutFolder <- system(paste0("echo $(dirname ", PCA_PerSample, ")"), intern=TRUE)
+chrs <- unlist(strsplit(strchrs, " "))
 SelectedSamples <- unlist(strsplit(strsamples, " "))
-
+print(GENOTYPEMatricesTMPfile)
 ######################################################################
 # Functions
 
@@ -42,11 +44,16 @@ SamplesOrder <- read.table(SamplesOrderInVCF, sep="\t", header=FALSE, check.name
 
 # Reading gentoype matrices
 cat("----> Reading gentoype matrices\n")
-Data <- read.table(GENOTYPEMatricesTMPfile, sep=" ", header=FALSE, check.names = F, stringsAsFactors = F)
-colnames(Data) <- c("Var", SamplesOrder)
+Data <- data.frame(matrix(ncol = length(SamplesOrder), nrow = 0))
+for(c in chrs){
+	print(c)
+	mat <- read.table(paste0(GENOTYPEMatricesTMPfile, "_", c, ".tmp.gz"), sep=" ", header=FALSE, check.names = F, stringsAsFactors = F)
+	Data <- rbind(Data, mat[,c(2:length(colnames(mat)))])
+}
+colnames(Data) <- SamplesOrder
 
 # Select columns corresponding to the set of samples
-Data <- Data[,c("Var", SelectedSamples)]
+Data <- Data[,SelectedSamples]
 print(head(Data))
 
 ######################################################################

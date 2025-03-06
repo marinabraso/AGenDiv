@@ -424,11 +424,14 @@ rule VariantFrequency_BEDs_PerAllSamples:
 	shell:
 		"""
 		mkdir -p $(dirname {output.VariantList}) 2> {log.err}
+		stFreq=$(echo {wildcards.Afreq} | awk '{{split($1,a,"-"); print a[1]}}')
+		endFreq=$(echo {wildcards.Afreq} | awk  -v stFreq=${{stFreq}} '{{split($1,a,"-"); if(a[2]){{print a[2]}}else{{print stFreq+1}}}}')
+		echo ${{stFreq}} ${{endFreq}}
 		if [ {wildcards.BiAll} == "Biallelic" ]
 		then
-			zcat < {input.Freqfile} | awk -v freq={wildcards.Afreq} '{{n=split($4,a,","); split(a[length(a)],b,":"); if(n==2 && b[2]==freq){{print $0}}}}' | cut -f1,2,3 | gzip > {output.VariantList} 2> {log.err}
+			zcat < {input.Freqfile} | awk -v stFreq=${{stFreq}} -v endFreq=${{endFreq}} '{{n=split($4,a,","); split(a[length(a)],b,":"); if(n==2 && b[2]>=stFreq && b[2]<endFreq){{print $0}}}}' | cut -f1,2,3 | gzip > {output.VariantList} 2> {log.err}
 		else
-			zcat < {input.Freqfile} | awk -v freq={wildcards.Afreq} '{{n=split($4,a,","); split(a[length(a)],b,":"); if(b[2]==freq){{print $0}}}}' | cut -f1,2,3 | gzip > {output.VariantList} 2> {log.err}
+			zcat < {input.Freqfile} | awk -v stFreq=${{stFreq}} -v endFreq=${{endFreq}} '{{n=split($4,a,","); split(a[length(a)],b,":"); if(b[2]>=stFreq && b[2]<endFreq){{print $0}}}}' | cut -f1,2,3 | gzip > {output.VariantList} 2> {log.err}
 		fi
 		"""
 
@@ -938,19 +941,32 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 		threads = 1,
 		mem = 500000,
 		samples = get_group_of_samples,
+		chrs = config["bralan3chrs"]
 	shell:
 		"""
-		output={output.PCA_PerSample}
-		mkdir -p $(dirname ${{output%.gz}}) 2> {log.err}
-		awk '{{if(NR==FNR){{a[$1]=1; next}}if(a[1]){{print $0}}}}' <(bedtools intersect -a <(zcat {input.GenoFiles} | cut -f1,2,3,4) -b <(zcat {input.BED} | cut -f1,2,3) -wa | cut -f4) <(zcat {input.chrsGENOTYPEMatrices}) | gzip > ${{output%.txt.gz}}_IncludedVariants.tmp.gz 2> {log.err}
+		outputS={output.PCA_PerSample}
+		outputV={output.PCA_PerVariant}
+		mkdir -p $(dirname ${{outputV%.gz}}) 2> {log.err}
+		nummat1=$(echo {input.chrsGENOTYPEMatrices} | awk '{{split($1,a,"chr1"); print a[1]}}')
+		nummat2=$(echo {input.chrsGENOTYPEMatrices} | awk '{{split($1,a,"chr1"); print a[2]}}')
+		genof1=$(echo {input.GenoFiles} | awk '{{split($1,a,"chr1"); print a[1]}}')
+		genof2=$(echo {input.GenoFiles} | awk '{{split($1,a,"chr1"); print a[2]}}')
+		for c in {params.chrs}
+		do
+			echo $c > {log.out}
+			awk '{{if(NR==FNR){{a[$1]=1; next}}if(a[$1]){{print $0}}}}' <(bedtools intersect -a <(zcat ${{genof1}}${{c}}${{genof2}} | cut -f1,2,3,4) -b <(zcat {input.BED} | cut -f1,2,3 | grep -w ${{c}}) -wa | cut -f4) <(zcat ${{nummat1}}${{c}}${{nummat2}}) | gzip > ${{outputV%.txt.gz}}_IncludedVariants_${{c}}.tmp.gz 2> {log.err}
+		done
+		zcat ${{outputV%.txt.gz}}_IncludedVariants* | wc -l
 		./scripts/Plotting_DNA/PCA_short_variants_inBEDregions_PerSubsetOfSamples.R \
-		${{output%.txt.gz}}_IncludedVariants.tmp.gz \
+		${{outputV%.txt.gz}}_IncludedVariants \
 		{input.SamplesOrderInVCF} \
-		{output.PCA_PerSample} \
-		{output.PCA_PerVariant} \
+		${{outputS%.gz}} \
+		${{outputV%.gz}} \
 		{output.PCA_PropVariance} \
+		\"{params.chrs}\" \
 		\"{params.samples}\" > {log.out} 2> {log.err}
-		#rm ${{output%.txt.gz}}_IncludedVariants.tmp.gz
+		gzip ${{outputS%.gz}} ${{outputV%.gz}}
+		rm ${{outputV%.txt.gz}}_IncludedVariants*
 		"""
 
 
@@ -1028,8 +1044,8 @@ rule plot_Figure2_PopulationStructure:
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic",), GroupSamples="AllSamples"),
-		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic"), GroupSamples="AllSamples"),
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-70_AllVariants", "AbsFreq_70-73_AllVariants"), GroupSamples="AllSamples"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-70_AllVariants", "AbsFreq_70-73_AllVariants"), GroupSamples="AllSamples"),
 		ObsShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots="Observed"),
 		RandShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots=["Rand_%d" % i for i in range(config["BootsRandPop"])]),
 		PSMC=expand(rules.PSMC_PerSample.output.psmc, sample=config["samples"]),
@@ -1054,8 +1070,8 @@ rule plot_Figure2_PopulationStructure:
 	shell:
 		"""
 		./scripts/Plotting_DNA/plot_Figure2_PopulationStructure.R \
-		\"{input.chrsGENOTYPEMatrices}\" \
-		\"{input.chrsDividedGENOTYPEs}\" \
+		\"{input.PCAValues_files}\" \
+		\"{input.PCAPropVar_files}\" \
 		\"{input.ObsShPriv}\" \
 		\"{input.RandShPriv}\" \
 		\"{input.PSMC}\" \
