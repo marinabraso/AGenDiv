@@ -527,7 +527,6 @@ rule Intersection2BEDs:
 		BED1=$(echo {input.BEDs} | cut -f1 -d' ')
 		BED2=$(echo {input.BEDs} | cut -f2 -d' ')
 		bedtools intersect -a <(zcat ${{BED1}} | cut -f1,2,3) -b <(zcat ${{BED2}} | cut -f1,2,3) | gzip > {output.Intersection}
-		#paste <(bedtools intersect -a <(zcat results/VariantCalling_DNA/7_join_extra_callable_regions/ExtraCallableRegions.bed.gz | cut -f1,2,3 | head -500) -b <(zcat results/Plotting_DNA/FunctionalFeatures_BEDs/Exons.bed.gz | cut -f1,2,3 | head -500)) <(bedtools intersect -a <(zcat results/VariantCalling_DNA/7_join_extra_callable_regions/ExtraCallableRegions.bed.gz | cut -f1,2,3 | head -500) -b <(zcat results/Plotting_DNA/FunctionalFeatures_BEDs/Exons.bed.gz | cut -f1,2,3 | head -500) -wo | cut -f4-)
 		"""
 
 # add group of samples!!!! we need co compute the two pop separately
@@ -706,15 +705,15 @@ rule Heterozygosity_InEachRegion_inBEDregions_PerSample:
 rule Heterozygosity_InEachRegion_FixedLengthRegions_PerSample:
 	input:
 		HetFiles = get_HetFiles,
-		BED = expand(rules.Windows_AccumulatedCallableSize_BEDs.output.WindowsBED, windowsize=config["windowsize"]),
+		BED = rules.Windows_AccumulatedCallableSize_BEDs.output.WindowsBED,
 		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19")
 	output:
-		out = "results/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions.txt.gz"
+		out = "results/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions_{windowsize}.txt.gz"
 	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions.out"
+		err = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions_{windowsize}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions_{windowsize}.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions.txt"
+		"benchmarks/Plotting_DNA/{ObsExp}/Heterozygosity_InEachRegion_FixedLengthRegions_PerSample/Heterozygosity_InEachRegion_FixedLengthRegions_{windowsize}.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
@@ -722,14 +721,13 @@ rule Heterozygosity_InEachRegion_FixedLengthRegions_PerSample:
 		name = "Het_FixLen",
 		threads = 1,
 		mem = 100000,
-		windowsize=config["windowsize"]
 	shell:
 		"""
 		output={output.out}
 		mkdir -p $(dirname ${{output%.gz}}) 2> {log.err}
 		bedtools intersect -a <(zcat {input.BED}) -b <(zcat {input.HetFiles}) -wao | \
 			cut -f1,2,3,8- | rev | cut -f2- | rev | \
-			awk  -v len={params.windowsize} '{{if(NR!=1 && reg!=$1"\\t"$2"\\t"$3){{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str; delete a}} reg=$1"\\t"$2"\\t"$3; for(i=4;i<=NF;i++){{a[i]+=$i}}}}END{{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str;}}' | \
+			awk  -v len={wildcards.windowsize} '{{if(NR!=1 && reg!=$1"\\t"$2"\\t"$3){{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str; delete a}} reg=$1"\\t"$2"\\t"$3; for(i=4;i<=NF;i++){{a[i]+=$i}}}}END{{str=reg; for(i=4;i<=NF;i++){{str=str"\\t"a[i]/len}} print str;}}' | \
 			gzip > ${{output}} 2>> {log.err}
 		"""
 # Compute total average pairwise differences in a set of BED regions and a group of samples
@@ -878,7 +876,7 @@ rule Prepare_PopulationSamples_Files:
 		"""
 
 # Compute total callable spand of exons, introns, promoters and intergenic regions
-rule get_FunctionalRegionsCallableSpand:
+rule get_FunctionalRegionsCallableSpan:
 	'''
 	'''
 	input:
@@ -888,12 +886,12 @@ rule get_FunctionalRegionsCallableSpand:
 		IntergenicBED=expand(rules.Intersection2BEDs.output.Intersection, Name1="Callable", Name2="Intergenic"),
 		CallableBED=rules.r7_join_extra_callable_regions.output.ExtraCallableRegions
 	output:
-		out = "results/Plotting_DNA/get_FunctionalRegionsCallableSpand/FunctionalRegionsCallableSpand.txt"
+		out = "results/Plotting_DNA/get_FunctionalRegionsCallableSpan/FunctionalRegionsCallableSpan.txt"
 	log:
-		err = "logs/Plotting_DNA/get_FunctionalRegionsCallableSpand/get_FunctionalRegionsCallableSpand.err",
-		out = "logs/Plotting_DNA/get_FunctionalRegionsCallableSpand/get_FunctionalRegionsCallableSpand.out"
+		err = "logs/Plotting_DNA/get_FunctionalRegionsCallableSpan/get_FunctionalRegionsCallableSpan.err",
+		out = "logs/Plotting_DNA/get_FunctionalRegionsCallableSpan/get_FunctionalRegionsCallableSpan.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/get_FunctionalRegionsCallableSpand/get_FunctionalRegionsCallableSpand.txt"
+		"benchmarks/Plotting_DNA/get_FunctionalRegionsCallableSpan/get_FunctionalRegionsCallableSpan.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
@@ -971,7 +969,38 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 
 
 
-#
+# 
+rule Join_PSMC_results:
+	'''
+	PSMC Pairwise Sequentially Markovian Coalescent
+	Li H, Durbin R. Inference of human population history from individual whole-genome sequences. Nature. 2011 Jul 13;475(7357):493-6. doi: 10.1038/nature10231. PMID: 21753753; PMCID: PMC3154645.
+	'''
+	input:
+		psmc=expand(rules.PSMC_PerSample.output.psmc, sample=config["samples"]),
+	output:
+		jpsmc="results/Plotting_DNA/Join_PSMC_results/joined_PSMC.txt",
+		jpsmc_thetas="results/Plotting_DNA/Join_PSMC_results/joined_PSMC_thetas.txt",
+	log:
+		err = "logs/Plotting_DNA/Join_PSMC_results/Join_PSMC_results.err",
+		out = "logs/Plotting_DNA/Join_PSMC_results/Join_PSMC_results.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/Join_PSMC_results/Join_PSMC_results.txt"
+	conda:
+		'../envs/hierfstat.yaml'
+	params:
+		time = '3:00:00',
+		name = "jPSMCWG",
+		threads = 1,
+		mem = 10000,
+		samples = expand("{sample}", sample=config["samples"]),
+		Blangenerationtime = config["Blangenerationtime"],
+		rounditerationsPSMC = config["rounditerationsPSMC"],
+		highmu = config["highmuPSMC"],
+		lowmu = config["lowmuPSMC"],
+		step = config["stepPSMC"],
+	shell:
+		"./scripts/Plotting_DNA/Join_PSMC_results.sh \"{input.psmc}\" {output.jpsmc}  {output.jpsmc_thetas} {params.Blangenerationtime} \"{params.samples}\" {params.rounditerationsPSMC} {params.highmu} {params.lowmu} {params.step} > {log.out} 2> {log.err}"
+
 #
 
 ################################################
@@ -989,9 +1018,11 @@ rule plot_Figure1_GenomicDiversity:
 		#PiFixedWindowsFiles = expand(rules.Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
 		HetPerRegFiles = expand(rules.Heterozygosity_InEachRegion_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic"]),
 		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"]),
-		HetFixedWindowsFiles = expand(rules.Heterozygosity_InEachRegion_FixedLengthRegions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"]),
+		HetFixedWindowsFiles = expand(rules.Heterozygosity_InEachRegion_FixedLengthRegions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], windowsize=[50,100,200]),
 		FreqPerSiteFiles = expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
 		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19"),
+		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
+		PerSiteFeatureType = rules.FunctionalFeatures_BEDs.output.PerSite_FeatureType,
 		MapImage = "metadata/MapSampling.png",
 		Lynch2023 = "data/OtherDiversityEstimates/SuppMat_Lynch2023.txt",
 		Leffler2012 = "data/OtherDiversityEstimates/SuppMat_Leffler2012.txt",
@@ -1024,6 +1055,8 @@ rule plot_Figure1_GenomicDiversity:
 		\"{input.HetFixedWindowsFiles}\"  \
 		\"{input.FreqPerSiteFiles}\"  \
 		{input.SamplesOrderInVCF}  \
+		{input.FunctionalRegionsCallableSpan}  \
+		{input.PerSiteFeatureType}  \
 		{input.MapImage}  \
 		{input.Lynch2023} \
 		{input.Leffler2012} \
@@ -1048,9 +1081,12 @@ rule plot_Figure2_PopulationStructure:
 		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-70_AllVariants", "AbsFreq_70-73_AllVariants"), GroupSamples="AllSamples"),
 		ObsShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots="Observed"),
 		RandShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots=["Rand_%d" % i for i in range(config["BootsRandPop"])]),
-		PSMC=expand(rules.PSMC_PerSample.output.psmc, sample=config["samples"]),
+		jpsmc= rules.Join_PSMC_results.output.jpsmc,
+		jpsmc_thetas= rules.Join_PSMC_results.output.jpsmc_thetas,
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+		DistTree = rules.Build_DistanceTree_Samples.output.tree,
+		TreeImage = "metadata/DistanceTreeSamples_formated.png",
 	output:
 		PDF = "results/Plotting_DNA/plot_Figure2_PopulationStructure.pdf",
 		REPORT = "results/Plotting_DNA/plot_Figure2_PopulationStructure_report.txt"
@@ -1066,7 +1102,10 @@ rule plot_Figure2_PopulationStructure:
 		name = "pFig2",
 		threads = 1,
 		mem = 50000,
-		chrs = config["bralan3chrs"]
+		chrs = config["bralan3chrs"],
+		PSMChighmu = config["highmuPSMC"],
+		PSMClowmu = config["lowmuPSMC"],
+		Blangenerationtime = config["Blangenerationtime"],
 	shell:
 		"""
 		./scripts/Plotting_DNA/plot_Figure2_PopulationStructure.R \
@@ -1074,12 +1113,18 @@ rule plot_Figure2_PopulationStructure:
 		\"{input.PCAPropVar_files}\" \
 		\"{input.ObsShPriv}\" \
 		\"{input.RandShPriv}\" \
-		\"{input.PSMC}\" \
+		{input.jpsmc} \
+		{input.jpsmc_thetas} \
 		{input.SamplesOrderInVCF} \
 		{input.Metadata} \
+		{input.DistTree} \
+		{input.TreeImage} \
 		{output.PDF} \
 		{output.REPORT} \
 		\"{params.chrs}\" \
+		{params.PSMChighmu} \
+		{params.PSMClowmu} \
+		{params.Blangenerationtime} \
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 # 
@@ -1349,7 +1394,7 @@ rule plot_PerSite_VarTypes_FuncRegions_Populations:
 		FunctionalFeatOfVariants=rules.FunctionalFeatures_BEDs.output.PerSite_FeatureType,
 		#SharedPrivatePop=expand(rules.SharedPrivatePopulation_BEDs.output.AllVarBothPop, ObsOrBoots="Observed"),
 		SynNonSyn=rules.SynonymousNonSynonymous_BEDs.output.AllVar_SynNonSyn,
-		SpanFuncRegions=rules.get_FunctionalRegionsCallableSpand.output.out
+		SpanFuncRegions=rules.get_FunctionalRegionsCallableSpan.output.out
 	output:
 		PDF = "results/Plotting_DNA/plot_PerSite_VarTypes_FuncRegions_Populations/plot_PerSite_VarTypes_FuncRegions_Populations.pdf"
 	log:

@@ -6,6 +6,8 @@ Sys.setenv(LANG = "en")
 # Libraries & functions
 library(RColorBrewer)
 library(ade4)
+library(ggtree)
+library(png)
 
 ######################################################################
 # Files & folders
@@ -16,118 +18,239 @@ strPCAValues_files <- args[1]
 strPCAPropVar_files <- args[2]
 strObsShPriv <- args[3]
 strRandShPriv <- args[4]
-strPSMC <- args[5]
-SamplesOrderInVCF <- args[6]
-Metadata <- args[7]
-PDF <- args[8]
-REPORT <- args[9]
-strchrs <- args[10]
-Rconfig <- args[11]
+jpsmc <- args[5]
+jpsmc_thetas <- args[6]
+SamplesOrderInVCF <- args[7]
+Metadata <- args[8]
+DistTree <- args[9]
+TreeImage <- args[10]
+PDF <- args[11]
+REPORT <- args[12]
+strchrs <- args[13]
+PSMChighmu <- as.numeric(args[14])
+PSMClowmu <- as.numeric(args[15])
+Blangenerationtime <- as.numeric(args[16])
+Rconfig <- args[17]
 script <- sub(".*=", "", commandArgs()[4])
 
 source(Rconfig)
 system(paste0("mkdir -p $(dirname ", PDF, ")"))
 OutFolder <- system(paste0("echo $(dirname ", PDF, ")"), intern=TRUE)
+TreeFolder <- system(paste0("echo $(dirname ", DistTree, ")"), intern=TRUE)
 PCAValues_files <- unlist(strsplit(strPCAValues_files, " "))
 PCAPropVar_files <- unlist(strsplit(strPCAPropVar_files, " "))
 ObsShPriv <- unlist(strsplit(strObsShPriv, " "))
 RandShPriv <- unlist(strsplit(strRandShPriv, " "))
-PSMC <- unlist(strsplit(strPSMC, " "))
 chrs <- unlist(strsplit(strchrs, " "))
 
 ######################################################################
 # Functions
 
-read_set_of_files <- function(files){
-	data <- read.table(files[1], sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-	colnames(data) <- seq(1,length(colnames(data)),1)
-	if(length(files)>1){
-		for(f in c(2:length(files))){
-			fdata <- read.table(files[f], sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
-			colnames(fdata) <- seq(1,length(colnames(fdata)),1)
-			data <- rbind(data, fdata)
-		}
+plot_PCA <- function(vec1, lab1, vec2, lab2, colors, samples, legcolors, leglabels, legpos){
+	vec1 <- as.numeric(vec1)
+	vec2 <- as.numeric(vec2)
+	ylim <- c(min(vec2), max(vec2))
+	xlim <- c(min(vec1), max(vec1))
+	yflank <- (ylim[2]-ylim[1])*0.05
+	xflank <- (xlim[2]-xlim[1])*0.05
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(ylim[1]-yflank,ylim[2]+yflank), xlim=c(xlim[1]-xflank,xlim[2]+xflank), col=NA)
+	mtext(lab1, side = 1, line = 4, cex=1.5)
+	mtext(lab2, side = 2, line = 4, cex=1.5)
+	points(vec1, vec2, pch=21, col=colors, bg=modif_alpha(colors), cex=4)
+	text(vec1, vec2, labels=samples, font=1, cex=.7)
+	if(length(leglabels)>1 & !is.na(leglabels[1])){
+		legend("right", as.character(leglabels), pch=15, text.col="black", col=legcolors, bty = "n", cex=2, xjust = 0, yjust = 0)
 	}
-	return(data)
+	#axis(1, at = seq(xlim[1],xlim[2],(xlim[2]-xlim[1])/5), lwd.ticks=1, las=2, cex.axis=1.5)
+	#axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
+	box()
 }
+
+plot_violin_RandomVsObserved <- function(t, xlab, ylab, odf, rdf, ylim, scalefactor, col){
+	print(t)
+	print(odf)
+	print(rdf[,c(1:5)])
+	w <- 0.5
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim/scalefactor, xlim=c(0.5,1.5), col=NA)
+	mtext(ylab, side = 2, line = 4, cex=1.5)
+	mtext(xlab, side = 1, line = 4, cex=1.5)
+	values <- as.numeric(rdf[t,c(1:length(rdf[1,]))])/scalefactor
+	d <- density(values, adjust = 2)
+	ynorm <- d$y/max(d$y)*w/2
+	polygon(c(1-ynorm, rev(1+ynorm)), c(d$x,rev(d$x)), col=modif_alpha(col), border=col, lwd=1)
+	points(jitter(rep(1, length(rdf[1,])), amount=w/2), values, pch=21, bg=modif_alpha(col,0.2), col=modif_alpha(col))
+	points(1, odf[t,1]/scalefactor, pch=18, col=col, cex=2)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5)/scalefactor, lwd.ticks=1, las=1, cex.axis=1)
+	box()
+}
+
+
+plot_violin_SeveralRandomVsObserved <- function(tps, odf, rdf, ylim, col, scalefactor, ylab, xlabels){
+	w <- 0.5
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim/scalefactor, xlim=c(1-.5,length(tps)+.5), col=NA)
+	mtext(ylab, side = 2, line = 4, cex=1.5)
+	for(i in c(1:length(tps))){
+		print(tps[i])
+		values <- as.numeric(rdf[tps[i],c(1:length(rdf[1,]))])/scalefactor
+		d <- density(values, adjust = 2)
+		ynorm <- d$y/max(d$y)*w/2
+		polygon(c(i+ynorm, rev(i-ynorm)), c(d$x,rev(d$x)), col=modif_alpha(col[i]), border=col[i], lwd=1)
+		#points(jitter(rep(i, length(rdf[1,])), amount=w/2), values, pch=21, bg=modif_alpha(col[i],0.2), col=modif_alpha(col[i]))
+		points(i, odf[tps[i],1]/scalefactor, pch=19, col=col[i], cex=2)
+	}
+	axis(1, at = c(1:length(tps)), labels=NA, lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(1, at = c(1:length(tps)), labels=xlabels, lwd=NA, line = 3, las=1, cex.axis=1.5)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/11)/scalefactor, lwd.ticks=1, las=1, cex.axis=1)
+	box()
+}
+
+plot_PSMC_samples_wo_mu <- function(df, samples, murange, g, colors){
+	Xcolumn1 <- "T_k_lowmu"
+	Xcolumn2 <- "T_k_highmu"
+	Ycolumn1 <- "N_k_lowmu"
+	Ycolumn2 <- "N_k_highmu"
+	yscaling <- 100000
+	ylim <- c(0, max(df[,Ycolumn1])/yscaling)
+	print(ylim)
+	xlim <- log(c(round(min(df[which(df[,Xcolumn1]!=0),Xcolumn1])/1000, digits=0)*1000, round(max(df[,Xcolumn1])/100000, digits=0)*100000))
+	print(c(round(min(df[which(df[,Xcolumn1]!=0),Xcolumn1])/1000, digits=0)*1000, round(max(df[,Xcolumn1])/100000, digits=0)*100000))
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=xlim, col=NA)		
+	mtext(paste0("Years ago (g=", g, ", ", expression(mu), "=", murange[1], "-", murange[2],")"), side = 1, line = 3, cex=1)
+	mtext(paste0("Effective population size (x",yscaling,")"), side = 2, line = 3, cex=1)
+	for(s in c(1:length(samples))){
+		sdf <- df[which(df$sample==samples[s]),]
+		x <- sdf[,Xcolumn1]
+		y <- sdf[,Ycolumn1]
+		stepsx <- c(rbind(x,x))[2:length(c(rbind(x,x)))]
+		print(stepsx)
+		stepsy <- c(rbind(y,y))[1:length(c(rbind(x,x)))-1]
+		lines(log(stepsx), stepsy/yscaling, lwd=2, col=colors[s])
+		print(stepsy)
+		quit()
+	}
+	xaxlab1 <- c(10^3,10^4,10^5,10^6,10^7,10^8,10^9)
+	xaxlab2 <- xaxlab1*murange[1]/murange[2]
+	yaxlab1 <- seq(0,12,2)
+	yaxlab2 <- yaxlab1*murange[1]/murange[2]
+
+	axis(1, at = log(xaxlab1), labels=paste0(xaxlab1,"\n",xaxlab2), lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(2, at = yaxlab1, labels=paste0(yaxlab1,"\n",yaxlab2), lwd.ticks=1, las=1, cex.axis=1.5)
+	box()
+}
+
 
 ######################################################################
 # Read data
 
 # Metadata
 MetData <- read.table(Metadata, sep="\t", header=TRUE, check.names = F, stringsAsFactors = F)
-MetData <- unique(MetData[,c("Sample", "Population")])
+MetData <- unique(MetData[,c("Sample", "Population", "Sex")])
 Samples <- read.table(SamplesOrderInVCF, sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 MetData <- MetData[match(Samples, MetData$Sample),]
-print(head(MetData)) 
+MetData$ColorP <- population.colors[match(MetData$Population, c("Roscoff", "Banyuls"))]
+MetData$ColorS <- sex.colors[match(MetData$Sex, unique(MetData$Sex))]
+print(MetData)
 
 # Reading PCA results for several goups of variants
 cat("----> Reading PCA results for several goups of variants\n")
 PCAresults <- data.frame(matrix(ncol = 0, nrow = length(Samples)))
 rownames(PCAresults) <- Samples
+PCApropvar <- data.frame(matrix(ncol = 0, nrow = 10))
 TypesOfRegions <- c()
 for(f in c(1:length(PCAValues_files))){
 	TypeRegions <- unlist(strsplit(unlist(strsplit(PCAValues_files[f], "PerSample_in"))[2], "Regions_PerAllSamples"))[1]
 	val <- read.table(PCAValues_files[f], h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)
-	pvar <- read.table(PCAPropVar_files[f], h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)
+	pvar <- as.data.frame(read.table(PCAPropVar_files[f], h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)[c(1:10),])
 	colnames(val) <- paste(TypeRegions, colnames(val), sep="_")
-	colnames(pvar) <- paste(TypeRegions, "PropVar", sep="_")
-	PCAresults <- cbind(PCAresults, val, pvar)
+	colnames(pvar) <- TypeRegions
+	PCAresults <- cbind(PCAresults, val)
+	PCApropvar <- cbind(PCApropvar, pvar)
 	TypesOfRegions <- c(TypesOfRegions, TypeRegions)
 }
 print(head(PCAresults))
+print(head(PCApropvar))
 print(TypesOfRegions)
-quit()
+
+# Private and shared variants
+OSharedPriv <- read.table(ObsShPriv, h=FALSE, sep = "\t", check.names = F, stringsAsFactors = F)
+rownames <- OSharedPriv[,2]
+OSharedPriv <- as.data.frame(OSharedPriv[,1])
+colnames(OSharedPriv) <- "Observed"
+rownames(OSharedPriv) <- rownames
+print(OSharedPriv)
+RSharedPriv <- data.frame(matrix(ncol = 0, nrow = length(rownames)))
+rownames(RSharedPriv) <- rownames
+for(r in c(0:(length(RandShPriv)-1))){
+	rand <- read.table(RandShPriv[r+1], h=FALSE, sep = "\t", check.names = F, stringsAsFactors = F)
+	tmpdf <- as.data.frame(rand$V1[match(rownames(RSharedPriv), rand$V2)])
+	colnames(tmpdf) <- paste0("Rand", r)
+	RSharedPriv <- cbind(RSharedPriv, tmpdf)
+}
+RSharedPriv[is.na(RSharedPriv)] <- 0
+print(RSharedPriv[,c(1:5)])
+
+# PSMC
+PSMCdata <- read.table(jpsmc, h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)
+print(head(PSMCdata))
+PSMCthetas <- read.table(jpsmc_thetas, h=TRUE, sep = "\t", check.names = F, stringsAsFactors = F)
+print(head(PSMCthetas))
+
+# If TreeImage verion of the treefile done with FigTree does not exist, create a substitute with ggtree
+if(!file.exists(TreeImage)){
+	png(filename = paste0(OutFolder, "/SamplesDistanceTree_ggtree.png"), width = 1000, height = 1000)
+	plot.new()
+	tree <- read.tree(DistTree)
+	p <- ggtree(tree, layout="daylight", size=1)
+	p <- p + geom_tiplab(size=10, color="black", fontface="bold")
+	#p <- p + geom_treescale(x = 0, y = 0, width=0.001)
+	print(p)
+	TreeImage <- paste0(OutFolder, "/SamplesDistanceTree_ggtree.png")
+	dev.off()
+}
 
 ######################################################################
-# Plotting
+## Start plotting Figure 2
 pdf(PDF, width=10, height=15)
 
 par(oma=c(1,1,1,1))
-layout(matrix(c(1,2,3,4,4,4),nrow=3,ncol=2,byrow=F), widths=c(6,6), heights=c(2,2,2), TRUE)
+layout(matrix(c(1,2,3,4,5,6),nrow=3,ncol=2,byrow=T), widths=c(1), heights=c(1), TRUE)
 
-
-# A
-par(mar=c(0,8,4,5))
-plot_ObsSim("Standard deviation\nof heterozygosity", ObsDataM$sd, ObsDataA$sd, SimHet, "sd", colNe, c(0,.1))
+### A
+## PCA
+par(mar=c(7,7,2,2))
+plot_PCA(	PCAresults$Callable_Comp1, paste("PC1", round(PCApropvar$Callable[1], digits = 2), "%"), 
+			PCAresults$Callable_Comp2, paste("PC2", round(PCApropvar$Callable[2], digits = 2), "%"), 
+			MetData$ColorP, MetData$Sample, population.colors, populations, "topleft")
 writePlotLabel("A")
-# B
-par(mar=c(0,8,4,5))
-plot_ObsSim("Propotion of\nsingletons + doubletons", SFSAtl$PropSingleDoubletons, SFSMed$PropSingleDoubletons, SimSFS, "PropSingleDoubletons", colNe, c(0,1))
-writePlotLabel("B")
-# Legend
-uNe <- unique(SimHet$Ne)
-umu <- unique(SimHet$mu)
-w <- .5
-par(mar=c(0,7,0,5))
-plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", xlim=c(0,length(uNe)+3), col=NA)
-for(i in c(1:length(uNe))){
-	text(i+2, 7, labels = NeValForm[which(NeVal==uNe[i])], xpd=NA)
-	text(i+2, 5, labels = muValForm[which(muVal==umu[i])], xpd=NA)
-	polygon(c(i+2-w/2, i+2+w/2, i+2+w/2, i+2-w/2), c(1, 1, 1+w*2, 1+w*2), col=colNe[i], border=NA, lwd=1)
-}
-text(1, 7, labels = expression("N"["e"]), xpd=NA)
-text(1, 5, labels = expression(mu), xpd=NA)
-text(1, 10, labels = "Atlantic", xpd=NA)
-text(2, 10, labels = "Mediterranean", xpd=NA)
-text(6, 10, labels = "Simulations", xpd=NA)
 
-# C
-par(mar=c(4,4,4,4))
-plot_PCA("", 
-		pca$co.df$Comp1, paste0("PC1 (", round(pca$propvar[1], digits = 2), "%)"), 
-		pca$co.df$Comp2, paste0("PC2 (", round(pca$propvar[2], digits = 2), "%)"), 
-		pcacolors, pcapch, pcacex, NA, c("black", "black", colNe), c("Atlantic", "Mediterranean", Nemu.combinations), c(0,1), c(-0.6,.3))
+### B
+## Distance tree
+par(mar=c(3,3,2,2))
+tree <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
+plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
+rasterImage(tree, 1, 1, 10, 10)
+writePlotLabel("B")
+
+
+### C
+## SHared Private variants analysis
+par(mar=c(7,7,2,2))
+plot_violin_SeveralRandomVsObserved(c("PrivateA", "PrivateM", "VariantShared"), OSharedPriv, RSharedPriv, c(9,20)*1000000, c(population.colors, "forestgreen"), 1000000, "Millions of variants", c("Private\nMediterranean", "Private\nAtlantic", "Shared"))
 writePlotLabel("C")
 
-
+### D
+## PSMC
+#plot_PSMC_samples_wo_mu(PSMCdata, MetData$Sample, c(PSMChighmu, PSMClowmu), Blangenerationtime, MetData$ColorP)
+plot.new()
+writePlotLabel("D")
 
 
 
 dev.off()
 
 
-
+#plot_violin_RandomVsObserved("VariantDifferent", "Variant\nDifferent", "", OSharedPriv, RSharedPriv, c(1,3)*1000000, 1000000, "darkred")
+#plot_violin_RandomVsObserved("FixedDifferent", "Fixed\nDifferent", "Variants", OSharedPriv, RSharedPriv, c(0,100), 1, "darkred")
 
 
 

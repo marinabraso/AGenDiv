@@ -3,10 +3,11 @@ channels:
     - conda-forge
     - bioconda
 dependencies:
-    - r-base=4.2.3
+    - r-base=4.4
     - r-rcolorbrewer=1.1-3
     - r-ash=1.0-15 
-    - r-ade4 #
-    - r-png # 
+    - r-ade4=1.7-22
+    - r-png=0.1-8 
+    - bioconductor-ggtree=3.14.0
     - bedtools=2.30.0
     - circos=0.69-8

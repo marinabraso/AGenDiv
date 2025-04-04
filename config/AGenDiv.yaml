@@ -267,6 +267,10 @@ SpTreeGenePrefix:
   - Strongylocentrotus_purpuratus.LOC
 SpTreeConstrainTree: "((((((Homo_sapiens,Mus_musculus),Danio_rerio),Ciona_intestinalis),(Branchiostoma_lanceolatum,Branchiostoma_floridae)),Strongylocentrotus_purpuratus),Drosophila_melanogaster);"
 SpTreeConstrainTree_unroted: "(((((Homo_sapiens,Mus_musculus),Danio_rerio),Ciona_intestinalis),(Branchiostoma_lanceolatum,Branchiostoma_floridae)),Strongylocentrotus_purpuratus,Drosophila_melanogaster);"
+rounditerationsPSMC: 20
+highmuPSMC: 10e-8
+lowmuPSMC: 5e-9
+stepPSMC:  100
 SimulationsOutputTimepoints0: [ 1000, 5000, 10000, 50000, 100000]
 SimulationsOutputTimepoints1: [ 150000, 200000 ]
 SimulationsOutputTimepoints2: [ 250000, 300000 ]

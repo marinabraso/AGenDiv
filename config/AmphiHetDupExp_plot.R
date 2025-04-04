@@ -29,10 +29,10 @@ modif_alpha <- function(col, alpha=.5){
   apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))  
 }
 
-violin <- function(values, pos, width, col, border, ad){
+violin <- function(values, pos, width, col, border, ad, lwd=1){
 	d <- density(as.numeric(values), adjust = ad)
 	ynorm <- d$y/max(d$y)*width/2
-	polygon(c(pos+ynorm, rev(pos-ynorm)), c(d$x,rev(d$x)), col=col, border=border, lwd=1)
+	polygon(c(pos+ynorm, rev(pos-ynorm)), c(d$x,rev(d$x)), col=col, border=border, lwd=lwd)
 }
 
 writePlotLabel <- function(txt){
