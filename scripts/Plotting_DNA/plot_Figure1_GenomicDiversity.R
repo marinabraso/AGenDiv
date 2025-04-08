@@ -20,6 +20,7 @@ strFreqPerSiteFiles <- args[6]
 SamplesOrderInVCF <- args[7]
 FunctionalRegionsCallableSpan <- args[8]
 PerSiteFeatureType <- args[9]
+SpeciesTree <- args[10]
 MapImage <- args[10]
 Lynch2023 <- args[11]
 Leffler2012 <- args[12]
@@ -136,29 +137,30 @@ plot_Heterozygous_Sites_in_Windows <- function(hetdf, samp, col, wsize, ymax){
 	box()
 }
 
-Chi.squared.test_Feature_SpanVsVariants <- function(df, feat){
-	print(paste0("### Chi.squared.test for feature ", feat))
-	Contingency.table <- matrix(c(FeatSpan$Variants[which(FeatSpan$Feature==feat)], 
-						FeatSpan$Callable[which(FeatSpan$Feature==feat)] - FeatSpan$Variants[which(FeatSpan$Feature==feat)], 
-						FeatSpan$Variants[which(FeatSpan$Feature=="Callable")] - FeatSpan$Variants[which(FeatSpan$Feature==feat)], 
-						FeatSpan$Callable[which(FeatSpan$Feature=="Callable")] - FeatSpan$Callable[which(FeatSpan$Feature==feat)] - FeatSpan$Variants[which(FeatSpan$Feature=="Callable")] + FeatSpan$Variants[which(FeatSpan$Feature==feat)]), 
+Chi.squared.test_Feature_SpanVsVariants <- function(df, vartype, feat){
+	#print(paste0("### Chi.squared.test for feature ", feat, " and ", vartype))
+	Contingency.table <- matrix(c(df[which(df$Feature==feat), vartype], 
+						df$Callable[which(df$Feature==feat)] - df[which(df$Feature==feat), vartype], 
+						df[which(df$Feature=="Callable"), vartype] - df[which(df$Feature==feat), vartype], 
+						df$Callable[which(df$Feature=="Callable")] - df$Callable[which(df$Feature==feat)] - df[which(df$Feature=="Callable"), vartype] + df[which(df$Feature==feat), vartype]), 
 						nrow = 2, byrow = TRUE,
 						dimnames = list(Feature = c("Present", "Absent"), Variants = c("Present", "Absent")))
 	chisq <- chisq.test(Contingency.table)
-	print(chisq)
-	print(format.pval(chisq$p.value, digits = 20))
-	print("Observed")
-	print(chisq$observed)
-	print("Expected")
-	print(chisq$expected)
+	#print(chisq)
+	#print(format.pval(chisq$p.value, digits = 20))
+	#print("Observed")
+	#print(chisq$observed)
+	#print("Expected")
+	#print(chisq$expected)
 	a <- as.numeric(Contingency.table[1,1])  # A Present, B Present
 	b <- as.numeric(Contingency.table[1,2])  # A Present, B Absent
 	c <- as.numeric(Contingency.table[2,1])  # A Absent, B Present
 	d <- as.numeric(Contingency.table[2,2])  # A Absent, B Absent
 	# Compute the Odds Ratio
 	OR <- (a * d) / (b * c)
-	print("Odds Ratio")
-	print(OR)
+	#print("Odds Ratio")
+	#print(OR)
+	return(list("pval" = format.pval(chisq$p.value, digits = 5), "OR" = OR))
 }
 
 ######################################################################
@@ -234,35 +236,50 @@ write.table(unif, file = REPORT, append = FALSE, row.names=FALSE, sep="\t", quot
 # % of callable length & number of vairants of different features 
 FeatSpan <- read.table(FunctionalRegionsCallableSpan, sep="\t", header=FALSE)
 colnames(FeatSpan) <- c("Feature", "Callable")
-FeatSpan$PercentCall <- FeatSpan$Callable/FeatSpan$Callable[which(FeatSpan$Feature=="Callable")]*100
-PerSiteFeat <- read.table(text=system(paste0("zcat < ", PerSiteFeatureType, " | cut -f4 | awk '{if(a[$1]){a[$1]++}else{a[$1]=1}}END{for(i in a){print i\" \"a[i]}}'"), intern = TRUE), sep=" ", header=FALSE, check.names = F, stringsAsFactors = F)
-colnames(PerSiteFeat) <- c("Feature", "Variants")
-FeatSpan$Variants[which(FeatSpan$Feature=="Callable")] <- sum(PerSiteFeat$Variants)
-FeatSpan$Variants[which(FeatSpan$Feature=="Exons")] <- sum(PerSiteFeat$Variants[grep("exon", PerSiteFeat$Feature)])
-FeatSpan$Variants[which(FeatSpan$Feature=="Introns")] <- sum(PerSiteFeat$Variants[grep("intron", PerSiteFeat$Feature)])
-FeatSpan$Variants[which(FeatSpan$Feature=="Promoters")] <- sum(PerSiteFeat$Variants[grep("promoter", PerSiteFeat$Feature)])
-FeatSpan$Variants[which(FeatSpan$Feature=="Intergenic")] <- sum(PerSiteFeat$Variants[grep("intergenic", PerSiteFeat$Feature)])
-FeatSpan$PercentVar <- FeatSpan$Variants/FeatSpan$Variants[which(FeatSpan$Feature=="Callable")]*100
+# Atlantic variants
+FeatSpan$VarAtl[which(FeatSpan$Feature=="Callable")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarAtl[which(FeatSpan$Feature=="Exons")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Exons.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarAtl[which(FeatSpan$Feature=="Introns")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Introns.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarAtl[which(FeatSpan$Feature=="Promoters")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Promoters.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarAtl[which(FeatSpan$Feature=="Intergenic")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Intergenic.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$PercentVarAtl <- FeatSpan$VarAtl/FeatSpan$Callable*100
+FeatSpan$pvalAtl[which(FeatSpan$Feature=="Callable")] <- NA
+FeatSpan$ORAtl[which(FeatSpan$Feature=="Callable")] <- NA
+FeatSpan$pvalAtl[which(FeatSpan$Feature=="Exons")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Exons")$pval
+FeatSpan$ORAtl[which(FeatSpan$Feature=="Exons")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Exons")$OR)
+FeatSpan$pvalAtl[which(FeatSpan$Feature=="Introns")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Introns")$pval
+FeatSpan$ORAtl[which(FeatSpan$Feature=="Introns")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Introns")$OR)
+FeatSpan$pvalAtl[which(FeatSpan$Feature=="Promoters")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Promoters")$pval
+FeatSpan$ORAtl[which(FeatSpan$Feature=="Promoters")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Promoters")$OR)
+FeatSpan$pvalAtl[which(FeatSpan$Feature=="Intergenic")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Intergenic")$pval
+FeatSpan$ORAtl[which(FeatSpan$Feature=="Intergenic")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarAtl", "Intergenic")$OR)
+# Mediterranean variants
+FeatSpan$VarMed[which(FeatSpan$Feature=="Callable")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarMed[which(FeatSpan$Feature=="Exons")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Exons.*MedSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarMed[which(FeatSpan$Feature=="Introns")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Introns.*MedSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarMed[which(FeatSpan$Feature=="Promoters")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Promoters.*MedSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$VarMed[which(FeatSpan$Feature=="Intergenic")] <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Intergenic.*MedSamples", FreqPerSiteFiles, value = TRUE), " | wc -l"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+FeatSpan$PercentVarMed <- FeatSpan$VarMed/FeatSpan$Callable*100
+FeatSpan$pvalMed[which(FeatSpan$Feature=="Callable")] <- NA
+FeatSpan$ORMed[which(FeatSpan$Feature=="Callable")] <- NA
+FeatSpan$pvalMed[which(FeatSpan$Feature=="Exons")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Exons")$pval
+FeatSpan$ORMed[which(FeatSpan$Feature=="Exons")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Exons")$OR)
+FeatSpan$pvalMed[which(FeatSpan$Feature=="Introns")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Introns")$pval
+FeatSpan$ORMed[which(FeatSpan$Feature=="Introns")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Introns")$OR)
+FeatSpan$pvalMed[which(FeatSpan$Feature=="Promoters")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Promoters")$pval
+FeatSpan$ORMed[which(FeatSpan$Feature=="Promoters")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Promoters")$OR)
+FeatSpan$pvalMed[which(FeatSpan$Feature=="Intergenic")] <- Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Intergenic")$pval
+FeatSpan$ORMed[which(FeatSpan$Feature=="Intergenic")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Intergenic")$OR)
 print(FeatSpan)
-print(sum(FeatSpan$PercentVar[which(FeatSpan$Feature!="Callable")]))
-Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "Exons")
-Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "Introns")
-Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "Promoters")
-Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "Intergenic")
 
-
+quit()
 
 ######################################################################
-## Start plot
+## Figure 1
+print("#### Figure 1")
 pdf(PDF, width=15, height=10)
 par(oma=c(2,2,2,2))
-layout(matrix(c(1,2,4,4,
-				1,3,4,4,
-				5,6,6,9,
-				5,7,7,9,
-				5,7,7,10,
-				5,8,8,10
-				),nrow=6,ncol=4,byrow=T), widths=c(3/3, 3/6, 3/3, 3/6), heights=c(2/4, 2/4, 2/6, 2/12, 2/12, 2/6), TRUE)
+layout(matrix(c(1,2,3,4,4,5),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(1,1), TRUE)
 
 ### A
 # One-to-one orthoologs phylogenetic tree 
@@ -307,27 +324,35 @@ plot_Comparison_diversity_estimates(unif, class[which(class != "Chordata")], c(P
 writePlotLabel("D")
 
 ### E
-## Callable vs variant spand on different regions (Exons, Introns, Promoters, Intergenic)
-print("E - Pi on different regions")
+## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
+print("E - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
-plot_Span_CallableVsVariants_FunctionalRegions(FeatSpan, "%", 100, RegionTypes)
+plot_PercOfVarSites_FunctionalRegions(FeatSpan, "%", 100, RegionTypes)
 writePlotLabel("E")
 
-### F
+######################################################################
+## Figure S1?
+print("#### Figure S1")
+layout(matrix(c(1,4,
+				2,4,
+				2,5,
+				3,5),nrow=4,ncol=2,byrow=T), widths=c(2,1), heights=c(2/3,2/6,2/6,2/3), TRUE)
+
+### A
 ## Site frequency spectrum
-print("F - Site frequency spectrum")
+print("A - Site frequency spectrum")
 par(mar=c(3,7,2,2))
 AllFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(AllFreq, "All samples", "", "", max(AllFreq), max(AllFreq)/2, c(0,0.2), "black")
-writePlotLabel("F")
+writePlotLabel("A")
 AtlFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(AtlFreq, "Atlantic samples", "Proportion of sites", "", max(AtlFreq), max(AtlFreq)/2, c(0,0.2), population.colors[1])
 MedFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(MedFreq, "Mediterranean samples", "", "Absolute major allele frequency", max(MedFreq), max(MedFreq)/2, c(0,0.2), population.colors[2])
 
-### G
+### B
 ## Distribution of the distance between het sites
-print("F - Distribution of the distance between het sites")
+print("B - Distribution of the distance between het sites")
 par(mar=c(7,7,2,2))
 windowsize <- 50
 maxyHetSites <- 2 # millions
@@ -338,7 +363,7 @@ HetRegAll.Fixed <- HetRegAll.Fixed*windowsize
 print(head(HetRegAll.Fixed))
 plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[AtlSamples], AtlSamples, PopColors[1], windowsize, maxyHetSites)
 plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[MedSamples], MedSamples, PopColors[2], windowsize, maxyHetSites)
-writePlotLabel("G")
+writePlotLabel("B")
 
 
 dev.off()

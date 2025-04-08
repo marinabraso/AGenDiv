@@ -1023,6 +1023,7 @@ rule plot_Figure1_GenomicDiversity:
 		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19"),
 		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
 		PerSiteFeatureType = rules.FunctionalFeatures_BEDs.output.PerSite_FeatureType,
+		SpeciesTree = rules.Build_Tree_Species.output.tree,
 		MapImage = "metadata/MapSampling.png",
 		Lynch2023 = "data/OtherDiversityEstimates/SuppMat_Lynch2023.txt",
 		Leffler2012 = "data/OtherDiversityEstimates/SuppMat_Leffler2012.txt",
@@ -1057,6 +1058,7 @@ rule plot_Figure1_GenomicDiversity:
 		{input.SamplesOrderInVCF}  \
 		{input.FunctionalRegionsCallableSpan}  \
 		{input.PerSiteFeatureType}  \
+		{input.SpeciesTree}  \
 		{input.MapImage}  \
 		{input.Lynch2023} \
 		{input.Leffler2012} \
@@ -1086,7 +1088,7 @@ rule plot_Figure2_PopulationStructure:
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
 		DistTree = rules.Build_DistanceTree_Samples.output.tree,
-		TreeImage = "metadata/DistanceTreeSamples_formated.png",
+		TreeImage = "metadata/DistanceTreeSamples_formated.png"
 	output:
 		PDF = "results/Plotting_DNA/plot_Figure2_PopulationStructure.pdf",
 		REPORT = "results/Plotting_DNA/plot_Figure2_PopulationStructure_report.txt"
