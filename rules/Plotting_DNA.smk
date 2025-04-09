@@ -1088,7 +1088,6 @@ rule plot_Figure2_PopulationStructure:
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
 		DistTree = rules.Build_DistanceTree_Samples.output.tree,
-		TreeImage = "metadata/DistanceTreeSamples_formated.png"
 	output:
 		PDF = "results/Plotting_DNA/plot_Figure2_PopulationStructure.pdf",
 		REPORT = "results/Plotting_DNA/plot_Figure2_PopulationStructure_report.txt"
@@ -1120,7 +1119,6 @@ rule plot_Figure2_PopulationStructure:
 		{input.SamplesOrderInVCF} \
 		{input.Metadata} \
 		{input.DistTree} \
-		{input.TreeImage} \
 		{output.PDF} \
 		{output.REPORT} \
 		\"{params.chrs}\" \

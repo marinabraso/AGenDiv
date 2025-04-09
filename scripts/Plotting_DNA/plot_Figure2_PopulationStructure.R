@@ -23,14 +23,13 @@ jpsmc_thetas <- args[6]
 SamplesOrderInVCF <- args[7]
 Metadata <- args[8]
 DistTree <- args[9]
-TreeImage <- args[10]
-PDF <- args[11]
-REPORT <- args[12]
-strchrs <- args[13]
-PSMChighmu <- as.numeric(args[14])
-PSMClowmu <- as.numeric(args[15])
-Blangenerationtime <- as.numeric(args[16])
-Rconfig <- args[17]
+PDF <- args[10]
+REPORT <- args[11]
+strchrs <- args[12]
+PSMChighmu <- as.numeric(args[13])
+PSMClowmu <- as.numeric(args[14])
+Blangenerationtime <- as.numeric(args[15])
+Rconfig <- args[16]
 script <- sub(".*=", "", commandArgs()[4])
 
 source(Rconfig)
@@ -196,15 +195,15 @@ PSMCthetas <- read.table(jpsmc_thetas, h=TRUE, sep = "\t", check.names = F, stri
 print(head(PSMCthetas))
 
 # If TreeImage verion of the treefile done with FigTree does not exist, create a substitute with ggtree
+TreeImage <- paste0(OutFolder, "/SamplesDistanceTree_formated.png")
 if(!file.exists(TreeImage)){
-	png(filename = paste0(OutFolder, "/SamplesDistanceTree_ggtree.png"), width = 1000, height = 1000)
+	png(filename = TreeImage, width = 1000, height = 1000)
 	plot.new()
 	tree <- read.tree(DistTree)
 	p <- ggtree(tree, layout="daylight", size=1)
 	p <- p + geom_tiplab(size=10, color="black", fontface="bold")
 	#p <- p + geom_treescale(x = 0, y = 0, width=0.001)
 	print(p)
-	TreeImage <- paste0(OutFolder, "/SamplesDistanceTree_ggtree.png")
 	dev.off()
 }
 

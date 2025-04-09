@@ -5,6 +5,8 @@ Sys.setenv(LANG = "en")
 # Libraries & functions
 library(RColorBrewer)
 library(png)
+library(ggtree)
+library(ape)
 
 ######################################################################
 # Files & folders
@@ -12,7 +14,6 @@ args <- commandArgs(trailingOnly=TRUE)
 script <- sub(".*=", "", commandArgs()[4])
 strPiPerRegFiles <- args[1]
 strPiTotalFiles <- args[2]
-#strPiFixedWindowsFiles <- args[3]
 strHetPerRegFiles <- args[3]
 strHetTotalFiles <- args[4]
 strHetFixedWindowsFiles <- args[5]
@@ -21,16 +22,16 @@ SamplesOrderInVCF <- args[7]
 FunctionalRegionsCallableSpan <- args[8]
 PerSiteFeatureType <- args[9]
 SpeciesTree <- args[10]
-MapImage <- args[10]
-Lynch2023 <- args[11]
-Leffler2012 <- args[12]
-Romiguier2014 <- args[13]
-CorbettDetig2015 <- args[14]
-PDF <- args[15]
-REPORT <- args[16]
-strAtlSamples <- args[17]
-strMedSamples <- args[18]
-Rconfig <- args[19]
+MapImage <- args[11]
+Lynch2023 <- args[12]
+Leffler2012 <- args[13]
+Romiguier2014 <- args[14]
+CorbettDetig2015 <- args[15]
+PDF <- args[16]
+REPORT <- args[17]
+strAtlSamples <- args[18]
+strMedSamples <- args[19]
+Rconfig <- args[20]
 script <- sub(".*=", "", commandArgs()[4])
 
 source(Rconfig)
@@ -50,28 +51,44 @@ MedSamples <- unlist(strsplit(strMedSamples, " "))
 # Functions
 
 plot_HetPerPop <- function(Hetdf, atls, meds, ylab, zlab, xlabs, ylim){
-	w <- 0.7
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0.5, 2.5), col=NA)
+	w <- 0.05
+	flanking <- 0.2
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0, flanking*3+(length(atls)+length(meds))*w), col=NA)
 	mtext(ylab, side = 2, line = 4, cex=1.5)
-    violin(Hetdf[1,atls], 1, w, NA, modif_alpha(population.colors[1]), 2, 2)
-	points(jitter(rep(1, length(atls)), amount=w/3), Hetdf[,atls], pch=21, bg=modif_alpha(population.colors[1],0.2), col=modif_alpha(population.colors[1]), cex=1)
-    violin(Hetdf[1,meds], 2, w, NA, modif_alpha(population.colors[2]), 2, 2)
-	points(jitter(rep(2, length(meds)), amount=w/3), Hetdf[,meds], pch=21, bg=modif_alpha(population.colors[2],0.2), col=modif_alpha(population.colors[2]), cex=1)
+	pos <- flanking
+	hetsA <- Hetdf[1,atls]
+	hetsM <- Hetdf[1,meds]
+	for(s in c(1:length(atls))){
+		polygon(c(pos,pos+w,pos+w,pos), c(0,0,hetsA[s],hetsA[s]), col=population.colors[1], border=NA)
+		pos <- pos+w
+	}
+	midpA <- flanking+(pos-flanking)/2
+	pos <- pos+flanking
+	stM <- pos
+ 	for(s in c(1:length(meds))){
+		polygon(c(pos,pos+w,pos+w,pos), c(0,0,hetsM[s],hetsM[s]), col=population.colors[2], border=NA)
+		pos <- pos+w
+	}
+	midpM <- stM+(pos-stM)/2
+   	#violin(Hetdf[1,atls], 1, w, NA, modif_alpha(population.colors[1]), 2, 2)
+	#points(jitter(rep(1, length(atls)), amount=w/3), Hetdf[,atls], pch=21, bg=modif_alpha(population.colors[1],0.2), col=modif_alpha(population.colors[1]), cex=1)
+    #violin(Hetdf[1,meds], 2, w, NA, modif_alpha(population.colors[2]), 2, 2)
+	#points(jitter(rep(2, length(meds)), amount=w/3), Hetdf[,meds], pch=21, bg=modif_alpha(population.colors[2],0.2), col=modif_alpha(population.colors[2]), cex=1)
 	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
-	axis(1, at = c(1,2), labels=NA, lwd.ticks=1, las=1, cex.axis=1.5)
-	axis(1, at = c(1,2), labels=xlabs, lwd=NA, las=1, line=1, cex.axis=1.5)
+	axis(1, at = c(midpA, midpM), labels=NA, lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(1, at = c(midpA, midpM), labels=xlabs, lwd=NA, las=1, line=1, cex.axis=1.5)
 	box()
 }
 
 plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi2, aPi3){
 	distbewcateg <- 40
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(0,10), xlim=c(1,length(unif[,1])+distbewcateg*(length(categ)-1))+distbewcateg*3, col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(0,10), xlim=c(0,length(df[,1])+distbewcateg*(length(categ)+1)+distbewcateg*3), xaxs="i", col=NA)
 	mtext("Average pairwise differences (%)", side = 2, line = 3, cex=1.5)
-	pos <- 0
+	pos <- distbewcateg
 	midp <- c()
 	for(c in categ){
 		print(c)
-		points(pos+c(1:length(df[which(df$class==c),1])), df$Diversity[which(df$class==c)], pch=16, col=unif$colors[which(df$class==c)], cex=1.5)
+		points(pos+c(1:length(df[which(df$class==c),1])), df$Diversity[which(df$class==c)], pch=16, col=df$colors[which(df$class==c)], cex=1.5)
 		midp <- c(midp, pos+(length(df[which(df$class==c),1]))/2)
 		pos <- pos+length(df[which(df$class==c),1])+distbewcateg
 	}
@@ -86,21 +103,23 @@ plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi
 	box()
 }
 
-plot_Span_CallableVsVariants_FunctionalRegions <- function(df, ylab, ylim, reg){
+plot_DifferenceOfPercOfVarSites_FunctionalRegions <- function(df, ylab, ylim, reg){
 	w <- .3
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(0,ylim), xlim=c(.5, length(colnames(df))-.5), col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(.5, length(reg)+.5), col=NA)
 	mtext(ylab, side = 2, line = 4, cex=1.2)
+	meanA <- df$PercentVarAtl[which(df$Feature=="Callable")]
+	meanM <- df$PercentVarMed[which(df$Feature=="Callable")]
 	for(i in c(1:length(reg))){
-		perC <- df$PercentCall[which(df$Feature==reg[i])]
-		perV <- df$PercentVar[which(df$Feature==reg[i])]
-		polygon(c(i-w,i,i,i-w), c(0,0,perC,perC), col="gold", border="gold")
-		polygon(c(i,i+w,i+w,i), c(0,0,perV, perV), col="forestgreen", border="forestgreen")
-		text(i-w/2+.1, perC+8,  labels =paste0(format(round(perC, 1), nsmall = 1),"%"), pos=3, srt = 90, cex=1.5)
-		text(i+w/2+.1, perV+8,  labels =paste0(format(round(perV, 1), nsmall = 1),"%"), pos=3, srt = 90, cex=1.5)
+		difperA <- df$PercentVarAtl[which(df$Feature==reg[i])]-meanA
+		difperM <- df$PercentVarMed[which(df$Feature==reg[i])]-meanM
+		polygon(c(i-w,i,i,i-w), c(0,0,difperA,difperA), col=population.colors[1], border=population.colors[1])
+		polygon(c(i,i+w,i+w,i), c(0,0,difperM, difperM), col=population.colors[2], border=population.colors[2])
+		#text(i-w/2+.1, difperA+8,  labels =paste0(format(round(difperA, 1), nsmall = 1),"%"), pos=3, srt = 90, cex=1.5)
+		#text(i+w/2+.1, difperM+8,  labels =paste0(format(round(difperM, 1), nsmall = 1),"%"), pos=3, srt = 90, cex=1.5)
 	}
+	abline(h=0, col="black")
 	axis(1, at = c(1:(length(reg))), labels=reg, lwd.ticks=1, las=2, cex.axis=1.5)
-	axis(2, at = seq(0,ylim,ylim/5), lwd.ticks=1, las=1, cex.axis=1.5)
-	legend("topleft", c("Callable length", "Variants"), pch=19, text.col="black", col=c("gold","forestgreen"), bty = "n", cex=2, xjust = 0, yjust = 0)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
 }
 
@@ -272,7 +291,22 @@ FeatSpan$pvalMed[which(FeatSpan$Feature=="Intergenic")] <- Chi.squared.test_Feat
 FeatSpan$ORMed[which(FeatSpan$Feature=="Intergenic")] <- as.numeric(Chi.squared.test_Feature_SpanVsVariants(FeatSpan, "VarMed", "Intergenic")$OR)
 print(FeatSpan)
 
-quit()
+
+# If TreeImage verion of the treefile done with FigTree & Incksape does not exist, create a substitute with ggtree
+TreeImage <- paste0(OutFolder, "/SpeciesTree_formated.png")
+#if(!file.exists(TreeImage)){
+	#png(filename = TreeImage, width = 1000, height = 1000)
+	#plot.new()
+	tree <- read.tree(SpeciesTree)
+	print(tree)
+	tree <- ape::root(tree, "Drosophila_melanogaster")
+	p <- ggtree(tree, linewidth=2)
+	p <- p + geom_tiplab(size=10, color="black", fontface="bold")
+	p <- p + xlim(0, max(p$data$x) + 0.2)
+	print(p)
+	ggsave(TreeImage, width = 15, height = 15)
+	#dev.off()
+#}
 
 ######################################################################
 ## Figure 1
@@ -285,10 +319,9 @@ layout(matrix(c(1,2,3,4,4,5),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(
 # One-to-one orthoologs phylogenetic tree 
 print("A - One-to-one orthoologs phylogenetic tree")
 par(mar=c(3,3,2,2))
-map <- readPNG(paste0(system("pwd", intern=TRUE), "/", MapImage))
+map <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
 plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
 rasterImage(map, 1, 1, 10, 10)
-legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=2, xjust = 0, yjust = 0)
 writePlotLabel("A")
 
 ### B
@@ -310,7 +343,7 @@ colnames(HetAll) <- AllSamples
 PiTAll <- read.table(grep("Observed_Data.*Callable.*AllSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTAtl <- read.table(grep("Observed_Data.*Callable.*AtlSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTMed <- read.table(grep("Observed_Data.*Callable.*MedSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
-plot_HetPerPop(HetAll*100, AtlSamples, MedSamples, "Heterozygosity (%)", "Average pairwise differences (%)", populations, c(2,3))
+plot_HetPerPop(HetAll*100, AtlSamples, MedSamples, "Heterozygosity (%)", "Average pairwise differences (%)", populations, c(2.5,3))
 writePlotLabel("C")
 
 ### D
@@ -327,9 +360,10 @@ writePlotLabel("D")
 ## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
 print("E - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
-plot_PercOfVarSites_FunctionalRegions(FeatSpan, "%", 100, RegionTypes)
+plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "Difference with total % of variants", c(-5,5), RegionTypes)
 writePlotLabel("E")
 
+quit()
 ######################################################################
 ## Figure S1?
 print("#### Figure S1")
