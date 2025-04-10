@@ -75,12 +75,12 @@ plot_HetPerPop <- function(Hetdf, atls, meds, ylab, zlab, xlabs, ylim){
     #violin(Hetdf[1,meds], 2, w, NA, modif_alpha(population.colors[2]), 2, 2)
 	#points(jitter(rep(2, length(meds)), amount=w/3), Hetdf[,meds], pch=21, bg=modif_alpha(population.colors[2],0.2), col=modif_alpha(population.colors[2]), cex=1)
 	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
-	axis(1, at = c(midpA, midpM), labels=NA, lwd.ticks=1, las=1, cex.axis=1.5)
+	#axis(1, at = c(midpA, midpM), labels=NA, lwd.ticks=1, las=1, cex.axis=1.5)
 	axis(1, at = c(midpA, midpM), labels=xlabs, lwd=NA, las=1, line=1, cex.axis=1.5)
 	box()
 }
 
-plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi2, aPi3){
+plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi2, aPi3, extralab){
 	distbewcateg <- 40
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(0,10), xlim=c(0,length(df[,1])+distbewcateg*(length(categ)+1)+distbewcateg*3), xaxs="i", col=NA)
 	mtext("Average pairwise differences (%)", side = 2, line = 3, cex=1.5)
@@ -92,12 +92,18 @@ plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi
 		midp <- c(midp, pos+(length(df[which(df$class==c),1]))/2)
 		pos <- pos+length(df[which(df$class==c),1])+distbewcateg
 	}
-	points(pos, mypivalues[2], pch=18, col=population.colors[1], cex=2)
-	points(pos+distbewcateg/2, mypivalues[3], pch=18, col=population.colors[2], cex=2)
 	abline(h=mypivalues[1], lty=2)
-	points(pos+distbewcateg/2*2, aPi1, pch=18, col="black", cex=2)
-	points(pos+distbewcateg/2*3, aPi2, pch=18, col="black", cex=2)
-	points(pos+distbewcateg/2*4, aPi3, pch=18, col="black", cex=2)
+	extrapointspos <- c(pos, pos+distbewcateg/2, pos+distbewcateg/2*2, pos+distbewcateg/2*3, pos+distbewcateg/2*4)
+	points(extrapointspos[1], mypivalues[2], pch=18, col=population.colors[1], cex=2)
+	text(extrapointspos[1], mypivalues[2], labels=extralab[1], pos=1, cex=1.5)
+	points(extrapointspos[2], mypivalues[3], pch=18, col=population.colors[2], cex=2)
+	text(extrapointspos[2], mypivalues[3], labels=extralab[2], pos=1, cex=1.5)
+	points(extrapointspos[3], aPi1, pch=18, col="black", cex=2)
+	text(extrapointspos[3], aPi1, labels=extralab[3], pos=1, cex=1.5)
+	points(extrapointspos[4], aPi2, pch=18, col="black", cex=2)
+	text(extrapointspos[4], aPi2, labels=extralab[4], pos=1, cex=1.5)
+	points(extrapointspos[5], aPi3, pch=18, col="black", cex=2)
+	text(extrapointspos[5], aPi3, labels=extralab[5], pos=1, cex=1.5)
 	axis(1, at = midp, labels=categ, lwd.ticks=1, las=2, cex.axis=1.5)
 	axis(2, at = seq(0,20,1), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
@@ -114,8 +120,14 @@ plot_DifferenceOfPercOfVarSites_FunctionalRegions <- function(df, ylab, ylim, re
 		difperM <- df$PercentVarMed[which(df$Feature==reg[i])]-meanM
 		polygon(c(i-w,i,i,i-w), c(0,0,difperA,difperA), col=population.colors[1], border=population.colors[1])
 		polygon(c(i,i+w,i+w,i), c(0,0,difperM, difperM), col=population.colors[2], border=population.colors[2])
-		#text(i-w/2+.1, difperA+8,  labels =paste0(format(round(difperA, 1), nsmall = 1),"%"), pos=3, srt = 90, cex=1.5)
-		#text(i+w/2+.1, difperM+8,  labels =paste0(format(round(difperM, 1), nsmall = 1),"%"), pos=3, srt = 90, cex=1.5)
+		textdirection <- 1
+		textposition <- 3
+		if(difperA<0){
+			textdirection <- -1
+			textposition <- 1
+		}
+		text(i-w/2, difperA+textdirection*.5,  labels =paste0(format(round(difperA, 1), nsmall = 1),"%"), pos=textposition, srt = 90, cex=1.5)
+		text(i+w/2, difperM+textdirection*.5,  labels =paste0(format(round(difperM, 1), nsmall = 1),"%"), pos=textposition, srt = 90, cex=1.5)
 	}
 	abline(h=0, col="black")
 	axis(1, at = c(1:(length(reg))), labels=reg, lwd.ticks=1, las=2, cex.axis=1.5)
@@ -294,9 +306,7 @@ print(FeatSpan)
 
 # If TreeImage verion of the treefile done with FigTree & Incksape does not exist, create a substitute with ggtree
 TreeImage <- paste0(OutFolder, "/SpeciesTree_formated.png")
-#if(!file.exists(TreeImage)){
-	#png(filename = TreeImage, width = 1000, height = 1000)
-	#plot.new()
+if(!file.exists(TreeImage)){
 	tree <- read.tree(SpeciesTree)
 	print(tree)
 	tree <- ape::root(tree, "Drosophila_melanogaster")
@@ -305,8 +315,7 @@ TreeImage <- paste0(OutFolder, "/SpeciesTree_formated.png")
 	p <- p + xlim(0, max(p$data$x) + 0.2)
 	print(p)
 	ggsave(TreeImage, width = 15, height = 15)
-	#dev.off()
-#}
+}
 
 ######################################################################
 ## Figure 1
@@ -318,10 +327,11 @@ layout(matrix(c(1,2,3,4,4,5),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(
 ### A
 # One-to-one orthoologs phylogenetic tree 
 print("A - One-to-one orthoologs phylogenetic tree")
-par(mar=c(3,3,2,2))
-map <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
+par(mar=c(3,3,2,2),xpd=T)
+tree <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
 plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
-rasterImage(map, 1, 1, 10, 10)
+rasterImage(tree, 1, 1, 10, 10)
+par(mar=c(3,3,2,2),xpd=F)
 writePlotLabel("A")
 
 ### B
@@ -331,7 +341,7 @@ par(mar=c(3,3,2,2))
 map <- readPNG(paste0(system("pwd", intern=TRUE), "/", MapImage))
 plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
 rasterImage(map, 1, 1, 10, 10)
-legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=2, xjust = 0, yjust = 0)
+legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=1.5, xjust = 0, yjust = 0)
 writePlotLabel("B")
 
 ### C
@@ -340,9 +350,6 @@ print("C - Heterozygosity per sample")
 par(mar=c(7,7,2,2))
 HetAll <- read.table(grep("Observed_Data.*Callable", HetTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 colnames(HetAll) <- AllSamples
-PiTAll <- read.table(grep("Observed_Data.*Callable.*AllSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
-PiTAtl <- read.table(grep("Observed_Data.*Callable.*AtlSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
-PiTMed <- read.table(grep("Observed_Data.*Callable.*MedSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 plot_HetPerPop(HetAll*100, AtlSamples, MedSamples, "Heterozygosity (%)", "Average pairwise differences (%)", populations, c(2.5,3))
 writePlotLabel("C")
 
@@ -353,14 +360,17 @@ par(mar=c(7,7,2,2))
 PutnamPi <- 4
 HuangPi <- 5.37
 BiPi <- 3.04
-plot_Comparison_diversity_estimates(unif, class[which(class != "Chordata")], c(PiTAll,PiTAtl,PiTMed)*100, PutnamPi, HuangPi, BiPi)
+PiTAll <- read.table(grep("Observed_Data.*Callable.*AllSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
+PiTAtl <- read.table(grep("Observed_Data.*Callable.*AtlSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
+PiTMed <- read.table(grep("Observed_Data.*Callable.*MedSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
+plot_Comparison_diversity_estimates(unif, class[which(class != "Chordata")], c(PiTAll,PiTAtl,PiTMed)*100, PutnamPi, HuangPi, BiPi, c("B. lanceolatum\nAtlantic", "B. lanceolatum\nMediterranean", "B. floridae\nPutnam 2008", "B. belcheri\nHuang 2014", "B. belcheri\nBi 2020"))
 writePlotLabel("D")
 
 ### E
 ## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
 print("E - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
-plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "Difference with total % of variants", c(-5,5), RegionTypes)
+plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variants - total % of variants", c(-5,5), RegionTypes)
 writePlotLabel("E")
 
 quit()
