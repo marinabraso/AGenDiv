@@ -330,7 +330,7 @@ print("A - One-to-one orthoologs phylogenetic tree")
 par(mar=c(3,3,2,2),xpd=T)
 tree <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
 plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
-rasterImage(tree, 1, 1, 10, 10)
+rasterImage(tree, 0.5, 0.5, 10, 10)
 par(mar=c(3,3,2,2),xpd=F)
 writePlotLabel("A")
 
