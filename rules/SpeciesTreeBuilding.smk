@@ -193,7 +193,7 @@ rule Build_Tree_Species:
 		"benchmarks/SpeciesTreeBuilding/Build_Tree_Species/Build_Tree_Species.txt"
 	conda:
 		'../envs/Phylogenetics.yaml'
-	params:
+	params:																																																																																																										
 		time = '15:00:00',
 		name = "treeSp",
 		threads = 10,

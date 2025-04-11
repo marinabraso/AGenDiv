@@ -131,26 +131,24 @@ plot_DifferenceOfPercOfVarSites_FunctionalRegions <- function(df, ylab, ylim, re
 	}
 	abline(h=0, col="black")
 	axis(1, at = c(1:(length(reg))), labels=reg, lwd.ticks=1, las=2, cex.axis=1.5)
-	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/10), lwd.ticks=1, las=1, cex.axis=1.5)
+	legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=1.5, xjust = 0, yjust = 0)
 	box()
 }
 
 plot_SFS <- function(values, main, ylab, xlab, max, min, ylim, col){
 	w <- 1
 	h <- hist(values, plot=F, breaks=seq(min(values)-w/2, max+w/2, w))
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(max-w/2, min+w/2), xaxs="i", col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(max+w/2, min-w/2), xaxs="i", col=NA)
 	mtext(main, side = 3, line = -3, cex=1.5)
 	mtext(xlab, side = 1, line = 3, cex=1.5)
 	mtext(ylab, side = 2, line = 4, cex=1.5)
 	h$counts <- h$counts/sum(h$counts)
-	print(paste(max, min))
-	print(h$mids)
 	for(i in c(length(h$mids):(length(h$mids)-(max-min)))){
-		print(h$mids[i])
 		polygon(c(h$mids[i]-w/2,h$mids[i]+w/2,h$mids[i]+w/2,h$mids[i]-w/2), c(0,0,h$counts[i],h$counts[i]), col=col, border=NA)
 	}
-	axis(1, at = seq(min,max,1), lwd.ticks=1, las=1, cex.axis=.5)
-	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(1, at = h$mids, lwd.ticks=1, las=1, cex.axis=1)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1)
 	box()
 }
 
@@ -160,9 +158,11 @@ plot_Heterozygous_Sites_in_Windows <- function(hetdf, samp, col, wsize, ymax){
 	mtext(paste0("Heterozygous sites in ", wsize, "bp windows"), side = 1, line = 4, cex=1.5)
 	for(s in c(1:length(samp))){
 		h <- hist(as.numeric(hetdf[,s]), breaks=seq(-0.5,wsize+.5,1), plot=FALSE)
-		lines(h$mids, h$counts/1000000, col=col[s])
+		lines(h$mids, h$counts/1000000, col=col[s], lwd=3)
 	}
-	lines(0:50, dgeom(x = 0:50, prob = 0.03))
+	print(h$counts/1000000)
+	print(dgeom(x = 0:50, prob = 0.1)*10*h$counts[1]/1000000)
+	#lines(0:50, dgeom(x = 0:50, prob = 0.1)*10*h$counts[1]/1000000)
 	axis(1, at = seq(0,10,1), lwd.ticks=1, las=1, cex.axis=1.5)
 	axis(2, at = seq(0,ymax,ymax/5), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
@@ -373,7 +373,6 @@ par(mar=c(7,7,2,2))
 plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variants - total % of variants", c(-5,5), RegionTypes)
 writePlotLabel("E")
 
-quit()
 ######################################################################
 ## Figure S1?
 print("#### Figure S1")
@@ -382,21 +381,24 @@ layout(matrix(c(1,4,
 				2,5,
 				3,5),nrow=4,ncol=2,byrow=T), widths=c(2,1), heights=c(2/3,2/6,2/6,2/3), TRUE)
 
-### A
 ## Site frequency spectrum
-print("A - Site frequency spectrum")
-par(mar=c(3,7,2,2))
+print("Site frequency spectrum")
+par(mar=c(7,7,2,2))
+### A
 AllFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-plot_SFS(AllFreq, "All samples", "", "", max(AllFreq), max(AllFreq)/2, c(0,0.2), "black")
+plot_SFS(AllFreq, "All samples", "Proportion of sites", "Absolute major allele frequency", max(AllFreq), max(AllFreq)/2, c(0,0.5), "black")
 writePlotLabel("A")
-AtlFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-plot_SFS(AtlFreq, "Atlantic samples", "Proportion of sites", "", max(AtlFreq), max(AtlFreq)/2, c(0,0.2), population.colors[1])
-MedFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-plot_SFS(MedFreq, "Mediterranean samples", "", "Absolute major allele frequency", max(MedFreq), max(MedFreq)/2, c(0,0.2), population.colors[2])
-
 ### B
+AtlFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+plot_SFS(AtlFreq, "Atlantic samples", "Proportion of sites", "Absolute major allele frequency", max(AtlFreq), max(AtlFreq)/2, c(0,0.5), population.colors[1])
+writePlotLabel("B")
+### C
+MedFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+plot_SFS(MedFreq, "Mediterranean samples", "Proportion of sites", "Absolute major allele frequency", max(MedFreq), max(MedFreq)/2, c(0,0.5), population.colors[2])
+writePlotLabel("C")
+
 ## Distribution of the distance between het sites
-print("B - Distribution of the distance between het sites")
+print("Distribution of the distance between het sites")
 par(mar=c(7,7,2,2))
 windowsize <- 50
 maxyHetSites <- 2 # millions
@@ -405,9 +407,12 @@ HetRegAll.Fixed <-  HetRegAll.Fixed[,4:(3+length(AllSamples))]
 colnames(HetRegAll.Fixed) <- AllSamples
 HetRegAll.Fixed <- HetRegAll.Fixed*windowsize
 print(head(HetRegAll.Fixed))
-plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[AtlSamples], AtlSamples, PopColors[1], windowsize, maxyHetSites)
-plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[MedSamples], MedSamples, PopColors[2], windowsize, maxyHetSites)
-writePlotLabel("B")
+### D
+plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[AtlSamples], AtlSamples, population.colors[1], windowsize, maxyHetSites)
+writePlotLabel("D")
+### E
+plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[MedSamples], MedSamples, population.colors[2], windowsize, maxyHetSites)
+writePlotLabel("E")
 
 
 dev.off()
@@ -420,7 +425,6 @@ write(paste(AllSamples,collapse="\t"), file = REPORT, append = TRUE)
 write(paste(HetAll,collapse="\t"), file = REPORT, append = TRUE)
 
 ## Prepare Table 1
-# Only Pi values?
 typesofdata <- c("Data", "SNPs", "INDELs", "Data", "Data", "Data", "Data")
 typesofregions <- c("Callable", "Callable", "Callable", "Exons", "Introns", "Promoters", "Intergenic")
 Table1 <- cbind(c("All","Atlantic", "Mediterranean"))
