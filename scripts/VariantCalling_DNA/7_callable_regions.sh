@@ -42,7 +42,7 @@ then
 	exit "Error in number of lines before paste (nmincov=${nmincov} & nSNPable=${nSNPable})"
 fi
 echo "### Paste"; >&2 echo "### Paste"
-#paste $(dirname ${CallableRegions})/$(basename ${SNPableQuality}).tbl <(zcat ${mincov} | grep '^chr' | sort -k1,2V | cut -f3) | gzip > $(dirname ${CallableRegions})/SNPable_MinCov.tbl.gz
+paste $(dirname ${CallableRegions})/$(basename ${SNPableQuality}).tbl <(zcat ${mincov} | grep '^chr' | sort -k1,2V | cut -f3) | gzip > $(dirname ${CallableRegions})/SNPable_MinCov.tbl.gz
 status=$?
 [ $status -eq 0 ] && echo "Done" || exit "Failed ($status)"
 
@@ -50,7 +50,7 @@ echo "### tbl2bed & apply SNPable & cov filters"; >&2 echo "### tbl2bed & apply 
 zcat $(dirname ${CallableRegions})/SNPable_MinCov.tbl.gz | \
 	awk -v lct=$lcovthreshold -v uct=$ucovthreshold '{if($3==3 && $4>=lct && $4<uct){print $1"\t"$2"\t1"}else{print $1"\t"$2"\t0"}}' | \
 	awk '{if(NR==1){chr=$1;st=$2;end=$2;len=1;io=$3;next}if($3!=io || $1!=chr){print chr"\t"st"\t"end"\t"io"\t"len;chr=$1;st=$2;end=$2;len=1;io=$3;next}end=$2;len++}END{print chr"\t"st"\t"end"\t"io"\t"len;}' | gzip > $(dirname ${CallableRegions})/AllWindows_SNPable_coverage.bed.gz
-dstatus=$?
+status=$?
 [ $status -eq 0 ] && echo "Done" || exit "Failed ($status)"
 
 echo "### tbl2bed applying only SNPable filter"; >&2 echo "### tbl2bed applying only SNPable filter"

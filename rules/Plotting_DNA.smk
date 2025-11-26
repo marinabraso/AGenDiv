@@ -1286,7 +1286,7 @@ rule plot_Heterozygosity_inBEDregions_PerSubsetOfSamples:
 		err = "logs/Plotting_DNA/{ObsExp}/plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.err",
 		out = "logs/Plotting_DNA/{ObsExp}/plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.out"
 	benchmark:
-		"benchmarks/Plotting_DNA//{ObsExp}plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.txt"
+		"benchmarks/Plotting_DNA/{ObsExp}plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:

@@ -4,9 +4,8 @@
 This code is structured on a snakemake pipeline. It was generated and executed on the UNIL CURNAGL computing cluster. It is heavily dependent on the CURNAGL folder structure, data storage system and its Slurm workload manager.  
 
 ## Basic environment
-- conda 23.1.0
-- mamba 1.4.0
-- snakemake 7.25.0
+- conda 25.11.0
+- snakemake 9.13.7
 
 ---
 ## Before starting: 

@@ -326,36 +326,36 @@ layout(matrix(c(1,2,3,4,4,5),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(
 
 ### A
 # One-to-one orthoologs phylogenetic tree 
-print("A - One-to-one orthoologs phylogenetic tree")
-par(mar=c(3,3,2,2),xpd=T)
-tree <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
-plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
-rasterImage(tree, 0.5, 0.5, 10, 10)
-par(mar=c(3,3,2,2),xpd=F)
-writePlotLabel("A")
+# print("A - One-to-one orthoologs phylogenetic tree")
+# par(mar=c(3,3,2,2),xpd=T)
+# tree <- readPNG(paste0(system("pwd", intern=TRUE), "/", TreeImage))
+# plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
+# rasterImage(tree, 0.5, 0.5, 10, 10)
+# par(mar=c(3,3,2,2),xpd=F)
+# writePlotLabel("A")
 
-### B
+### A
 ## Map of sampling
-print("B - Map of sampling")
+print("A - Map of sampling")
 par(mar=c(3,3,2,2))
 map <- readPNG(paste0(system("pwd", intern=TRUE), "/", MapImage))
 plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
 rasterImage(map, 1, 1, 10, 10)
 legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=1.5, xjust = 0, yjust = 0)
-writePlotLabel("B")
+writePlotLabel("A")
 
-### C
+### B
 ## Heterozygosity per sample
-print("C - Heterozygosity per sample")
+print("B - Heterozygosity per sample")
 par(mar=c(7,7,2,2))
 HetAll <- read.table(grep("Observed_Data.*Callable", HetTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 colnames(HetAll) <- AllSamples
 plot_HetPerPop(HetAll*100, AtlSamples, MedSamples, "Heterozygosity (%)", "Average pairwise differences (%)", populations, c(2.5,3))
-writePlotLabel("C")
+writePlotLabel("B")
 
-### D
+### C
 ## Comparison with other diversity estimates
-print("D - Comparison with other diversity estimates")
+print("C - Comparison with other diversity estimates")
 par(mar=c(7,7,2,2))
 PutnamPi <- 4
 HuangPi <- 5.37
@@ -364,14 +364,14 @@ PiTAll <- read.table(grep("Observed_Data.*Callable.*AllSamples", PiTotalFiles, v
 PiTAtl <- read.table(grep("Observed_Data.*Callable.*AtlSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTMed <- read.table(grep("Observed_Data.*Callable.*MedSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 plot_Comparison_diversity_estimates(unif, class[which(class != "Chordata")], c(PiTAll,PiTAtl,PiTMed)*100, PutnamPi, HuangPi, BiPi, c("B. lanceolatum\nAtlantic", "B. lanceolatum\nMediterranean", "B. floridae\nPutnam 2008", "B. belcheri\nHuang 2014", "B. belcheri\nBi 2020"))
-writePlotLabel("D")
+writePlotLabel("C")
 
-### E
+### D
 ## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
-print("E - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
+print("D - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
-plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variants - total % of variants", c(-5,5), RegionTypes)
-writePlotLabel("E")
+plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variant sites - genome-wide % of variant sites", c(-5,5), RegionTypes)
+writePlotLabel("D")
 
 ######################################################################
 ## Figure S1?
