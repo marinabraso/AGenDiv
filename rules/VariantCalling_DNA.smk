@@ -226,6 +226,8 @@ rule r5_join_sample_calls_PerChr:
 	output:
 		SamplesMap = "results/VariantCalling_DNA/{folder}/SamplesMap_{round}.{chr}.txt",
 		VCF = "results/VariantCalling_DNA/{folder}/ShortVariants_{round}.{chr}.vcf.gz"
+	wildcard_constraints:
+		round = 'round[0-9]+'
 	log:
 		err = "logs/VariantCalling_DNA/{folder}/5_join_sample_calls_PerChr_{round}.{chr}.err",
 		out = "logs/VariantCalling_DNA/{folder}/5_join_sample_calls_PerChr_{round}.{chr}.out"
@@ -249,6 +251,8 @@ rule r6_hardfilter_VCF_PerChr:
 		chrVCF = "results/VariantCalling_DNA/{folder}/ShortVariants_{round}.{chr}.vcf.gz"
 	output:
 		chrVCFHardFiltered = "results/VariantCalling_DNA/{folder}/ShortVariants_HardFiltered_{round}.{chr}.vcf.gz"
+	wildcard_constraints:
+		round = 'round[0-9]+'
 	log:
 		err = "logs/VariantCalling_DNA/{folder}/6_hardfilter_VCF_PerChr_{round}.{chr}.err",
 		out = "logs/VariantCalling_DNA/{folder}/6_hardfilter_VCF_PerChr_{round}.{chr}.out",
