@@ -1043,7 +1043,7 @@ rule plot_Figure1_GenomicDiversity:
 		time = '1:00:00',
 		name = "pFig1",
 		threads = 1,
-		mem = 2000,
+		mem = 10000,
 		AtlSamples=config["AtlSamples"],
 		MedSamples=config["MedSamples"]
 	shell:

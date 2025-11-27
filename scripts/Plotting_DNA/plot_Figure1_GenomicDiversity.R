@@ -152,6 +152,22 @@ plot_SFS <- function(values, main, ylab, xlab, max, min, ylim, col){
 	box()
 }
 
+plot_Nalleles <- function(values, main, ylab, xlab, max, min, ylim, col){
+	w <- 1
+	h <- hist(values, plot=F, breaks=seq(min(values)-w/2, max+w/2, w))
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(max+w/2, min-w/2), xaxs="i", col=NA)
+	mtext(main, side = 3, line = -3, cex=1.5)
+	mtext(xlab, side = 1, line = 3, cex=1.5)
+	mtext(ylab, side = 2, line = 4, cex=1.5)
+	h$counts <- h$counts/sum(h$counts)
+	for(i in c(length(h$mids):(length(h$mids)-(max-min)))){
+		polygon(c(h$mids[i]-w/2,h$mids[i]+w/2,h$mids[i]+w/2,h$mids[i]-w/2), c(0,0,h$counts[i],h$counts[i]), col=col, border=NA)
+	}
+	axis(1, at = h$mids, lwd.ticks=1, las=1, cex.axis=1)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1)
+	box()
+}
+
 plot_Heterozygous_Sites_in_Windows <- function(hetdf, samp, col, wsize, ymax){
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(0,ymax), xlim=c(0, 10), col=NA, xaxs = "i", yaxs = "i")
 	mtext("Frequency (in millions)", side = 2, line = 4, cex=1.5)
@@ -322,7 +338,7 @@ if(!file.exists(TreeImage)){
 print("#### Figure 1")
 pdf(PDF, width=15, height=10)
 par(oma=c(2,2,2,2))
-layout(matrix(c(1,2,3,4,4,5),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(1,1), TRUE)
+layout(matrix(c(1,2,4,3,3,3),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(1,1), TRUE)
 
 ### A
 # One-to-one orthoologs phylogenetic tree 
@@ -374,12 +390,13 @@ plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variant sites 
 writePlotLabel("D")
 
 ######################################################################
-## Figure S1?
-print("#### Figure S1")
-layout(matrix(c(1,4,
-				2,4,
-				2,5,
-				3,5),nrow=4,ncol=2,byrow=T), widths=c(2,1), heights=c(2/3,2/6,2/6,2/3), TRUE)
+## Figure S3
+print("#### Figure S3")
+layout(matrix(c(1,1,
+				2,2,
+				3,3,
+				4,5,
+				6,7),nrow=5,ncol=2,byrow=T), widths=c(1,1), heights=c(1,1,1,1,1), TRUE)
 
 ## Site frequency spectrum
 print("Site frequency spectrum")
@@ -388,14 +405,15 @@ par(mar=c(7,7,2,2))
 AllFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(AllFreq, "All samples", "Proportion of sites", "Absolute major allele frequency", max(AllFreq), max(AllFreq)/2, c(0,0.5), "black")
 writePlotLabel("A")
-### B
+gc(AllFreq)
+### 
 AtlFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(AtlFreq, "Atlantic samples", "Proportion of sites", "Absolute major allele frequency", max(AtlFreq), max(AtlFreq)/2, c(0,0.5), population.colors[1])
-writePlotLabel("B")
-### C
+gc(AtlFreq)
+### 
 MedFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(MedFreq, "Mediterranean samples", "Proportion of sites", "Absolute major allele frequency", max(MedFreq), max(MedFreq)/2, c(0,0.5), population.colors[2])
-writePlotLabel("C")
+gc(MedFreq)
 
 ## Distribution of the distance between het sites
 print("Distribution of the distance between het sites")
@@ -407,13 +425,28 @@ HetRegAll.Fixed <-  HetRegAll.Fixed[,4:(3+length(AllSamples))]
 colnames(HetRegAll.Fixed) <- AllSamples
 HetRegAll.Fixed <- HetRegAll.Fixed*windowsize
 print(head(HetRegAll.Fixed))
-### D
+### B
 plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[AtlSamples], AtlSamples, population.colors[1], windowsize, maxyHetSites)
-writePlotLabel("D")
-### E
+writePlotLabel("B")
+### 
 plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[MedSamples], MedSamples, population.colors[2], windowsize, maxyHetSites)
-writePlotLabel("E")
+gc(HetRegAll.Fixed)
 
+## Histogram of number of alleles per variants site
+print("Histogram of number of alleles per variant site")
+par(mar=c(7,7,2,2))
+### C
+AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+print(head(AllNalleles))
+FeatureType <- read.table(text = system(paste0("zcat ", PerSiteFeatureType), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+print(head(FeatureType))
+NallelesFeat <- cbind(AllNalleles, FeatureType)
+gc(AllNalleles, FeatureType)
+print(head(NallelesFeat))
+plot_Nalleles(NallelesFeat$AllNalleles[which(NallelesFeat$FeatureType == "SNP")], "SNPs", "Proportion of sites", "Number of alleles", max(NallelesFeat$AllNalleles), max(NallelesFeat$AllNalleles)/2, c(0,0.5), "black")
+writePlotLabel("C")
+plot_Nalleles(NallelesFeat$AllNalleles[which(NallelesFeat$FeatureType == "INDEL")], "INDELs", "Proportion of sites", "Number of alleles", max(NallelesFeat$AllNalleles), max(NallelesFeat$AllNalleles)/2, c(0,0.5), "black")
+gc(NallelesFeat)
 
 dev.off()
 #############
