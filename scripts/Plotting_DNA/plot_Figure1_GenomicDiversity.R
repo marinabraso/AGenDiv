@@ -18,21 +18,22 @@ strHetPerRegFiles <- args[3]
 strHetTotalFiles <- args[4]
 strHetFixedWindowsFiles <- args[5]
 strFreqPerSiteFiles <- args[6]
-SamplesOrderInVCF <- args[7]
-FunctionalRegionsCallableSpan <- args[8]
-PerSiteFeatureType <- args[9]
-SpeciesTree <- args[10]
-MapImage <- args[11]
-Lynch2023 <- args[12]
-Leffler2012 <- args[13]
-Romiguier2014 <- args[14]
-CorbettDetig2015 <- args[15]
-PDF <- args[16]
-REPORT <- args[17]
-strAtlSamples <- args[18]
-strMedSamples <- args[19]
-Rconfig <- args[20]
-script <- sub(".*=", "", commandArgs()[4])
+strCoverageFiles <- args[7]
+SamplesOrderInVCF <- args[8]
+FunctionalRegionsCallableSpan <- args[9]
+PerSiteFeatureType <- args[10]
+SpeciesTree <- args[11]
+MapImage <- args[12]
+Metadata <- args[13]
+Lynch2023 <- args[14]
+Leffler2012 <- args[15]
+Romiguier2014 <- args[16]
+CorbettDetig2015 <- args[17]
+PDF <- args[18]
+REPORT <- args[19]
+strAtlSamples <- args[20]
+strMedSamples <- args[21]
+Rconfig <- args[22]
 
 source(Rconfig)
 system(paste0("mkdir -p $(dirname ", PDF, ")"))
@@ -43,6 +44,7 @@ HetPerRegFiles <- unlist(strsplit(strHetPerRegFiles, " "))
 HetTotalFiles <- unlist(strsplit(strHetTotalFiles, " "))
 HetFixedWindowsFiles <- unlist(strsplit(strHetFixedWindowsFiles, " "))
 FreqPerSiteFiles <- unlist(strsplit(strFreqPerSiteFiles, " "))
+CoverageFiles <- unlist(strsplit(strCoverageFiles, " "))
 AtlSamples <- unlist(strsplit(strAtlSamples, " "))
 MedSamples <- unlist(strsplit(strMedSamples, " "))
 
@@ -112,7 +114,7 @@ plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi
 plot_DifferenceOfPercOfVarSites_FunctionalRegions <- function(df, ylab, ylim, reg){
 	w <- .3
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(.5, length(reg)+.5), col=NA)
-	mtext(ylab, side = 2, line = 4, cex=1.2)
+	mtext(ylab, side = 2, line = 4, cex=1.5)
 	meanA <- df$PercentVarAtl[which(df$Feature=="Callable")]
 	meanM <- df$PercentVarMed[which(df$Feature=="Callable")]
 	for(i in c(1:length(reg))){
@@ -155,16 +157,18 @@ plot_SFS <- function(values, main, ylab, xlab, max, min, ylim, col){
 plot_Nalleles <- function(values, main, ylab, xlab, max, min, ylim, col){
 	w <- 1
 	h <- hist(values, plot=F, breaks=seq(min(values)-w/2, max+w/2, w))
-	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(max+w/2, min-w/2), xaxs="i", col=NA)
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(min-w/2, max+w/2), xaxs="i", col=NA)
 	mtext(main, side = 3, line = -3, cex=1.5)
 	mtext(xlab, side = 1, line = 3, cex=1.5)
 	mtext(ylab, side = 2, line = 4, cex=1.5)
-	h$counts <- h$counts/sum(h$counts)
-	for(i in c(length(h$mids):(length(h$mids)-(max-min)))){
+	h$counts <- h$counts/sum(h$counts)*100
+	print(h$mids)
+	for(i in c(1:length(h$mids))){
 		polygon(c(h$mids[i]-w/2,h$mids[i]+w/2,h$mids[i]+w/2,h$mids[i]-w/2), c(0,0,h$counts[i],h$counts[i]), col=col, border=NA)
+		text(h$mids[i], h$counts[i]+.5,  labels =paste0(format(round(h$counts[i], 1), nsmall = 1),"%"), pos=3, cex=2)
 	}
-	axis(1, at = h$mids, lwd.ticks=1, las=1, cex.axis=1)
-	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1)
+	axis(1, at = h$mids, lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/5), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
 }
 
@@ -225,16 +229,19 @@ PopColors[match(AllSamples, MedSamples)] <- population.colors[2]
 class.colors <- c("#fde725", "#b5de2b", "black", "#6ece58", "#35b779", "#1f9e89", "#26828e", "#3e4989", "#482878", "#440154")
 class <- c("Vertebrata", "Tunicata", "Chordata", "Echinodermata", "Arthropoda", "Nematoda", "Mollusca", "Cnidaria", "Fungi", "Vascular plants")
 print(class)
+method.pch <- c(16, 17, 15, 18)
+method <- c("Whole-genome, multiple populations", "Whole-genome, single population", "Transcriptome", "Silent sites in protein coding genes", "Non-coding", "Few loci (<1000)", "Other")
+print(method)
 # Read & prepare Lynch2023 data
 Lyn23 <- read.table(Lynch2023, sep="\t", header=TRUE)
 colnames(Lyn23) <- c("Species", "class", "Diversity")
-print(unique(Lyn23$class))
 Lyn23$class[which(Lyn23$class=="Vertebrates")] <- "Vertebrata"
 Lyn23 <- Lyn23[which(Lyn23$class%in%class),]
 uLyn23 <- unique(Lyn23[,c("Species","class")])
 uLyn23$Diversity <- as.numeric(lapply(uLyn23$Species, function(x){mean(as.numeric(Lyn23$Diversity[which(Lyn23$Species == x)]))}))
 Lyn23 <- uLyn23
 Lyn23$source <- "Lyn23"
+Lyn23$method <- "Silent sites in protein coding genes"
 print(head(Lyn23))
 # Read & prepare Romiguier2014 data
 Rom14 <- read.table(Romiguier2014, sep="\t", header=TRUE)
@@ -249,13 +256,14 @@ uRom14 <- unique(Rom14[,c("Species","class")])
 uRom14$Diversity <- as.numeric(lapply(uRom14$Species, function(x){mean(as.numeric(Rom14$Diversity[which(Rom14$Species == x)]))}))
 Rom14 <- uRom14
 Rom14$source <- "Rom14"
+Rom14$method <- "Transcriptome"
 print(head(Rom14))
 # Read & prepare Leffler2012 data
 Lef12 <- read.table(Leffler2012, sep="\t", header=TRUE)
 Lef12 <- Lef12[which(Lef12$ThetaW.or.Pi=="Pi"),]
-Lef12 <- Lef12[which(Lef12$Type.of.chromosome=="Autosome"),]
-Lef12 <- Lef12[,c(1,3,5,6,9)]
-colnames(Lef12) <- c("Species", "Phylum", "Total.loci", "Diversity", "Type.of.site")
+#Lef12 <- Lef12[which(Lef12$Type.of.chromosome=="Autosome"),]
+Lef12 <- Lef12[,c(1,3,5,6,8,9,10)]
+colnames(Lef12) <- c("Species", "Phylum", "Total.loci", "Diversity", "Type.of.chromosome", "Type.of.site", "Sampling.Strategy")
 Lef12$class <- Lef12$Phylum
 Lef12$class[which(Lef12$class=="Magnoliophyta")] <- "Vascular plants"
 Lef12$class[which(Lef12$class=="Pinophyta")] <- "Vascular plants"
@@ -263,6 +271,25 @@ Lef12$class[which(Lef12$class=="Basidiomycota")] <- "Fungi"
 Lef12$class[which(Lef12$class=="Ascomycota")] <- "Fungi"
 Lef12 <- Lef12[which(Lef12$class%in%class),]
 Lef12 <- Lef12[order(Lef12$class), ]
+Lef12$method <- NA
+#Lef12$method[which(Lef12$Total.loci != "genome-wide" & Lef12$Total.loci != "chromosome-wide" & as.numeric(Lef12$Total.loci) == "One population")] <- "Whole-genome, single population"
+Lef12$method[which(Lef12$Total.loci == "genome-wide" & Lef12$Type.of.site == "genome-wide" & Lef12$Sampling.Strategy == "One population")] <- "Whole-genome, single population"
+Lef12$method[which(Lef12$Total.loci == "genome-wide" & Lef12$Type.of.site == "genome-wide" & grepl("Multiple populations", Lef12$Sampling.Strategy))] <- "Whole-genome, Multiple populations"
+Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & (Lef12$Type.of.site == "synonymous" | Lef12$Type.of.site == "intronic" | Lef12$Type.of.site == "4-fold degenerate"))] <- "Silent sites in protein coding genes"
+Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & Lef12$Type.of.site == "non-coding")] <- "Non-coding"
+Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & Lef12$Type.of.chromosome == "Sex")] <- "Other"
+Lef12$method[which(grepl("bp", Lef12$Total.loci))] <- "Other"
+wmethod.Lef12 <- Lef12[which(!is.na(Lef12$method)),]
+Lef12 <- Lef12[which(is.na(Lef12$method)),]
+Lef12$Total.loci <- unlist(lapply(Lef12$Total.loci, function(x){sum(as.numeric(unlist(strsplit(x, ";"))))}))
+Lef12$method[which(as.numeric(Lef12$Total.loci) < 1000)] <- "Few loci (<1000)"
+Lef12$method[which(is.na(Lef12$method) & Lef12$Type.of.site == "synonymous")] <- "Silent sites in protein coding genes"
+wmethod.Lef12 <- rbind(wmethod.Lef12, Lef12[which(!is.na(Lef12$method)),])
+print(head(wmethod.Lef12))
+Lef12 <- Lef12[which(is.na(Lef12$method)),]
+print(Lef12)
+#check what is left in "Other"
+quit()
 Lef12$Diversity <- lapply(Lef12$Diversity, function(x){mean(as.numeric(unlist(strsplit(x, ";"))))})
 Lef12$Species <- as.character(lapply(Lef12$Species, function(x){paste(unlist(strsplit(x, " "))[c(1,2)], collapse=" ")}))
 uLef12 <- unique(Lef12[,c("Species","class")])
@@ -338,7 +365,7 @@ if(!file.exists(TreeImage)){
 print("#### Figure 1")
 pdf(PDF, width=15, height=10)
 par(oma=c(2,2,2,2))
-layout(matrix(c(1,2,4,3,3,3),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(1,1), TRUE)
+layout(matrix(c(1,2,3,4,3,5),nrow=2,ncol=3,byrow=F), widths=c(1,1,1), heights=c(1,1), TRUE)
 
 ### A
 # One-to-one orthoologs phylogenetic tree 
@@ -386,17 +413,23 @@ writePlotLabel("C")
 ## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
 print("D - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
-plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variant sites - genome-wide % of variant sites", c(-5,5), RegionTypes)
+plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variability - genome average", c(-5,5), RegionTypes)
 writePlotLabel("D")
+
+## Histogram of number of alleles per variants site (SNPs)
+print("Histogram of number of alleles per variant site")
+par(mar=c(7,7,2,2))
+### C
+AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_SNPs.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+plot_Nalleles(AllNalleles, "SNPs", "% of sites", "Number of alleles", max(AllNalleles), 2, c(0,100), "grey60")
+writePlotLabel("E")
 
 ######################################################################
 ## Figure S3
 print("#### Figure S3")
-layout(matrix(c(1,1,
-				2,2,
-				3,3,
-				4,5,
-				6,7),nrow=5,ncol=2,byrow=T), widths=c(1,1), heights=c(1,1,1,1,1), TRUE)
+layout(matrix(c(1,1,4,
+				2,2,5,
+				3,3,6),nrow=3,ncol=3,byrow=T), widths=c(1,1), heights=c(1,1,1,1,1), TRUE)
 
 ## Site frequency spectrum
 print("Site frequency spectrum")
@@ -405,15 +438,12 @@ par(mar=c(7,7,2,2))
 AllFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(AllFreq, "All samples", "Proportion of sites", "Absolute major allele frequency", max(AllFreq), max(AllFreq)/2, c(0,0.5), "black")
 writePlotLabel("A")
-gc(AllFreq)
 ### 
 AtlFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AtlSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(AtlFreq, "Atlantic samples", "Proportion of sites", "Absolute major allele frequency", max(AtlFreq), max(AtlFreq)/2, c(0,0.5), population.colors[1])
-gc(AtlFreq)
 ### 
 MedFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(MedFreq, "Mediterranean samples", "Proportion of sites", "Absolute major allele frequency", max(MedFreq), max(MedFreq)/2, c(0,0.5), population.colors[2])
-gc(MedFreq)
 
 ## Distribution of the distance between het sites
 print("Distribution of the distance between het sites")
@@ -430,23 +460,11 @@ plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[AtlSamples], AtlSamples, popu
 writePlotLabel("B")
 ### 
 plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[MedSamples], MedSamples, population.colors[2], windowsize, maxyHetSites)
-gc(HetRegAll.Fixed)
 
-## Histogram of number of alleles per variants site
-print("Histogram of number of alleles per variant site")
-par(mar=c(7,7,2,2))
-### C
-AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-print(head(AllNalleles))
-FeatureType <- read.table(text = system(paste0("zcat ", PerSiteFeatureType), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-print(head(FeatureType))
-NallelesFeat <- cbind(AllNalleles, FeatureType)
-gc(AllNalleles, FeatureType)
-print(head(NallelesFeat))
-plot_Nalleles(NallelesFeat$AllNalleles[which(NallelesFeat$FeatureType == "SNP")], "SNPs", "Proportion of sites", "Number of alleles", max(NallelesFeat$AllNalleles), max(NallelesFeat$AllNalleles)/2, c(0,0.5), "black")
+## Histogram of number of alleles per variants site (INDELs)
+AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_INDELs.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+plot_Nalleles(AllNalleles, "INDELs", "% of sites", "Number of alleles", max(AllNalleles), 2, c(0,100), "grey60")
 writePlotLabel("C")
-plot_Nalleles(NallelesFeat$AllNalleles[which(NallelesFeat$FeatureType == "INDEL")], "INDELs", "Proportion of sites", "Number of alleles", max(NallelesFeat$AllNalleles), max(NallelesFeat$AllNalleles)/2, c(0,0.5), "black")
-gc(NallelesFeat)
 
 dev.off()
 #############
@@ -457,21 +475,23 @@ write("### Heterozygosity per sample", file = REPORT, append = FALSE)
 write(paste(AllSamples,collapse="\t"), file = REPORT, append = TRUE)
 write(paste(HetAll,collapse="\t"), file = REPORT, append = TRUE)
 
-## Prepare Table 1
+## Write average and standard deviation of coverage per sample 
+#CoverageFiles
+## Write proportion of variants in several regions
 typesofdata <- c("Data", "SNPs", "INDELs", "Data", "Data", "Data", "Data")
 typesofregions <- c("Callable", "Callable", "Callable", "Exons", "Introns", "Promoters", "Intergenic")
-Table1 <- cbind(c("All","Atlantic", "Mediterranean"))
+Table <- cbind(c("All","Atlantic", "Mediterranean"))
 for(i in c(1:length(typesofdata))){
     All <- read.table(grep(paste0("Observed_", typesofdata[i], ".*", typesofregions[i], ".*AllSamples"), PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
     Atl <- read.table(grep(paste0("Observed_", typesofdata[i], ".*", typesofregions[i], ".*AtlSamples"), PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
     Med <- read.table(grep(paste0("Observed_", typesofdata[i], ".*", typesofregions[i], ".*MedSamples"), PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
-    Table1 <- cbind(Table1, c(All, Atl, Med))
+    Table <- cbind(Table, c(All, Atl, Med))
 }
-Table1 <- as.data.frame(Table1)
-colnames(Table1) <- c("GSamples", "Total", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic")
-print(Table1)
-write("### Table 1", file = REPORT, append = TRUE)
-write.table(Table1, file = REPORT, append = TRUE, row.names=FALSE, sep="\t", quote = FALSE)
+Table <- as.data.frame(Table)
+colnames(Table) <- c("GSamples", "Total", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic")
+print(Table)
+write("### Proportion of variants", file = REPORT, append = TRUE)
+write.table(Table, file = REPORT, append = TRUE, row.names=FALSE, sep="\t", quote = FALSE)
 
 # Add unified version of Lynch2023, Romiguier2014, Leffler2012 diversity estimates
 write.table(unif, file = REPORT, append = TRUE, row.names=FALSE, sep="\t", quote = FALSE)

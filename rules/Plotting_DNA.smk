@@ -11,6 +11,8 @@ import gzip
 def get_bed_file_name(wildcards):
 	if wildcards.BED == "Callable":
 		return rules.r7_join_extra_callable_regions.output.ExtraCallableRegions
+	elif wildcards.BED == "All":
+		return "data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt"
 	elif wildcards.BED == "SNPs":
 		return rules.VariantType_BEDs_PerSubsetOfSamples.output.SNPs
 	elif wildcards.BED == "INDELs":
@@ -1002,6 +1004,33 @@ rule Join_PSMC_results:
 		"./scripts/Plotting_DNA/Join_PSMC_results.sh \"{input.psmc}\" {output.jpsmc}  {output.jpsmc_thetas} {params.Blangenerationtime} \"{params.samples}\" {params.rounditerationsPSMC} {params.highmu} {params.lowmu} {params.step} > {log.out} 2> {log.err}"
 
 #
+rule Coverage_inBEDregions_PerSample:
+	'''
+	Calculate average and standard deviation of coverage for each sample in a set of regions (bed file)
+	'''
+	input:
+		CoverageFiles = rules.r7_join_coverage_per_site.output.covgenome,
+		BED = get_bed_file_name
+	output:
+		out = "results/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '03:00:00',
+		name = "cov{BED}",
+		threads = 1,
+		mem = 500000
+	shell:
+		"""
+		#zcat results/VariantCalling_DNA/7_join_coverage_per_site/Depth.allsamples.tbl.gz | head > tmp/tmp_coverage_per_site.txt
+		touch {output}
+		"""
+
 
 ################################################
 ## 1. Estimate and describe genomic diversity
@@ -1015,16 +1044,17 @@ rule plot_Figure1_GenomicDiversity:
 		Rconfig = config["Rconfig"],
 		PiPerRegFiles = expand(rules.Pi_InEachRegion_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
 		PiTotalFiles = expand(rules.Pi_Total_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
-		#PiFixedWindowsFiles = expand(rules.Pi_InEachRegion_FixedLengthRegions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
 		HetPerRegFiles = expand(rules.Heterozygosity_InEachRegion_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic"]),
 		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"]),
 		HetFixedWindowsFiles = expand(rules.Heterozygosity_InEachRegion_FixedLengthRegions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], windowsize=[50,100,200]),
 		FreqPerSiteFiles = expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
+		CoverageFiles = expand(rules.Coverage_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data"], BED=["All", "Callable"]),
 		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19"),
 		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
 		PerSiteFeatureType = rules.FunctionalFeatures_BEDs.output.PerSite_FeatureType,
 		SpeciesTree = rules.Build_Tree_Species.output.tree,
 		MapImage = "metadata/MapSampling.png",
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
 		Lynch2023 = "data/OtherDiversityEstimates/SuppMat_Lynch2023.txt",
 		Leffler2012 = "data/OtherDiversityEstimates/SuppMat_Leffler2012.txt",
 		Romiguier2014 = "data/OtherDiversityEstimates/SuppMat_Romiguier2014.txt",
@@ -1055,11 +1085,13 @@ rule plot_Figure1_GenomicDiversity:
 		\"{input.HetTotalFiles}\"  \
 		\"{input.HetFixedWindowsFiles}\"  \
 		\"{input.FreqPerSiteFiles}\"  \
+		\"{input.CoverageFiles}\"  \
 		{input.SamplesOrderInVCF}  \
 		{input.FunctionalRegionsCallableSpan}  \
 		{input.PerSiteFeatureType}  \
 		{input.SpeciesTree}  \
 		{input.MapImage}  \
+		{input.Metadata}  \
 		{input.Lynch2023} \
 		{input.Leffler2012} \
 		{input.Romiguier2014} \

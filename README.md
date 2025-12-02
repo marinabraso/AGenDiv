@@ -15,10 +15,10 @@ This code is structured on a snakemake pipeline. It was generated and executed o
 ## Snakemake usage:
 
 ### for a first dry run
-`snakemake --cores 1 -p --use-conda -n`
+`snakemake --cores 1 -p --software-deployment-method conda -n`
 
 ### for a cluster run
-`snakemake -p -j 30 --cluster "sbatch -J {params.name} -N 1 -o ./logs/.slurm/%x.out -e ./logs/.slurm/%x.err --cpus-per-task={params.threads} --mem={params.mem} -t {params.time}" --use-conda`
+`snakemake -p --software-deployment-method conda -j 30 --executor cluster-generic --cluster-generic-submit-cmd "sbatch -J {params.name} -N 1 -o ./logs/.slurm/%x.out -e ./logs/.slurm/%x.err --cpus-per-task={params.threads} --mem={params.mem} -t {params.time}"`
 
 ---
 ## Folder organization
