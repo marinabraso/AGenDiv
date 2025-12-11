@@ -82,30 +82,32 @@ plot_HetPerPop <- function(Hetdf, atls, meds, ylab, zlab, xlabs, ylim){
 	box()
 }
 
-plot_Comparison_diversity_estimates <- function(df, categ, mypivalues, aPi1, aPi2, aPi3, extralab){
-	distbewcateg <- 40
+plot_Comparison_diversity_estimates <- function(df, categ, meth, pch, mypivalues, aPi1, aPi2, aPi3, extralab){
+	distbewcateg <- 10
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=c(0,10), xlim=c(0,length(df[,1])+distbewcateg*(length(categ)+1)+distbewcateg*3), xaxs="i", col=NA)
 	mtext("Average pairwise differences (%)", side = 2, line = 3, cex=1.5)
 	pos <- distbewcateg
 	midp <- c()
 	for(c in categ){
 		print(c)
-		points(pos+c(1:length(df[which(df$class==c),1])), df$Diversity[which(df$class==c)], pch=16, col=df$colors[which(df$class==c)], cex=1.5)
+		print(df$Diversity[which(df$class==c)])
+		points(pos+c(1:length(df[which(df$class==c),1])), df$Diversity[which(df$class==c)], pch=df$pch[which(df$class==c)], col=df$colors[which(df$class==c)], cex=1.5)
 		midp <- c(midp, pos+(length(df[which(df$class==c),1]))/2)
 		pos <- pos+length(df[which(df$class==c),1])+distbewcateg
 	}
 	abline(h=mypivalues[1], lty=2)
 	extrapointspos <- c(pos, pos+distbewcateg/2, pos+distbewcateg/2*2, pos+distbewcateg/2*3, pos+distbewcateg/2*4)
-	points(extrapointspos[1], mypivalues[2], pch=18, col=population.colors[1], cex=2)
+	points(extrapointspos[1], mypivalues[2], pch=16, col=population.colors[1], cex=2)
 	text(extrapointspos[1], mypivalues[2], labels=extralab[1], pos=1, cex=1.5)
-	points(extrapointspos[2], mypivalues[3], pch=18, col=population.colors[2], cex=2)
+	points(extrapointspos[2], mypivalues[3], pch=16, col=population.colors[2], cex=2)
 	text(extrapointspos[2], mypivalues[3], labels=extralab[2], pos=1, cex=1.5)
-	points(extrapointspos[3], aPi1, pch=18, col="black", cex=2)
+	points(extrapointspos[3], aPi1, pch=17, col="black", cex=2)
 	text(extrapointspos[3], aPi1, labels=extralab[3], pos=1, cex=1.5)
-	points(extrapointspos[4], aPi2, pch=18, col="black", cex=2)
+	points(extrapointspos[4], aPi2, pch=17, col="black", cex=2)
 	text(extrapointspos[4], aPi2, labels=extralab[4], pos=1, cex=1.5)
-	points(extrapointspos[5], aPi3, pch=18, col="black", cex=2)
+	points(extrapointspos[5], aPi3, pch=17, col="black", cex=2)
 	text(extrapointspos[5], aPi3, labels=extralab[5], pos=1, cex=1.5)
+	legend("topright", meth, pch=pch, col="black", bty = "n", cex=1.5, xjust = 0, yjust = 0)
 	axis(1, at = midp, labels=categ, lwd.ticks=1, las=2, cex.axis=1.5)
 	axis(2, at = seq(0,20,1), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
@@ -224,13 +226,11 @@ PopColors <- rep(population.colors[1], length(AllSamples))
 PopColors[match(AllSamples, MedSamples)] <- population.colors[2]
 
 ## Comparison with other diversity estimates
-#class.colors <- c("#fde725", "#b5de2b", "black", "#6ece58", "#35b779", "#1f9e89", "#26828e", "#31688e", "#3e4989", "#482878", "#440154")
-#class <- c("Vertebrata", "Tunicata", "Chordata", "Echinodermata", "Arthropoda", "Nematoda", "Mollusca", "Cnidaria", "Porifera", "Fungi", "Vascular plants")
-class.colors <- c("#fde725", "#b5de2b", "black", "#6ece58", "#35b779", "#1f9e89", "#26828e", "#3e4989", "#482878", "#440154")
 class <- c("Vertebrata", "Tunicata", "Chordata", "Echinodermata", "Arthropoda", "Nematoda", "Mollusca", "Cnidaria", "Fungi", "Vascular plants")
+class.colors <- c("#fde725", "#b5de2b", "black", "#6ece58", "#35b779", "#1f9e89", "#26828e", "#3e4989", "#482878", "#440154")
 print(class)
-method.pch <- c(16, 17, 15, 18)
-method <- c("Whole-genome, multiple populations", "Whole-genome, single population", "Transcriptome", "Silent sites in protein coding genes", "Non-coding", "Few loci (<1000)", "Other")
+method.pch <- c(16, 17, 1, 2, 3, 4, 8, 7)
+method <- c("Whole-genome, multiple populations", "Whole-genome, single population", "Non-coding", "Single chromosome", "Transcriptome", "Silent sites in protein coding genes", "Few loci (<1000 bp)", "Other")
 print(method)
 # Read & prepare Lynch2023 data
 Lyn23 <- read.table(Lynch2023, sep="\t", header=TRUE)
@@ -272,29 +272,29 @@ Lef12$class[which(Lef12$class=="Ascomycota")] <- "Fungi"
 Lef12 <- Lef12[which(Lef12$class%in%class),]
 Lef12 <- Lef12[order(Lef12$class), ]
 Lef12$method <- NA
-#Lef12$method[which(Lef12$Total.loci != "genome-wide" & Lef12$Total.loci != "chromosome-wide" & as.numeric(Lef12$Total.loci) == "One population")] <- "Whole-genome, single population"
 Lef12$method[which(Lef12$Total.loci == "genome-wide" & Lef12$Type.of.site == "genome-wide" & Lef12$Sampling.Strategy == "One population")] <- "Whole-genome, single population"
 Lef12$method[which(Lef12$Total.loci == "genome-wide" & Lef12$Type.of.site == "genome-wide" & grepl("Multiple populations", Lef12$Sampling.Strategy))] <- "Whole-genome, Multiple populations"
 Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & (Lef12$Type.of.site == "synonymous" | Lef12$Type.of.site == "intronic" | Lef12$Type.of.site == "4-fold degenerate"))] <- "Silent sites in protein coding genes"
 Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & Lef12$Type.of.site == "non-coding")] <- "Non-coding"
-Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & Lef12$Type.of.chromosome == "Sex")] <- "Other"
-Lef12$method[which(grepl("bp", Lef12$Total.loci))] <- "Other"
+Lef12$method[which((Lef12$Total.loci == "genome-wide" | Lef12$Total.loci == "chromosome-wide") & Lef12$Type.of.chromosome == "Sex")] <- "Single chromosome"
+Lef12$method[which(grepl("bp", Lef12$Total.loci))] <- "Few loci (<1000 bp)" # two cases with few loci that include "bp" in the column
 wmethod.Lef12 <- Lef12[which(!is.na(Lef12$method)),]
 Lef12 <- Lef12[which(is.na(Lef12$method)),]
 Lef12$Total.loci <- unlist(lapply(Lef12$Total.loci, function(x){sum(as.numeric(unlist(strsplit(x, ";"))))}))
-Lef12$method[which(as.numeric(Lef12$Total.loci) < 1000)] <- "Few loci (<1000)"
+Lef12$method[which(as.numeric(Lef12$Total.loci) < 1000)] <- "Few loci (<1000 bp)"
 Lef12$method[which(is.na(Lef12$method) & Lef12$Type.of.site == "synonymous")] <- "Silent sites in protein coding genes"
-wmethod.Lef12 <- rbind(wmethod.Lef12, Lef12[which(!is.na(Lef12$method)),])
-print(head(wmethod.Lef12))
-Lef12 <- Lef12[which(is.na(Lef12$method)),]
-print(Lef12)
-#check what is left in "Other"
-quit()
-Lef12$Diversity <- lapply(Lef12$Diversity, function(x){mean(as.numeric(unlist(strsplit(x, ";"))))})
+Lef12$method[which(is.na(Lef12$method))] <- "Other"
+Lef12 <- rbind(wmethod.Lef12, Lef12)
+Lef12$Diversity <- as.numeric(lapply(Lef12$Diversity, function(x){mean(as.numeric(unlist(strsplit(x, ";"))))}))
+print(class(Lef12$Diversity))
 Lef12$Species <- as.character(lapply(Lef12$Species, function(x){paste(unlist(strsplit(x, " "))[c(1,2)], collapse=" ")}))
-uLef12 <- unique(Lef12[,c("Species","class")])
-uLef12$Diversity <- as.numeric(lapply(uLef12$Species, function(x){mean(as.numeric(Lef12$Diversity[which(Lef12$Species == x)]))}))
-Lef12 <- uLef12
+Lef12$Paste <- paste(Lef12$Species, Lef12$class, Lef12$method, sep="_")
+uLef12 <- unique(Lef12$Paste)
+uDiversity <- as.numeric(lapply(uLef12, function(x){ if(x == "Drosophila pseudoobscura_Arthropoda_Silent sites in protein coding genes"){print(Lef12[which(paste(Lef12$Species, Lef12$class, Lef12$method, sep="_") == x),])}
+																										return(mean(as.numeric(Lef12$Diversity[which(paste(Lef12$Species, Lef12$class, Lef12$method, sep="_") == x)])))}))
+Lef12 <- as.data.frame(cbind(unlist(strsplit(uLef12, "_"))[seq(1,length(unlist(strsplit(uLef12, "_"))),3)], unlist(strsplit(uLef12, "_"))[seq(2,length(unlist(strsplit(uLef12, "_"))),3)], unlist(strsplit(uLef12, "_"))[seq(3,length(unlist(strsplit(uLef12, "_"))),3)], as.numeric(uDiversity)))
+colnames(Lef12) <- c("Species", "class", "method", "Diversity")
+Lef12$Diversity <- as.numeric(Lef12$Diversity)
 Lef12$class[which(Lef12$Species %in% c("Ciona savignyi", "Ciona roulei"))] <- "Tunicata"
 Lef12$class[which(Lef12$class=="Chordata")] <- "Vertebrata"
 Lef12$source <- "Lef12"
@@ -303,6 +303,7 @@ print(head(Lef12))
 unif <- rbind(Lyn23, Rom14[which(!Rom14$Species%in%Lyn23$Species),])
 unif <- rbind(unif, Lef12[which(!Lef12$Species%in%unif$Species),])
 unif$colors <- class.colors[match(unif$class,class)]
+unif$pch <- method.pch[match(unif$method, method)]
 unif <- unif[order(unif$class, -unif$Diversity), ]
 print(head(unif))
 write.table(unif, file = REPORT, append = FALSE, row.names=FALSE, sep="\t", quote = FALSE)
@@ -365,7 +366,7 @@ if(!file.exists(TreeImage)){
 print("#### Figure 1")
 pdf(PDF, width=15, height=10)
 par(oma=c(2,2,2,2))
-layout(matrix(c(1,2,3,4,3,5),nrow=2,ncol=3,byrow=F), widths=c(1,1,1), heights=c(1,1), TRUE)
+layout(matrix(c(1,2,4,3,3,3),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(1,1), TRUE)
 
 ### A
 # One-to-one orthoologs phylogenetic tree 
@@ -406,30 +407,23 @@ BiPi <- 3.04
 PiTAll <- read.table(grep("Observed_Data.*Callable.*AllSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTAtl <- read.table(grep("Observed_Data.*Callable.*AtlSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTMed <- read.table(grep("Observed_Data.*Callable.*MedSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
-plot_Comparison_diversity_estimates(unif, class[which(class != "Chordata")], c(PiTAll,PiTAtl,PiTMed)*100, PutnamPi, HuangPi, BiPi, c("B. lanceolatum\nAtlantic", "B. lanceolatum\nMediterranean", "B. floridae\nPutnam 2008", "B. belcheri\nHuang 2014", "B. belcheri\nBi 2020"))
+plot_Comparison_diversity_estimates(unif, class[which(class != "Chordata")], method, method.pch, c(PiTAll,PiTAtl,PiTMed)*100, PutnamPi, HuangPi, BiPi, c("B. lanceolatum\nAtlantic", "B. lanceolatum\nMediterranean", "B. floridae\nPutnam 2008", "B. belcheri\nHuang 2014", "B. belcheri\nBi 2020"))
 writePlotLabel("C")
-
 ### D
 ## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
 print("D - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
 plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variability - genome average", c(-5,5), RegionTypes)
 writePlotLabel("D")
-
-## Histogram of number of alleles per variants site (SNPs)
-print("Histogram of number of alleles per variant site")
-par(mar=c(7,7,2,2))
-### C
-AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_SNPs.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
-plot_Nalleles(AllNalleles, "SNPs", "% of sites", "Number of alleles", max(AllNalleles), 2, c(0,100), "grey60")
-writePlotLabel("E")
+dev.off()
+quit()
 
 ######################################################################
 ## Figure S3
 print("#### Figure S3")
-layout(matrix(c(1,1,4,
-				2,2,5,
-				3,3,6),nrow=3,ncol=3,byrow=T), widths=c(1,1), heights=c(1,1,1,1,1), TRUE)
+layout(matrix(c(1,4,7,
+				2,5,8,
+				3,6,9),nrow=3,ncol=3,byrow=T), widths=c(2,1,1), heights=c(1,1,1), TRUE)
 
 ## Site frequency spectrum
 print("Site frequency spectrum")
@@ -461,10 +455,18 @@ writePlotLabel("B")
 ### 
 plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[MedSamples], MedSamples, population.colors[2], windowsize, maxyHetSites)
 
+## Histogram of number of alleles per variants site (SNPs)
+print("Histogram of number of alleles per variant site")
+par(mar=c(7,7,2,2))
+### C
+AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_SNPs.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
+plot_Nalleles(AllNalleles, "SNPs", "% of sites", "Number of alleles", max(AllNalleles), 2, c(0,100), "grey60")
+writePlotLabel("C")
+
 ## Histogram of number of alleles per variants site (INDELs)
 AllNalleles <- read.table(text = system(paste0("zcat ", grep("Observed_INDELs.*Callable.*AllSamples", FreqPerSiteFiles, value = TRUE), " | cut -f4 | awk '{n=split($0,a,\",\"); print n}' "), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_Nalleles(AllNalleles, "INDELs", "% of sites", "Number of alleles", max(AllNalleles), 2, c(0,100), "grey60")
-writePlotLabel("C")
+
 
 dev.off()
 #############
