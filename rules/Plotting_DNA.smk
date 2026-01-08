@@ -1004,31 +1004,44 @@ rule Join_PSMC_results:
 		"./scripts/Plotting_DNA/Join_PSMC_results.sh \"{input.psmc}\" {output.jpsmc}  {output.jpsmc_thetas} {params.Blangenerationtime} \"{params.samples}\" {params.rounditerationsPSMC} {params.highmu} {params.lowmu} {params.step} > {log.out} 2> {log.err}"
 
 #
-rule Coverage_inBEDregions_PerSample:
+rule Coverage_inAllRegions_PerSample:
 	'''
-	Calculate average and standard deviation of coverage for each sample in a set of regions (bed file)
+	Calculate average and standard deviation of coverage for each sample in Callable regions
 	'''
 	input:
 		CoverageFiles = rules.r7_join_coverage_per_site.output.covgenome,
-		BED = get_bed_file_name
 	output:
-		out = "results/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.txt"
+		out = "results/Plotting_DNA/{ObsExp}/Coverage_inAllRegions_PerSample.txt"
 	log:
-		err = "logs/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.err",
-		out = "logs/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.out"
+		err = "logs/Plotting_DNA/{ObsExp}/Coverage_inAllRegions_PerSample.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Coverage_inAllRegions_PerSample.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}/Coverage_in{BED}Regions_PerSample.txt"
+		"benchmarks/Plotting_DNA/{ObsExp}/Coverage_inAllRegions_PerSample.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '03:00:00',
-		name = "cov{BED}",
+		name = "cov",
 		threads = 1,
 		mem = 500000
 	shell:
 		"""
-		#zcat results/VariantCalling_DNA/7_join_coverage_per_site/Depth.allsamples.tbl.gz | head > tmp/tmp_coverage_per_site.txt
-		touch {output}
+		zcat < {input.CoverageFiles} | cut -f3- | awk '
+			{{
+			    for (i = 1; i <= NF; i++) {{
+			        sum[i] += $i
+			        sumsq[i] += $i * $i
+			        n[i]++
+			    }}
+			}}
+			END {{
+			    for (i = 1; i <= length(sum); i++) {{
+			        mean = sum[i] / n[i]
+			        sd = sqrt((sumsq[i] / n[i]) - mean^2)
+			        print mean\"\\t\"sd
+			    }}
+			}}
+			' > {output}
 		"""
 
 
@@ -1048,7 +1061,7 @@ rule plot_Figure1_GenomicDiversity:
 		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Exons", "Introns", "Promoters", "Intergenic", "Callable"]),
 		HetFixedWindowsFiles = expand(rules.Heterozygosity_InEachRegion_FixedLengthRegions_PerSample.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], windowsize=[50,100,200]),
 		FreqPerSiteFiles = expand(rules.FrequencyPerSite_inBEDregions_PerSubsetOfSamples.output.out, ObsExp=["Observed_Data", "Observed_SNPs", "Observed_INDELs"], BED=["Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic"], GroupSamples=["AtlSamples", "MedSamples", "AllSamples"]),
-		CoverageFiles = expand(rules.Coverage_inBEDregions_PerSample.output.out, ObsExp=["Observed_Data"], BED=["All", "Callable"]),
+		CoverageFile = expand(rules.Coverage_inAllRegions_PerSample.output.out, ObsExp=["Observed_Data"]),
 		SamplesOrderInVCF = expand(rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF, chr="chr19"),
 		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
 		PerSiteFeatureType = rules.FunctionalFeatures_BEDs.output.PerSite_FeatureType,
@@ -1059,6 +1072,7 @@ rule plot_Figure1_GenomicDiversity:
 		Leffler2012 = "data/OtherDiversityEstimates/SuppMat_Leffler2012.txt",
 		Romiguier2014 = "data/OtherDiversityEstimates/SuppMat_Romiguier2014.txt",
 		CorbettDetig2015 = "data/OtherDiversityEstimates/SuppMat_Corbett-Detig2015.txt",
+		IndependentEstimates = "data/OtherDiversityEstimates/Independent_GenomicDiversityEstimates.tab"
 	output:
 		PDF = "results/Plotting_DNA/plot_Figure1_GenomicDiversity.pdf",
 		REPORT = "results/Plotting_DNA/plot_Figure1_GenomicDiversity_report.txt"
@@ -1085,7 +1099,7 @@ rule plot_Figure1_GenomicDiversity:
 		\"{input.HetTotalFiles}\"  \
 		\"{input.HetFixedWindowsFiles}\"  \
 		\"{input.FreqPerSiteFiles}\"  \
-		\"{input.CoverageFiles}\"  \
+		\"{input.CoverageFile}\"  \
 		{input.SamplesOrderInVCF}  \
 		{input.FunctionalRegionsCallableSpan}  \
 		{input.PerSiteFeatureType}  \
@@ -1096,6 +1110,7 @@ rule plot_Figure1_GenomicDiversity:
 		{input.Leffler2012} \
 		{input.Romiguier2014} \
 		{input.CorbettDetig2015} \
+		{input.IndependentEstimates} \
 		{output.PDF}  \
 		{output.REPORT}  \
 		\"{params.AtlSamples}\"  \
@@ -1318,7 +1333,7 @@ rule plot_Heterozygosity_inBEDregions_PerSubsetOfSamples:
 		err = "logs/Plotting_DNA/{ObsExp}/plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.err",
 		out = "logs/Plotting_DNA/{ObsExp}/plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/{ObsExp}plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.txt"
+		"benchmarks/Plotting_DNA/{ObsExp}/plot_Heterozygosity_inBEDregions_PerSubsetOfSamples/plot_Heterozygosity_in{BED}Regions_Per{GroupSamples}.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:

@@ -262,7 +262,7 @@ rule Build_ConsensusSequences_PerSample:
 	shell:
 		"./scripts/VariantAnalysis_DNA/Build_ConsensusSequences_PerSample.sh {input.genomeFA} {input.VCF} {output.ConsensusSeq} {output.ConcatenatedConsensusSeq} {wildcards.sample} > {log.out} 2> {log.err}"
 
-# Join all consensus seuqences
+# Join all consensus sequences
 rule Join_ConsensusSequences:
 	'''
 	Make sure all the sequences have the same length

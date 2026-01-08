@@ -114,7 +114,7 @@ echo ${Tlen}
 
 if [[ ${Plen}*3 -ne ${Tlen} ]]
 then
-	echo "----> Length of the trimmed transcript alignment not 3 times the trimmed protein alignment!"; >&2 echo "----> Length of the trimmed transcript alignment not 3 times the trimmed protein alignment!"
+	echo "----> Length of the trimmed transcript alignment not 3 times the trimmed protein alignment. Need to add gaps at the begining"; >&2 echo "----> Length of the trimmed transcript alignment not 3 times the trimmed protein alignment. Need to add gaps at the begining"
 	dif=$((${Tlen}-${Plen} * 3 ))
 	echo ${dif}
 	if [[ $diff -gt 0 ]]
