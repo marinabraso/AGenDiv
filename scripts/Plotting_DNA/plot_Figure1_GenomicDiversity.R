@@ -154,6 +154,7 @@ plot_SFS <- function(values, main, ylab, xlab, max, min, ylim, col){
 }
 
 plot_Nalleles <- function(values, main, ylab, xlab, max, min, ylim, col){
+	print(main)
 	w <- 1
 	h <- hist(values, plot=F, breaks=seq(min(values)-w/2, max+w/2, w))
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(min-w/2, max+w/2), xaxs="i", col=NA)
@@ -161,7 +162,7 @@ plot_Nalleles <- function(values, main, ylab, xlab, max, min, ylim, col){
 	mtext(xlab, side = 1, line = 3, cex=1.5)
 	mtext(ylab, side = 2, line = 4, cex=1.5)
 	h$counts <- h$counts/sum(h$counts)*100
-	print(h$mids)
+	print(h$counts)
 	for(i in c(1:length(h$mids))){
 		polygon(c(h$mids[i]-w/2,h$mids[i]+w/2,h$mids[i]+w/2,h$mids[i]-w/2), c(0,0,h$counts[i],h$counts[i]), col=col, border=NA)
 		text(h$mids[i], h$counts[i]+.5,  labels =paste0(format(round(h$counts[i], 1), nsmall = 1),"%"), pos=3, cex=1)
@@ -472,6 +473,7 @@ plot_SFS(AtlFreq, "Atlantic samples", "Proportion of sites", "Absolute major all
 ### 
 MedFreq <- read.table(text = system(paste0("zcat ", grep("Observed_Data.*Callable.*MedSamples", FreqPerSiteFiles, value = TRUE), " | rev | cut -f1 -d':' | rev"), intern = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[,1]
 plot_SFS(MedFreq, "Mediterranean samples", "Proportion of sites", "Absolute major allele frequency", max(MedFreq), max(MedFreq)/2, c(0,0.5), population.colors[2])
+
 # Histogram of number of alleles per variants site (SNPs)
 print("Histogram of number of alleles per variant site")
 par(mar=c(7,7,2,2))

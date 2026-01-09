@@ -246,12 +246,34 @@ writePlotLabel("D")
 
 
 dev.off()
-
-
-#plot_violin_RandomVsObserved("VariantDifferent", "Variant\nDifferent", "", OSharedPriv, RSharedPriv, c(1,3)*1000000, 1000000, "darkred")
-#plot_violin_RandomVsObserved("FixedDifferent", "Fixed\nDifferent", "Variants", OSharedPriv, RSharedPriv, c(0,100), 1, "darkred")
-
-
+#############
+## Report
+print(OSharedPriv)
+## Write Table S3 (Shared Private)
+write("### Table S3 (Shared Private)", file = REPORT, append = FALSE)
+tableS3 <- OSharedPriv
+tableS3$PercentTotal <- tableS3$Observed/sum(tableS3$Observed)*100
+tableS3$RMeans <- rowMeans(RSharedPriv)
+pvals <- c()
+sds <- c()
+for(r in c(1:length(RSharedPriv[,1]))){
+	moreextreme <- 0
+	print(tableS3$Observed[r])
+	print(mean(unlist(RSharedPriv[r,])))
+	if(tableS3$Observed[r] > mean(unlist(RSharedPriv[r,]))){
+		moreextreme <- length(RSharedPriv[r,] >= tableS3$Observed[r])
+	} else {
+		moreextreme <- length(RSharedPriv[r,] <= tableS3$Observed[r])
+	}
+	p_val <- moreextreme/length(RSharedPriv[r,])
+	pvals <- c(pvals, p_val)
+	sd_val <- sd(as.numeric(RSharedPriv[r,]))
+	sds <- c(sds, sd_val)
+}
+tableS3$RSds <- sds
+tableS3$Rp_val <- pvals
+print(tableS3)
+write.table(tableS3, file = REPORT, append = TRUE, row.names=FALSE, sep="\t", quote = FALSE)
 
 
 
