@@ -1045,6 +1045,43 @@ rule Coverage_inAllRegions_PerSample:
 		"""
 
 
+#
+# Compute total population Fst
+rule Population_Fst_Total:
+	'''
+	Population Fst
+	'''
+	input:
+		VCF_File = rules.r9_run_all_chr.output.passVCF,
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+	output:
+		outPerSite = "results/Plotting_DNA/{ObsExp}/Population_Fst_Total/Population_Fst_PerSite.weir.fst",
+		outTotal = "results/Plotting_DNA/{ObsExp}/Population_Fst_Total/Population_Fst_Total.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/Population_Fst_Total/Population_Fst_Total.err",
+		out = "logs/Plotting_DNA/{ObsExp}/Population_Fst_Total/Population_Fst_Total.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/Population_Fst_Total/Population_Fst_Total.txt"
+	conda:
+		'../envs/VariantAnalysis_DNA.yaml'
+	params:
+		time = '20:00:00',
+		name = "Fst_perVar",
+		threads = 1,
+		mem = 100000
+	shell:
+		"""
+		outputT={output.outTotal}
+		outputPS={output.outPerSite}
+		mkdir -p $(dirname ${{outputT}}) 2> {log.err}
+		tail -n +2 {input.Metadata} | grep -w "Banyuls" | cut -f3 > $(dirname ${{outputT}})/MediterraneanSamples.txt
+		tail -n +2 {input.Metadata} | grep -w "Roscoff" | cut -f3 > $(dirname ${{outputT}})/AtlanticSamples.txt
+		echo "----> Fst by population per site" # only considers PASS variants
+		vcftools --gzvcf {input.VCF_File} --remove-filtered-all --weir-fst-pop $(dirname ${{outputT}})/AtlanticSamples.txt --weir-fst-pop $(dirname ${{outputT}})/MediterraneanSamples.txt --out ${{outputPS%.weir.fst}} 2>> {log.err}
+		echo "----> Averaging Fst by population to get total Fst"
+		awk 'NR>1 && $3 != "nan" {{sum+=$3; n++}} END {{print sum/n}}' ${{outputPS}} > ${{outputT}} 2>> {log.err}
+		"""
+
 ################################################
 ## 1. Estimate and describe genomic diversity
 ################################################

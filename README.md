@@ -100,10 +100,10 @@ This part of the pipeline goes from the sample fastq files to the GATK recalibra
 		> Classify each variant according to its Genomic Feature
 
 ### 3. Plotting_DNA.smk
-	- rule plot_PCA_short_variants_perGenomicFeature:
-		> Plot PCA dividing variants per genomic feature (exonic, intronic, promoter, intergenic)
-	- rule plot_PopGenStats_perSite_perWindow:
-		> Plot basic population genetics statistics
+	- rule plot_Figure1_GenomicDiversity
+	- rule plot_Figure2_PopulationStructure
+	- rule plot_Figure3_vsSimulations
+	
 
 
 

@@ -209,10 +209,10 @@ if(!file.exists(TreeImage)){
 
 ######################################################################
 ## Start plotting Figure 2
-pdf(PDF, width=10, height=15)
+pdf(PDF, width=15, height=10)
 
 par(oma=c(1,1,1,1))
-layout(matrix(c(1,2,3,4,5,6),nrow=3,ncol=2,byrow=T), widths=c(1), heights=c(1), TRUE)
+layout(matrix(c(1,2,3),nrow=1,ncol=3,byrow=T), widths=c(1), heights=c(1), TRUE)
 
 ### A
 ## PCA
@@ -240,8 +240,8 @@ writePlotLabel("C")
 ### D
 ## PSMC
 #plot_PSMC_samples_wo_mu(PSMCdata, MetData$Sample, c(PSMChighmu, PSMClowmu), Blangenerationtime, MetData$ColorP)
-plot.new()
-writePlotLabel("D")
+#plot.new()
+#writePlotLabel("D")
 
 
 
@@ -257,15 +257,20 @@ tableS3$RMeans <- rowMeans(RSharedPriv)
 pvals <- c()
 sds <- c()
 for(r in c(1:length(RSharedPriv[,1]))){
+	print(rownames(tableS3)[r])
 	moreextreme <- 0
 	print(tableS3$Observed[r])
 	print(mean(unlist(RSharedPriv[r,])))
 	if(tableS3$Observed[r] > mean(unlist(RSharedPriv[r,]))){
-		moreextreme <- length(RSharedPriv[r,] >= tableS3$Observed[r])
+		moreextreme <- length(which(tableS3$Observed[r] <= RSharedPriv[r,]))
 	} else {
-		moreextreme <- length(RSharedPriv[r,] <= tableS3$Observed[r])
+		moreextreme <- length(which(tableS3$Observed[r] >= RSharedPriv[r,]))
 	}
+	print(moreextreme)
 	p_val <- moreextreme/length(RSharedPriv[r,])
+	if(p_val==0){
+		p_val <- paste0("<", 1/length(RSharedPriv[r,]))
+	}
 	pvals <- c(pvals, p_val)
 	sd_val <- sd(as.numeric(RSharedPriv[r,]))
 	sds <- c(sds, sd_val)
@@ -273,7 +278,7 @@ for(r in c(1:length(RSharedPriv[,1]))){
 tableS3$RSds <- sds
 tableS3$Rp_val <- pvals
 print(tableS3)
-write.table(tableS3, file = REPORT, append = TRUE, row.names=FALSE, sep="\t", quote = FALSE)
+write.table(tableS3, file = REPORT, append = TRUE, row.names=TRUE, sep="\t", quote = FALSE)
 
 
 
