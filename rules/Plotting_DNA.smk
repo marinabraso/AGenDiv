@@ -1263,6 +1263,142 @@ rule plot_Figure3_vsSimulations:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 #
+rule ENA_Submision:
+	'''
+	Following instructions from:
+		- https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html
+		- https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html
+	Fields in ManifestFile:
+		STUDY
+		SAMPLE
+		NAME
+		PLATFORM
+		INSTRUMENT
+		INSERT_SIZE
+		LIBRARY_NAME (optional)
+		LIBRARY_SOURCE
+		LIBRARY_SELECTION
+		LIBRARY_STRATEGY
+		DESCRIPTION (optional)
+		FASTQ
+	java -jar webin-cli-<version>.jar
+		-context reads 
+		-userName: the Webin submission account name.
+		-password: the Webin submission account password.
+		-centerName: the center name of the submitter (mandatory for broker accounts).
+		-manifest: the manifest file name.
+		-outputDir: directory for output files.
+		-inputDir: input directory for files declared in manifest file.
+		-validate: validates the files defined in the manifest file.
+		-submit: validates and submits the files defined in the manifest file.
+		-test: use Webin test service
+	'''
+	input:
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+		SamplesENA = "results/Plotting_DNA/ENA_Submision/samples-ENA.csv",
+		sampleFASTQ1 = "data/DNAseqFASTQ/{sample}_{lane}_{platform}_R1.fastq.gz",
+		sampleFASTQ2 = "data/DNAseqFASTQ/{sample}_{lane}_{platform}_R2.fastq.gz",
+	output:
+		ManifestFile = "results/Plotting_DNA/ENA_Submision/ManifestFile_{sample}_{lane}_{platform}.txt",
+		SubmissionReport = "results/Plotting_DNA/ENA_Submision/SubmissionReport_{sample}_{lane}_{platform}.txt",
+	log:
+		err = "logs/Plotting_DNA/ENA_Submision_{sample}_{lane}_{platform}.err",
+		out = "logs/Plotting_DNA/ENA_Submision_{sample}_{lane}_{platform}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/ENA_Submision_{sample}_{lane}_{platform}.txt"
+	conda:
+		'../envs/ENAsubmission.yaml'
+	params:
+		time = '1:00:00',
+		name = "ENA{sample}_{lane}_{platform}",
+		threads = 1,
+		mem = 5000,
+		ENAjavafile = config["ENAjavafile"],
+		ENAuserName = config["ENAuserName"],
+		ENApassword = config["ENApassword"],
+	shell:
+		"""
+		# Build Manifest file per sample, lane & platform
+		# STUDY
+		echo "STUDY\tPRJEB106885" > {output.ManifestFile} 2> {log.err}
+		# SAMPLE
+		ENAsample=$(cat {input.SamplesENA} | grep ,{wildcards.sample}, | cut -f1 -d',') 2> {log.err}
+		echo "SAMPLE\t$ENAsample" >> {output.ManifestFile} 2> {log.err}
+		# NAME
+		echo "NAME\tEXP_{wildcards.sample}_{wildcards.lane}_{wildcards.platform}" >> {output.ManifestFile} 2> {log.err}
+		# INSTRUMENT
+		awk -v platform={wildcards.platform} 'BEGIN {{if (platform == \"HiSeq4000\") print \"INSTRUMENT\tIllumina HiSeq 4000\"; else if (platform == \"NovaSeq6000\") print \"INSTRUMENT\tIllumina NovaSeq 6000\"}}' >> {output.ManifestFile} 2> {log.err}
+		# INSERT_SIZE
+		echo "INSERT_SIZE\t300" >> {output.ManifestFile} 2> {log.err}
+		# LIBRARY_SOURCE
+		echo "LIBRARY_SOURCE\tGENOMIC" >> {output.ManifestFile} 2> {log.err}
+		# LIBRARY_SELECTION
+		echo "LIBRARY_SELECTION\tRANDOM" >> {output.ManifestFile} 2> {log.err}
+		# LIBRARY_STRATEGY
+		echo "LIBRARY_STRATEGY\tWGS" >> {output.ManifestFile} 2> {log.err}
+		# FASTQ
+		echo "FASTQ\t$(basename {input.sampleFASTQ1})" >> {output.ManifestFile} 2> {log.err}
+		echo "FASTQ\t$(basename {input.sampleFASTQ2})" >> {output.ManifestFile} 2> {log.err}
+		cp {output.ManifestFile} {output.SubmissionReport}
+
+
+
+
+
+
+		# Validate
+		java -jar {params.ENAjavafile} \
+			-context reads \
+			-userName {params.ENAuserName} \
+			-password {params.ENApassword} \
+			-manifest {output.ManifestFile} \
+			-outputDir $(dirname {output.ManifestFile})\
+			-inputDir $(dirname {input.sampleFASTQ1}) \
+			-validate > {log.out} 2> {log.err}
+		# Submit
+		#java -jar {params.ENAjavafile} \
+			-context=reads \
+			-username={params.ENAuserName} \
+			-password={params.ENApassword} \
+			-manifest={output.ManifestFile} \
+			-outputdir=$(dirname {output.ManifestFile})\
+			-inputdir=$(dirname {input.sampleFASTQ1}) \
+			-submit >> {log.out} 2> {log.err}
+		#rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2> {log.err} || true
+		"""
+#
+rule ENA_Submision_AllSamplesLanesPlatforms:
+	'''
+	'''
+	input:
+		ManifestFiles_HiSeq4000 = expand("results/Plotting_DNA/ENA_Submision/ManifestFile_{samplelane}_HiSeq4000.txt", samplelane=config["samplelanesHiSeq4000"]),
+		ManifestFiles_NovaSeq6000_1 = expand("results/Plotting_DNA/ENA_Submision/ManifestFile_{samplelane}_NovaSeq6000.txt", samplelane=config["samplelanesNovaSeq6000_1"]),
+		ManifestFiles_NovaSeq6000_2 = expand("results/Plotting_DNA/ENA_Submision/ManifestFile_{samplelane}_NovaSeq6000.txt", samplelane=config["samplelanesNovaSeq6000_2"]),
+	output:
+		OutputFile = "results/Plotting_DNA/ENA_Submision/ManifestFile_all_samplelaneplatform.txt",
+	log:
+		err = "logs/Plotting_DNA/ENA_Submision_all.err",
+		out = "logs/Plotting_DNA/ENA_Submision_all.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/ENA_Submision_all.txt"
+	conda:
+		'../envs/ENAsubmission.yaml'
+	params:
+		time = '1:00:00',
+		name = "ENA_all",
+		threads = 1,
+		mem = 5000,
+	shell:
+		"""
+		echo "ManifestFile\tExperimentAccession\tRunAccession" > {output.OutputFile} 2> {log.err}
+		for run in {input.ManifestFiles_HiSeq4000} {input.ManifestFiles_NovaSeq6000_1} {input.ManifestFiles_NovaSeq6000_2}; do
+			samplelaneplatform=$(basename $run | cut -f3,4,5 -d'_' | sed 's/.txt//g')
+			expid=$(cat $run | grep 'The following experiment accession was assigned to the submission:' | rev | cut -f1 -d' ' | rev) 2> {log.err}
+			runid=$(cat $run | grep 'The following run accession was assigned to the submission:' | rev | cut -f1 -d' ' | rev) 2> {log.err}
+			echo "$run\t$expid\t$runid" >> {output.OutputFile} 2> {log.err}
+		done
+		"""
+#
 
 
 

@@ -1,0 +1,7 @@
+name: ENAsubmission
+channels:
+    - conda-forge
+    - bioconda
+dependencies:
+    - openjdk==17.0.17
+    - aspera-cli=4.20.0-0
