@@ -1356,15 +1356,16 @@ rule ENA_Submision:
 			-inputDir $(dirname {input.sampleFASTQ1}) \
 			-validate > {log.out} 2> {log.err}
 		# Submit
-		#java -jar {params.ENAjavafile} \
+		java -jar {params.ENAjavafile} \
 			-context=reads \
 			-username={params.ENAuserName} \
 			-password={params.ENApassword} \
 			-manifest={output.ManifestFile} \
 			-outputdir=$(dirname {output.ManifestFile})\
 			-inputdir=$(dirname {input.sampleFASTQ1}) \
-			-submit >> {log.out} 2> {log.err}
-		#rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2> {log.err} || true
+			-submit >> {log.out} 2> {log.err}	
+		cat {log.out} >> {output.SubmissionReport}
+		rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2> {log.err}
 		"""
 #
 rule ENA_Submision_AllSamplesLanesPlatforms:
@@ -1399,7 +1400,20 @@ rule ENA_Submision_AllSamplesLanesPlatforms:
 		done
 		"""
 #
-
+rule scp_fastq_data_from_NAS:
+	'''
+	Copy fastq data from NAS (cluster) to local data folder (meant only to upload data to ENA)
+	'''
+	output:
+		fastqfile = "data/DNAseqFASTQ/{idfile}.fastq.gz"
+	log:
+		err = "logs/Plotting_DNA/scp_fastq_data_from_NAS/{idfile}.err",
+		out = "logs/Plotting_DNA/scp_fastq_data_from_NAS/{idfile}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/scp_fastq_data_from_NAS/{idfile}.txt"
+	shell:
+		"scp mbrasovi@curnagl.dcsr.unil.ch:/nas/FAC/FBM/DEE/mrobinso/default/D2c/mbrasovi/Banyuls_Roscoff/DNAseqFASTQ/{wildcards.idfile}.fastq.gz {output.fastqfile}"
+#
 
 
 

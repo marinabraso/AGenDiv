@@ -1,7 +1,7 @@
 
 
 configfile: "config/AGenDiv.yaml"
-localrules: copy_fastq_NAS_data, DownloadProteinSeq_from_Ensembl, BuildOGs_withOrthoLoger, ENA_Submision
+localrules: copy_fastq_NAS_data, DownloadProteinSeq_from_Ensembl, BuildOGs_withOrthoLoger, ENA_Submision, scp_fastq_data_from_NAS
 
 include: 'rules/VariantCalling_DNA.smk'
 include: 'rules/VariantAnalysis_DNA.smk'
@@ -9,6 +9,7 @@ include: 'rules/Simulations.smk'
 include: 'rules/SpeciesTreeBuilding.smk'
 include: 'rules/Plotting_DNA.smk'
 
+ruleorder: scp_fastq_data_from_NAS > copy_fastq_NAS_data
 
 rule all:
 	'''
