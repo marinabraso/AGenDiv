@@ -1363,7 +1363,7 @@ rule ENA_Submision:
 			-manifest={output.ManifestFile} \
 			-outputdir=$(dirname {output.ManifestFile})\
 			-inputdir=$(dirname {input.sampleFASTQ1}) \
-			-submit >> {log.out} 2> {log.err}	
+			-submit >> {log.out} 2> {log.err}
 		cat {log.out} >> {output.SubmissionReport}
 		rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2> {log.err}
 		"""
