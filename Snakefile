@@ -9,7 +9,12 @@ include: 'rules/Simulations.smk'
 include: 'rules/SpeciesTreeBuilding.smk'
 include: 'rules/Plotting_DNA.smk'
 
-ruleorder: scp_fastq_data_from_NAS > copy_fastq_NAS_data
+#
+if config["where"] == "local":
+    ruleorder: scp_fastq_data_from_NAS > copy_fastq_NAS_data
+else:
+    ruleorder: copy_fastq_NAS_data > scp_fastq_data_from_NAS
+#
 
 rule all:
 	'''

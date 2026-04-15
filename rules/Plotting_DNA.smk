@@ -1318,6 +1318,7 @@ rule ENA_Submision:
 		ENApassword = config["ENApassword"],
 	shell:
 		"""
+		pwd=$(pwd)
 		# Build Manifest file per sample, lane & platform
 		# STUDY
 		echo "STUDY\tPRJEB106885" > {output.ManifestFile} 2> {log.err}
@@ -1342,30 +1343,13 @@ rule ENA_Submision:
 		cp {output.ManifestFile} {output.SubmissionReport}
 
 
+		# Uploading fastq files
+		echo "Uploading fastq files..." >> {log.out}
+		cd $(dirname {input.sampleFASTQ1})
+		echo ascp -QT -l300M -L- $(basename {input.sampleFASTQ1}) $(basename {input.sampleFASTQ2}) {params.ENAuserName}@webin.ebi.ac.uk:.
+		cd $pwd
+		echo "Done uploading fastq files." >> {log.out}
 
-
-
-
-		# Validate
-		java -jar {params.ENAjavafile} \
-			-context reads \
-			-userName {params.ENAuserName} \
-			-password {params.ENApassword} \
-			-manifest {output.ManifestFile} \
-			-outputDir $(dirname {output.ManifestFile})\
-			-inputDir $(dirname {input.sampleFASTQ1}) \
-			-validate > {log.out} 2> {log.err}
-		# Submit
-		java -jar {params.ENAjavafile} \
-			-context=reads \
-			-username={params.ENAuserName} \
-			-password={params.ENApassword} \
-			-manifest={output.ManifestFile} \
-			-outputdir=$(dirname {output.ManifestFile})\
-			-inputdir=$(dirname {input.sampleFASTQ1}) \
-			-submit >> {log.out} 2> {log.err}
-		cat {log.out} >> {output.SubmissionReport}
-		rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2> {log.err}
 		"""
 #
 rule ENA_Submision_AllSamplesLanesPlatforms:
