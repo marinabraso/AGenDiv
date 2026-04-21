@@ -8,6 +8,7 @@ include: 'rules/VariantAnalysis_DNA.smk'
 include: 'rules/Simulations.smk'
 include: 'rules/SpeciesTreeBuilding.smk'
 include: 'rules/Plotting_DNA.smk'
+include: 'rules/AlternativeVariantCalling_DNA.smk'
 
 #
 if config["where"] == "local":

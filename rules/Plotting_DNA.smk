@@ -1320,35 +1320,61 @@ rule ENA_Submision:
 		"""
 		pwd=$(pwd)
 		# Build Manifest file per sample, lane & platform
+		echo "Building Manifest file..." > {log.out}
 		# STUDY
 		echo "STUDY\tPRJEB106885" > {output.ManifestFile} 2> {log.err}
 		# SAMPLE
-		ENAsample=$(cat {input.SamplesENA} | grep ,{wildcards.sample}, | cut -f1 -d',') 2> {log.err}
-		echo "SAMPLE\t$ENAsample" >> {output.ManifestFile} 2> {log.err}
+		ENAsample=$(cat {input.SamplesENA} | grep ,{wildcards.sample}, | cut -f1 -d',') 2>> {log.err}
+		echo "SAMPLE\t$ENAsample" >> {output.ManifestFile} 2>> {log.err}
 		# NAME
-		echo "NAME\tEXP_{wildcards.sample}_{wildcards.lane}_{wildcards.platform}" >> {output.ManifestFile} 2> {log.err}
+		echo "NAME\tEXP_{wildcards.sample}_{wildcards.lane}_{wildcards.platform}" >> {output.ManifestFile} 2>> {log.err}
 		# INSTRUMENT
-		awk -v platform={wildcards.platform} 'BEGIN {{if (platform == \"HiSeq4000\") print \"INSTRUMENT\tIllumina HiSeq 4000\"; else if (platform == \"NovaSeq6000\") print \"INSTRUMENT\tIllumina NovaSeq 6000\"}}' >> {output.ManifestFile} 2> {log.err}
+		awk -v platform={wildcards.platform} 'BEGIN {{if (platform == \"HiSeq4000\") print \"INSTRUMENT\tIllumina HiSeq 4000\"; else if (platform == \"NovaSeq6000\") print \"INSTRUMENT\tIllumina NovaSeq 6000\"}}' >> {output.ManifestFile} 2>> {log.err}
 		# INSERT_SIZE
-		echo "INSERT_SIZE\t300" >> {output.ManifestFile} 2> {log.err}
+		echo "INSERT_SIZE\t300" >> {output.ManifestFile} 2>> {log.err}
 		# LIBRARY_SOURCE
-		echo "LIBRARY_SOURCE\tGENOMIC" >> {output.ManifestFile} 2> {log.err}
+		echo "LIBRARY_SOURCE\tGENOMIC" >> {output.ManifestFile} 2>> {log.err}
 		# LIBRARY_SELECTION
-		echo "LIBRARY_SELECTION\tRANDOM" >> {output.ManifestFile} 2> {log.err}
+		echo "LIBRARY_SELECTION\tRANDOM" >> {output.ManifestFile} 2>> {log.err}
 		# LIBRARY_STRATEGY
-		echo "LIBRARY_STRATEGY\tWGS" >> {output.ManifestFile} 2> {log.err}
+		echo "LIBRARY_STRATEGY\tWGS" >> {output.ManifestFile} 2>> {log.err}
 		# FASTQ
-		echo "FASTQ\t$(basename {input.sampleFASTQ1})" >> {output.ManifestFile} 2> {log.err}
-		echo "FASTQ\t$(basename {input.sampleFASTQ2})" >> {output.ManifestFile} 2> {log.err}
+		echo "FASTQ\t$(basename {input.sampleFASTQ1})" >> {output.ManifestFile} 2>> {log.err}
+		echo "FASTQ\t$(basename {input.sampleFASTQ2})" >> {output.ManifestFile} 2>> {log.err}
 		cp {output.ManifestFile} {output.SubmissionReport}
+		echo "Done." >> {log.out}
 
 
 		# Uploading fastq files
+		export ASPERA_SCP_PASS='{params.ENApassword}'
 		echo "Uploading fastq files..." >> {log.out}
 		cd $(dirname {input.sampleFASTQ1})
-		echo ascp -QT -l300M -L- $(basename {input.sampleFASTQ1}) $(basename {input.sampleFASTQ2}) {params.ENAuserName}@webin.ebi.ac.uk:.
+		ascp -QT \
+			--mode=send \
+			--host=webin.ebi.ac.uk \
+			--user=Webin-60987 \
+			-l50M \
+			--file-crypt=decrypt -T \
+			-L- \
+			$(basename {input.sampleFASTQ1}) $(basename {input.sampleFASTQ2})  \
+			. >> $pwd/{log.out}  2>> $pwd/{log.err}
+		#ascp -QT -l300M -T -L- $(basename {input.sampleFASTQ1}) $(basename {input.sampleFASTQ2}) {params.ENAuserName}@webin.ebi.ac.uk:.  >> $pwd/{log.out}  2>> $pwd/{log.err}
 		cd $pwd
 		echo "Done uploading fastq files." >> {log.out}
+
+		echo "Submitting manifest..." >> {log.out}
+		cd $(dirname {output.ManifestFile})
+		java -jar {params.ENAjavafile} \
+			-context reads \
+			-userName {params.ENAuserName} \
+			-password {params.ENApassword} \
+			-manifest $(basename {output.ManifestFile}) \
+			-submit >> $pwd/{log.out} 2>> $pwd/{log.err}
+		cd $pwd
+		echo "Submitted!" >> {log.out}
+
+		#cat {log.out} >> {output.SubmissionReport}
+		#rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2>> {log.err}
 
 		"""
 #
