@@ -1342,36 +1342,32 @@ rule ENA_Submision:
 		echo "FASTQ\t$(basename {input.sampleFASTQ1})" >> {output.ManifestFile} 2>> {log.err}
 		echo "FASTQ\t$(basename {input.sampleFASTQ2})" >> {output.ManifestFile} 2>> {log.err}
 		cp {output.ManifestFile} {output.SubmissionReport}
+		cp {output.ManifestFile} $(dirname {input.sampleFASTQ1})
 		echo "Done." >> {log.out}
 
 
-		# Uploading fastq files
-		export ASPERA_SCP_PASS='{params.ENApassword}'
-		echo "Uploading fastq files..." >> {log.out}
 		cd $(dirname {input.sampleFASTQ1})
-		ascp -QT \
-			--mode=send \
-			--host=webin.ebi.ac.uk \
-			--user=Webin-60987 \
-			-l50M \
-			--file-crypt=decrypt -T \
-			-L- \
-			$(basename {input.sampleFASTQ1}) $(basename {input.sampleFASTQ2})  \
-			. >> $pwd/{log.out}  2>> $pwd/{log.err}
-		#ascp -QT -l300M -T -L- $(basename {input.sampleFASTQ1}) $(basename {input.sampleFASTQ2}) {params.ENAuserName}@webin.ebi.ac.uk:.  >> $pwd/{log.out}  2>> $pwd/{log.err}
-		cd $pwd
-		echo "Done uploading fastq files." >> {log.out}
-
-		echo "Submitting manifest..." >> {log.out}
-		cd $(dirname {output.ManifestFile})
-		java -jar {params.ENAjavafile} \
+		echo "Validating manifest..." >> $pwd/{log.out}
+		java -jar $pwd/{params.ENAjavafile} \
 			-context reads \
 			-userName {params.ENAuserName} \
 			-password {params.ENApassword} \
 			-manifest $(basename {output.ManifestFile}) \
+			-ascp \
+			-validate >> $pwd/{log.out} 2>> $pwd/{log.err}
+		echo "Validated!" >> $pwd/{log.out}
+
+		echo "Submitting manifest..." >> $pwd/{log.out}
+		java -jar $pwd/{params.ENAjavafile} \
+			-context reads \
+			-userName {params.ENAuserName} \
+			-password {params.ENApassword} \
+			-manifest $(basename {output.ManifestFile}) \
+			-ascp \
 			-submit >> $pwd/{log.out} 2>> $pwd/{log.err}
+		echo "Submitted!" >> $pwd/{log.out}
+		rm $(basename {output.ManifestFile})
 		cd $pwd
-		echo "Submitted!" >> {log.out}
 
 		#cat {log.out} >> {output.SubmissionReport}
 		#rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2>> {log.err}
