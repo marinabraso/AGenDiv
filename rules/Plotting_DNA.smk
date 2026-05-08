@@ -1406,22 +1406,6 @@ rule ENA_Submision_AllSamplesLanesPlatforms:
 		done
 		"""
 #
-rule scp_fastq_data_from_NAS:
-	'''
-	Copy fastq data from NAS (cluster) to local data folder (meant only to upload data to ENA)
-	'''
-	output:
-		fastqfile = "data/DNAseqFASTQ/{idfile}.fastq.gz"
-	log:
-		err = "logs/Plotting_DNA/scp_fastq_data_from_NAS/{idfile}.err",
-		out = "logs/Plotting_DNA/scp_fastq_data_from_NAS/{idfile}.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/scp_fastq_data_from_NAS/{idfile}.txt"
-	shell:
-		"scp mbrasovi@curnagl.dcsr.unil.ch:/nas/FAC/FBM/DEE/mrobinso/default/D2c/mbrasovi/Banyuls_Roscoff/DNAseqFASTQ/{wildcards.idfile}.fastq.gz {output.fastqfile}"
-#
-
-
 
 
 ############################

@@ -13,3 +13,14 @@ minimap2 -ax sr -B4 -O6,24 -E2,1 -t ${threads} ${genome} ${fastq1} ${fastq2} | s
 		# -B4 → lowers mismatch penalty (more tolerant)
 		# -O6,24 → gap open penalties (affects indels)
 		# -E2,1 → gap extension penalties
+status=$?
+
+samtools index ${bam}
+status2=$?
+
+
+if [[  status -eq 0 && status2 -eq 0 && -s ${bam} ]]
+then
+	echo "removing ${fastq1} ${fastq2}"
+	rm ${fastq1} ${fastq2} 2> ~/.null
+fi
