@@ -109,7 +109,7 @@ rule r4_call_short_variants_GATK_PerChr_PerSample_from_minimap2:
 	Calling short variants for a given chr from a merged bam file for the 3 lanes, sorted & markduplicated with GATK HaplotypeCaller
 	'''
 	input:
-		samplechrBAMmarkdup = rules.r2_merge_3_lanes_bams_markdup_PerChr_from_minimap2.output.samplechrBAMmarkdup,
+		samplechrBAMmarkdup = "results/AlternativeVariantCalling_DNA/{folder}/{sample}_{round}_merged.{chr}.bam",
 		genomeFA = "data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_genome.fa"
 	output:
 		samplechrGVCF = "results/AlternativeVariantCalling_DNA/{folder}/{sample}_{round}.{chr}.chrg.vcf.gz"
