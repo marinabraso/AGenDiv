@@ -425,7 +425,7 @@ par(mar=c(3,3,2,2))
 map <- readPNG(paste0(system("pwd", intern=TRUE), "/", MapImage))
 plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", col=NA, xaxs = "i", yaxs = "i")
 rasterImage(map, 1, 1, 10, 10)
-legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=1.5, xjust = 0, yjust = 0)
+legend("topleft", populations, pch=19, col=population.colors, bty = "n", cex=2, xjust = 0, yjust = 0)
 writePlotLabel("A")
 
 ### B

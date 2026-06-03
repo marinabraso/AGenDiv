@@ -31,8 +31,9 @@ gatk --java-options "-Xmx4g -Xms4g" GenomicsDBImport \
        --sample-name-map ${mapfile} \
        --tmp-dir ${tmppath} \
        --reader-threads 5 \
-       --L ${chr}
-status1=$?
+       --intervals ${chr} \
+	   --reference ${genome} 
+ status1=$?
 
 gatk --java-options "-Xmx4g" GenotypeGVCFs \
    -R ${genome} \

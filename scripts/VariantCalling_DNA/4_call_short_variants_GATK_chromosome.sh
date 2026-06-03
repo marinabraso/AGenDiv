@@ -18,9 +18,9 @@ gatk --java-options "-Xmx4g" HaplotypeCaller \
 	--intervals ${chr}
 status=$?
 
-if [[  status -eq 0 && -s ${outputGVCF} ]]
-then
-	echo "removing ${inputBAM}"
-	rm ${inputBAM}* 2> ~/.null
-fi
+#if [[  status -eq 0 && -s ${outputGVCF} ]]
+#then
+#	echo "removing ${inputBAM}"
+#	rm ${inputBAM}* 2> ~/.null
+#fi
 

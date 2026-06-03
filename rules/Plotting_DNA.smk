@@ -109,6 +109,14 @@ def get_HetFiles(wildcards):
 			return expand(rules.Formating_SimulationFiles.output.HetFile, SimFolder="%s/SimParam_%s" % (Simulationtype, SimParam), SimParam="%s_%s" % (SimParam, Replica), FiniteInfiniteAlleles=FiniteInfiniteAlleles)
 		else:
 			raise ValueError("Unknown value for SimParam, Simulationtype or FiniteInfiniteAlleles get_HetFiles: %s, %s" % SimParam, FiniteInfiniteAlleles)
+	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile, chr="chr19")
+	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="minimap2", caller="freebayes", chr="chr19")
+	elif wildcards.ObsExp == "Observed_minimap2_GATK":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="minimap2", caller="GATK", chr="chr19")
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_HetFiles: %s" % wildcards.ObsExp)
 
@@ -132,8 +140,31 @@ def get_GenoFiles(wildcards):
 			return expand(rules.Formating_SimulationFiles.output.GenoFile, SimFolder="%s/SimParam_%s" % (Simulationtype, SimParam), SimParam="%s_%s" % (SimParam, Replica), FiniteInfiniteAlleles=FiniteInfiniteAlleles)
 		else:
 			raise ValueError("Unknown value for SimParam, Simulationtype or FiniteInfiniteAlleles get_GenoFiles: %s, %s" % SimParam, FiniteInfiniteAlleles)
+	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr="chr19")
+	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="minimap2", caller="freebayes", chr="chr19")
+	elif wildcards.ObsExp == "Observed_minimap2_GATK":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="minimap2", caller="GATK", chr="chr19")
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_GenoFiles: %s" % wildcards.ObsExp)
+
+# Provide GENOTYPEMatrices files according to the wildcard ObsExp
+def get_GENOTYPEMatrices(wildcards):
+	if wildcards.ObsExp == "Observed_Data":
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrsGENOTYPEMatrices, chr=config["bralan3chrs"])
+	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrsGENOTYPEMatrices, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrsGENOTYPEMatrices, chr="chr19")
+	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrsGENOTYPEMatrices, mapper="minimap2", caller="freebayes", chr="chr19")
+	elif wildcards.ObsExp == "Observed_minimap2_GATK":
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrsGENOTYPEMatrices, mapper="minimap2", caller="GATK", chr="chr19")
+	else:
+		raise ValueError("Unknown value for ObsExp file in get_GENOTYPEMatrices: %s" % wildcards.ObsExp)
 
 # Provide file with list of samples according to wildcard GroupSamples
 def get_group_of_samples_file(wildcards):
@@ -920,8 +951,8 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 	'''
 	'''
 	input:
-		GenoFiles = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr=config["bralan3chrs"]),
-		chrsGENOTYPEMatrices = expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3chrs"]),
+		GenoFiles = get_GenoFiles,
+		chrsGENOTYPEMatrices = get_GENOTYPEMatrices,
 		BED = get_bed_file_name,
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt" 
 	output:
@@ -1088,7 +1119,7 @@ rule Population_Fst_Total:
 # add synonymous/non-synonymous
 rule plot_Figure1_GenomicDiversity:
 	'''
-
+	Figure 1 + Supplementary figures 2 and 4
 	'''
 	input:
 		Rconfig = config["Rconfig"],
@@ -1157,14 +1188,13 @@ rule plot_Figure1_GenomicDiversity:
 #
 rule plot_Figure2_PopulationStructure:
 	'''
-	
 	Plotting PSMC Pairwise Sequentially Markovian Coalescent
 	Li H, Durbin R. Inference of human population history from individual whole-genome sequences. Nature. 2011 Jul 13;475(7357):493-6. doi: 10.1038/nature10231. PMID: 21753753; PMCID: PMC3154645.
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-70_AllVariants", "AbsFreq_70-73_AllVariants"), GroupSamples="AllSamples"),
-		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-70_AllVariants", "AbsFreq_70-73_AllVariants"), GroupSamples="AllSamples"),
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-73_AllVariants"), GroupSamples="AllSamples"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-73_AllVariants"), GroupSamples="AllSamples"),
 		ObsShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots="Observed"),
 		RandShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots=["Rand_%d" % i for i in range(config["BootsRandPop"])]),
 		jpsmc= rules.Join_PSMC_results.output.jpsmc,
@@ -1214,7 +1244,6 @@ rule plot_Figure2_PopulationStructure:
 # 
 rule plot_Figure3_vsSimulations:
 	'''
-
 	'''
 	input:
 		Rconfig = config["Rconfig"],
@@ -1263,6 +1292,45 @@ rule plot_Figure3_vsSimulations:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 #
+rule plot_FigureSX_AlternativeMappingAndVariantCalling:
+	'''
+	'''
+	input:
+		Rconfig = config["Rconfig"],
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples"),
+		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable"),
+		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
+		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
+	output:
+		PDF = "results/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.pdf",
+		REPORT = "results/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling_report.txt"
+	log:
+		err = "logs/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.err",
+		out = "logs/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '1:00:00',
+		name = "pFigSX",
+		threads = 1,
+		mem = 50000,
+	shell:
+		"""
+		./scripts/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.R \
+		\"{input.PCAValues_files}\" \
+		\"{input.PCAPropVar_files}\" \
+		\"{input.HetTotalFiles}\" \
+		{input.SamplesOrderInVCF} \
+		{input.Metadata} \
+		{output.PDF} \
+		{output.REPORT} \
+		{input.Rconfig} > {log.out} 2> {log.err}
+		"""
+# 
+
 rule ENA_Submision:
 	'''
 	Following instructions from:

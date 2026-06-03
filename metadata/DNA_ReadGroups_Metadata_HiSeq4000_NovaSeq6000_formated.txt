@@ -2,13 +2,13 @@
 @RG	ID:2.HiSeq4000	SM:F1D	PL:illumina	LB:F1D	BC:TGAACGCGGA	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:5.HiSeq4000	SM:F2D	PL:illumina	LB:F2D	BC:CCTGCAACCT	DT:2020-12-11	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:F3D	PL:illumina	LB:F3D	BC:TTCATGGTTC	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:2.HiSeq4000	SM:F4D	PL:illumina	LB:F4D	BC:AGCGAATTAG	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:2.HiSeq4000	SM:F4D	PL:illumina	LB:F4D	BC:AGCGAATTAG	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:F6D	PL:illumina	LB:F6D	BC:CACTAGACCA	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:F7D	PL:illumina	LB:F7D	BC:ATTATCCACT	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:F8D	PL:illumina	LB:F8D	BC:ATGGCGTGCC	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:F9D	PL:illumina	LB:F9D	BC:TCCAGAGATC	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:M2D	PL:illumina	LB:M2D	BC:TCATACCGTT	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:2.HiSeq4000	SM:M3D	PL:illumina	LB:M3D	BC:ATCCTCTCAA	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:2.HiSeq4000	SM:M3D	PL:illumina	LB:M3D	BC:ATCCTCTCAA	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:M4D	PL:illumina	LB:M4D	BC:GGCGCCATTG	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:M5D	PL:illumina	LB:M5D	BC:CAACGTTCGG	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:M6D	PL:illumina	LB:M6D	BC:GCGTATTAAT	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
@@ -33,8 +33,8 @@
 @RG	ID:2.HiSeq4000	SM:RM6D	PL:illumina	LB:RM6D	BC:TCTTGTCGGC	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:RM7D	PL:illumina	LB:RM7D	BC:TACCGCCTCG	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.HiSeq4000	SM:RM8D	PL:illumina	LB:RM8D	BC:CTGTTATATC	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:2.HiSeq4000	SM:RU5D	PL:illumina	LB:RU5D	BC:CTTCCTAGGA	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Roscoff.Unknown	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:1.NovaSeq6000	SM:RU5D	PL:illumina	LB:RU5D	BC:CTTCCTAGGA-CCTAGAGTAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Unknown	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:2.HiSeq4000	SM:RU5D	PL:illumina	LB:RU5D	BC:CTTCCTAGGA	DT:2020-12-04	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:1.NovaSeq6000	SM:RU5D	PL:illumina	LB:RU5D	BC:CTTCCTAGGA-CCTAGAGTAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:RM3D	PL:illumina	LB:RM3D	BC:AGCTAAGCGG-ATTAATACGC	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:RM2D	PL:illumina	LB:RM2D	BC:GAGGCCTATT-CTAGTCCGGA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:RM1D	PL:illumina	LB:RM1D	BC:CCAATGATAC-GAGTGTGCCG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
@@ -49,7 +49,7 @@
 @RG	ID:1.NovaSeq6000	SM:RM6D	PL:illumina	LB:RM6D	BC:TCTTGTCGGC-CCACCTGTGT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:RM5D	PL:illumina	LB:RM5D	BC:CACACAGTAT-TTGAGCCTAA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:RM4D	PL:illumina	LB:RM4D	BC:TTAGACCATG-TCCTAGGAAG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:1.NovaSeq6000	SM:F4D	PL:illumina	LB:F4D	BC:AGCGAATTAG-AGCCGGAACA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:1.NovaSeq6000	SM:F4D	PL:illumina	LB:F4D	BC:AGCGAATTAG-AGCCGGAACA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:M4D	PL:illumina	LB:M4D	BC:GGCGCCATTG-ACCGCGCAAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:M2D	PL:illumina	LB:M2D	BC:TCATACCGTT-GGTAACGCAG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:RF8D	PL:illumina	LB:RF8D	BC:CAGCGGTAGA-GCAACAGGTG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Female	CN:Lausanne.Genomic.Technologies.Facility
@@ -66,11 +66,11 @@
 @RG	ID:1.NovaSeq6000	SM:F8D	PL:illumina	LB:F8D	BC:ATGGCGTGCC-CGCTTGAAGT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:F6D	PL:illumina	LB:F6D	BC:CACTAGACCA-ACTGCCTTAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:F7D	PL:illumina	LB:F7D	BC:ATTATCCACT-TACGCACGTA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:1.NovaSeq6000	SM:M3D	PL:illumina	LB:M3D	BC:ATCCTCTCAA-TCCGCAAGGC	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:1.NovaSeq6000	SM:M3D	PL:illumina	LB:M3D	BC:ATCCTCTCAA-TCCGCAAGGC	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:F3D	PL:illumina	LB:F3D	BC:TTCATGGTTC-GACATTGTCA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:F2D	PL:illumina	LB:F2D	BC:CCTGCAACCT-GTAGAGTCAG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:1.NovaSeq6000	SM:F1D	PL:illumina	LB:F1D	BC:TGAACGCGGA-CTTCGAAGGA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:2.NovaSeq6000	SM:RU5D	PL:illumina	LB:RU5D	BC:CTTCCTAGGA-CCTAGAGTAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Unknown	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:2.NovaSeq6000	SM:RU5D	PL:illumina	LB:RU5D	BC:CTTCCTAGGA-CCTAGAGTAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:RM3D	PL:illumina	LB:RM3D	BC:AGCTAAGCGG-ATTAATACGC	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:RM2D	PL:illumina	LB:RM2D	BC:GAGGCCTATT-CTAGTCCGGA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:RM1D	PL:illumina	LB:RM1D	BC:CCAATGATAC-GAGTGTGCCG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
@@ -85,7 +85,7 @@
 @RG	ID:2.NovaSeq6000	SM:RM6D	PL:illumina	LB:RM6D	BC:TCTTGTCGGC-CCACCTGTGT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:RM5D	PL:illumina	LB:RM5D	BC:CACACAGTAT-TTGAGCCTAA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:RM4D	PL:illumina	LB:RM4D	BC:TTAGACCATG-TCCTAGGAAG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Male	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:2.NovaSeq6000	SM:F4D	PL:illumina	LB:F4D	BC:AGCGAATTAG-AGCCGGAACA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:2.NovaSeq6000	SM:F4D	PL:illumina	LB:F4D	BC:AGCGAATTAG-AGCCGGAACA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:M4D	PL:illumina	LB:M4D	BC:GGCGCCATTG-ACCGCGCAAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:M2D	PL:illumina	LB:M2D	BC:TCATACCGTT-GGTAACGCAG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:RF8D	PL:illumina	LB:RF8D	BC:CAGCGGTAGA-GCAACAGGTG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Roscoff.Female	CN:Lausanne.Genomic.Technologies.Facility
@@ -102,7 +102,7 @@
 @RG	ID:2.NovaSeq6000	SM:F8D	PL:illumina	LB:F8D	BC:ATGGCGTGCC-CGCTTGAAGT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:F6D	PL:illumina	LB:F6D	BC:CACTAGACCA-ACTGCCTTAT	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:F7D	PL:illumina	LB:F7D	BC:ATTATCCACT-TACGCACGTA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
-@RG	ID:2.NovaSeq6000	SM:M3D	PL:illumina	LB:M3D	BC:ATCCTCTCAA-TCCGCAAGGC	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Male	CN:Lausanne.Genomic.Technologies.Facility
+@RG	ID:2.NovaSeq6000	SM:M3D	PL:illumina	LB:M3D	BC:ATCCTCTCAA-TCCGCAAGGC	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:F3D	PL:illumina	LB:F3D	BC:TTCATGGTTC-GACATTGTCA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:F2D	PL:illumina	LB:F2D	BC:CCTGCAACCT-GTAGAGTCAG	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility
 @RG	ID:2.NovaSeq6000	SM:F1D	PL:illumina	LB:F1D	BC:TGAACGCGGA-CTTCGAAGGA	DT:2023-04-06	DS:Branchiostoma.lanceolatum.Banyuls.Female	CN:Lausanne.Genomic.Technologies.Facility

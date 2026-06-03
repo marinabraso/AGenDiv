@@ -7,15 +7,13 @@ outputVCF=$4
 
 mkdir -p $(dirname ${outputVCF})
 
-
-echo freebayes \
-  -f ${genome} \
-  #--use-best-n-alleles 4 \ 
+freebayes -f ${genome} \
+  --skip-coverage 100 \
+  --haplotype-length 0 \
+  --use-best-n-alleles 10 \
   --theta 0.02 \
-  #--haplotype-length 0 \
   --min-alternate-fraction 0.05 \
   --min-alternate-count 2 \
   --min-base-quality 10 \
   --min-mapping-quality 20 \
-  --genotype-qualities \
-  ${inputBAMs} > ${outputVCF}
+  --genotype-qualities ${inputBAMs} | bgzip > ${outputVCF}
