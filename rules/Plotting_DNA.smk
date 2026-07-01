@@ -154,15 +154,15 @@ def get_GenoFiles(wildcards):
 # Provide GENOTYPEMatrices files according to the wildcard ObsExp
 def get_GENOTYPEMatrices(wildcards):
 	if wildcards.ObsExp == "Observed_Data":
-		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrsGENOTYPEMatrices, chr=config["bralan3chrs"])
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3chrs"])
 	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrsGENOTYPEMatrices, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="bwa_mem2", caller="freebayes", chr="chr19")
 	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrsGENOTYPEMatrices, chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr="chr19")
 	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrsGENOTYPEMatrices, mapper="minimap2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="minimap2", caller="freebayes", chr="chr19")
 	elif wildcards.ObsExp == "Observed_minimap2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrsGENOTYPEMatrices, mapper="minimap2", caller="GATK", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="minimap2", caller="GATK", chr="chr19")
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_GENOTYPEMatrices: %s" % wildcards.ObsExp)
 
@@ -945,6 +945,42 @@ rule get_FunctionalRegionsCallableSpan:
 			echo ${{labels[$l]}}"\t"${{length}} >> {output.out}
 		done
 		"""
+# Compute total spand of exons, introns, promoters and intergenic regions
+rule get_FunctionalRegionsTotalSpan:
+	'''
+	'''
+	input:
+		ExonsBED=rules.FunctionalFeatures_BEDs.output.Exons,
+		IntronsBED=rules.FunctionalFeatures_BEDs.output.Introns,
+		PromotersBED=rules.FunctionalFeatures_BEDs.output.Promoters,
+		IntergenicBED=rules.FunctionalFeatures_BEDs.output.Intergenic,
+	output:
+		out = "results/Plotting_DNA/get_FunctionalRegionsTotalSpan/FunctionalRegionsTotalSpan.txt"
+	log:
+		err = "logs/Plotting_DNA/get_FunctionalRegionsTotalSpan/get_FunctionalRegionsTotalSpan.err",
+		out = "logs/Plotting_DNA/get_FunctionalRegionsTotalSpan/get_FunctionalRegionsTotalSpan.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/get_FunctionalRegionsTotalSpan/get_FunctionalRegionsTotalSpan.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '3:00:00',
+		name = "FuncTSpan",
+		threads = 1,
+		mem = 50000
+	shell:
+		"""
+		if [[ -s {output.out} ]]; then rm {output.out}; fi
+		mkdir -p $(dirname {output.out}) 2>> {log.err}
+		labels=("Exons" "Introns" "Promoters" "Intergenic")
+		inputs=({input.ExonsBED} {input.IntronsBED} {input.PromotersBED} {input.IntergenicBED})
+		for l in ${{!labels[@]}}
+		do
+			echo ${{labels[$l]}} ${{inputs[$l]}}
+			length=$( zcat ${{inputs[$l]}} | awk '{{len=len+$3-$2+1}}END{{print len}}' )
+			echo ${{labels[$l]}}"\t"${{length}} >> {output.out}
+		done
+		"""
 
 # Compute PCA for short variants genotypes for a specific set of variants 
 rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
@@ -998,6 +1034,53 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 		\"{params.samples}\" > {log.out} 2> {log.err}
 		gzip ${{outputS%.gz}} ${{outputV%.gz}}
 		rm ${{outputV%.txt.gz}}_IncludedVariants*
+		"""
+# Compute PCA for short variants genotypes for a specific set of variants 
+rule PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr:
+	'''
+	'''
+	input:
+		GenoFiles = get_GenoFiles,
+		chrsGENOTYPEMatrices = get_GENOTYPEMatrices,
+		BED = get_bed_file_name,
+		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt" 
+	output:
+		PCA_PerSample = "results/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr/PCA_PerSample_in{BED}Regions_Per{GroupSamples}.{chr}.txt.gz",
+		PCA_PerVariant = "results/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr/PCA_PerVariant_in{BED}Regions_Per{GroupSamples}.{chr}.txt.gz",
+		PCA_PropVariance = "results/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr/PCA_PropVariance_in{BED}Regions_Per{GroupSamples}.{chr}.txt"
+	log:
+		err = "logs/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr/PCA_short_variants_in{BED}Regions_Per{GroupSamples}.{chr}.err",
+		out = "logs/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr/PCA_short_variants_in{BED}Regions_Per{GroupSamples}.{chr}.out"
+	benchmark:
+		"benchmarks/Plotting_DNA/{ObsExp}/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr/PCA_short_variants_in{BED}Regions_Per{GroupSamples}.{chr}.txt"
+	conda:
+		'../envs/Plotting_DNA.yaml'
+	params:
+		time = '10:00:00',
+		name = "cPCA_{ObsExp}_{BED}_{GroupSamples}_{chr}",
+		threads = 1,
+		mem = 500000,
+		samples = get_group_of_samples,
+	shell:
+		"""
+		outputS={output.PCA_PerSample}
+		outputV={output.PCA_PerVariant}
+		mkdir -p $(dirname ${{outputV%.gz}}) 2> {log.err}
+		nummat1=$(echo {input.chrsGENOTYPEMatrices} | awk  -v chr={wildcards.chr} '{{split($1,a,chr); print a[1]}}')
+		nummat2=$(echo {input.chrsGENOTYPEMatrices} | awk -v chr={wildcards.chr} '{{split($1,a,chr); print a[2]}}')
+		genof1=$(echo {input.GenoFiles} | awk -v chr={wildcards.chr} '{{split($1,a,chr); print a[1]}}')
+		genof2=$(echo {input.GenoFiles} | awk -v chr={wildcards.chr} '{{split($1,a,chr); print a[2]}}')
+		awk '{{if(NR==FNR){{a[$1]=1; next}}if(a[$1]){{print $0}}}}' <(bedtools intersect -a <(zcat ${{genof1}}{wildcards.chr}${{genof2}} | cut -f1,2,3,4) -b <(zcat {input.BED} | cut -f1,2,3 | grep -w {wildcards.chr}) -wa | cut -f4) <(zcat ${{nummat1}}{wildcards.chr}${{nummat2}}) | gzip > ${{outputV%.txt.gz}}_IncludedVariants_{wildcards.chr}.tmp.gz 2> {log.err}
+		zcat ${{outputV%.txt.gz}}_IncludedVariants* | wc -l
+		./scripts/Plotting_DNA/PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr.R \
+		${{outputV%.txt.gz}}_IncludedVariants_{wildcards.chr}.tmp.gz \
+		{input.SamplesOrderInVCF} \
+		${{outputS%.gz}} \
+		${{outputV%.gz}} \
+		{output.PCA_PropVariance} \
+		\"{params.samples}\" > {log.out} 2> {log.err}
+		gzip ${{outputS%.gz}} ${{outputV%.gz}}
+		#rm ${{outputV%.txt.gz}}_IncludedVariants*
 		"""
 
 
@@ -1113,10 +1196,13 @@ rule Population_Fst_Total:
 		awk 'NR>1 && $3 != "nan" {{sum+=$3; n++}} END {{print sum/n}}' ${{outputPS}} > ${{outputT}} 2>> {log.err}
 		"""
 
+#
+
+
 ################################################
-## 1. Estimate and describe genomic diversity
+## Figures
 ################################################
-# add synonymous/non-synonymous
+#
 rule plot_Figure1_GenomicDiversity:
 	'''
 	Figure 1 + Supplementary figures 2 and 4
@@ -1297,8 +1383,8 @@ rule plot_FigureSX_AlternativeMappingAndVariantCalling:
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples"),
-		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples"),
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr.output.PCA_PerSample, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples", chr="chr19"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr.output.PCA_PropVariance, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples", chr="chr19"),
 		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable"),
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
@@ -1317,6 +1403,8 @@ rule plot_FigureSX_AlternativeMappingAndVariantCalling:
 		name = "pFigSX",
 		threads = 1,
 		mem = 50000,
+		AtlSamples=config["AtlSamples"],
+		MedSamples=config["MedSamples"]
 	shell:
 		"""
 		./scripts/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.R \
@@ -1327,154 +1415,37 @@ rule plot_FigureSX_AlternativeMappingAndVariantCalling:
 		{input.Metadata} \
 		{output.PDF} \
 		{output.REPORT} \
+		\"{params.AtlSamples}\"  \
+		\"{params.MedSamples}\"  \
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 # 
-
-rule ENA_Submision:
+rule plot_FigureSX_CallableRegions:
 	'''
-	Following instructions from:
-		- https://ena-docs.readthedocs.io/en/latest/submit/reads/webin-cli.html
-		- https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html
-	Fields in ManifestFile:
-		STUDY
-		SAMPLE
-		NAME
-		PLATFORM
-		INSTRUMENT
-		INSERT_SIZE
-		LIBRARY_NAME (optional)
-		LIBRARY_SOURCE
-		LIBRARY_SELECTION
-		LIBRARY_STRATEGY
-		DESCRIPTION (optional)
-		FASTQ
-	java -jar webin-cli-<version>.jar
-		-context reads 
-		-userName: the Webin submission account name.
-		-password: the Webin submission account password.
-		-centerName: the center name of the submitter (mandatory for broker accounts).
-		-manifest: the manifest file name.
-		-outputDir: directory for output files.
-		-inputDir: input directory for files declared in manifest file.
-		-validate: validates the files defined in the manifest file.
-		-submit: validates and submits the files defined in the manifest file.
-		-test: use Webin test service
+	
 	'''
 	input:
-		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
-		SamplesENA = "results/Plotting_DNA/ENA_Submision/samples-ENA.csv",
-		sampleFASTQ1 = "data/DNAseqFASTQ/{sample}_{lane}_{platform}_R1.fastq.gz",
-		sampleFASTQ2 = "data/DNAseqFASTQ/{sample}_{lane}_{platform}_R2.fastq.gz",
+		Rconfig = config["Rconfig"],
+		ExtraCallableRegions = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
+		ChrLengths="data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
+		FunctionalRegionsTotalSpan = rules.get_FunctionalRegionsTotalSpan.output.out
 	output:
-		ManifestFile = "results/Plotting_DNA/ENA_Submision/ManifestFile_{sample}_{lane}_{platform}.txt",
-		SubmissionReport = "results/Plotting_DNA/ENA_Submision/SubmissionReport_{sample}_{lane}_{platform}.txt",
+		PDF = "results/Plotting_DNA/plot_FigureSX_CallableRegions.pdf",
+		REPORT = "results/Plotting_DNA/plot_FigureSX_CallableRegions_report.txt"
 	log:
-		err = "logs/Plotting_DNA/ENA_Submision_{sample}_{lane}_{platform}.err",
-		out = "logs/Plotting_DNA/ENA_Submision_{sample}_{lane}_{platform}.out"
+		err = "logs/Plotting_DNA/plot_FigureSX_CallableRegions.err",
+		out = "logs/Plotting_DNA/plot_FigureSX_CallableRegions.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/ENA_Submision_{sample}_{lane}_{platform}.txt"
+		"benchmarks/Plotting_DNA/plot_FigureSX_CallableRegions.txt"
 	conda:
-		'../envs/ENAsubmission.yaml'
+		'../envs/Plotting_DNA.yaml'
 	params:
-		time = '1:00:00',
-		name = "ENA{sample}_{lane}_{platform}",
+		time = '10:00:00',
+		name = "pCallableReg",
 		threads = 1,
-		mem = 5000,
-		ENAjavafile = config["ENAjavafile"],
-		ENAuserName = config["ENAuserName"],
-		ENApassword = config["ENApassword"],
+		mem = 10000,
 	shell:
-		"""
-		pwd=$(pwd)
-		# Build Manifest file per sample, lane & platform
-		echo "Building Manifest file..." > {log.out}
-		# STUDY
-		echo "STUDY\tPRJEB106885" > {output.ManifestFile} 2> {log.err}
-		# SAMPLE
-		ENAsample=$(cat {input.SamplesENA} | grep ,{wildcards.sample}, | cut -f1 -d',') 2>> {log.err}
-		echo "SAMPLE\t$ENAsample" >> {output.ManifestFile} 2>> {log.err}
-		# NAME
-		echo "NAME\tEXP_{wildcards.sample}_{wildcards.lane}_{wildcards.platform}" >> {output.ManifestFile} 2>> {log.err}
-		# INSTRUMENT
-		awk -v platform={wildcards.platform} 'BEGIN {{if (platform == \"HiSeq4000\") print \"INSTRUMENT\tIllumina HiSeq 4000\"; else if (platform == \"NovaSeq6000\") print \"INSTRUMENT\tIllumina NovaSeq 6000\"}}' >> {output.ManifestFile} 2>> {log.err}
-		# INSERT_SIZE
-		echo "INSERT_SIZE\t300" >> {output.ManifestFile} 2>> {log.err}
-		# LIBRARY_SOURCE
-		echo "LIBRARY_SOURCE\tGENOMIC" >> {output.ManifestFile} 2>> {log.err}
-		# LIBRARY_SELECTION
-		echo "LIBRARY_SELECTION\tRANDOM" >> {output.ManifestFile} 2>> {log.err}
-		# LIBRARY_STRATEGY
-		echo "LIBRARY_STRATEGY\tWGS" >> {output.ManifestFile} 2>> {log.err}
-		# FASTQ
-		echo "FASTQ\t$(basename {input.sampleFASTQ1})" >> {output.ManifestFile} 2>> {log.err}
-		echo "FASTQ\t$(basename {input.sampleFASTQ2})" >> {output.ManifestFile} 2>> {log.err}
-		cp {output.ManifestFile} {output.SubmissionReport}
-		cp {output.ManifestFile} $(dirname {input.sampleFASTQ1})
-		echo "Done." >> {log.out}
-
-
-		cd $(dirname {input.sampleFASTQ1})
-		echo "Validating manifest..." >> $pwd/{log.out}
-		java -jar $pwd/{params.ENAjavafile} \
-			-context reads \
-			-userName {params.ENAuserName} \
-			-password {params.ENApassword} \
-			-manifest $(basename {output.ManifestFile}) \
-			-ascp \
-			-validate >> $pwd/{log.out} 2>> $pwd/{log.err}
-		echo "Validated!" >> $pwd/{log.out}
-
-		echo "Submitting manifest..." >> $pwd/{log.out}
-		java -jar $pwd/{params.ENAjavafile} \
-			-context reads \
-			-userName {params.ENAuserName} \
-			-password {params.ENApassword} \
-			-manifest $(basename {output.ManifestFile}) \
-			-ascp \
-			-submit >> $pwd/{log.out} 2>> $pwd/{log.err}
-		echo "Submitted!" >> $pwd/{log.out}
-		rm $(basename {output.ManifestFile})
-		cd $pwd
-
-		#cat {log.out} >> {output.SubmissionReport}
-		#rm {input.sampleFASTQ1} {input.sampleFASTQ2} 2>> {log.err}
-
-		"""
-#
-rule ENA_Submision_AllSamplesLanesPlatforms:
-	'''
-	'''
-	input:
-		ManifestFiles_HiSeq4000 = expand("results/Plotting_DNA/ENA_Submision/ManifestFile_{samplelane}_HiSeq4000.txt", samplelane=config["samplelanesHiSeq4000"]),
-		ManifestFiles_NovaSeq6000_1 = expand("results/Plotting_DNA/ENA_Submision/ManifestFile_{samplelane}_NovaSeq6000.txt", samplelane=config["samplelanesNovaSeq6000_1"]),
-		ManifestFiles_NovaSeq6000_2 = expand("results/Plotting_DNA/ENA_Submision/ManifestFile_{samplelane}_NovaSeq6000.txt", samplelane=config["samplelanesNovaSeq6000_2"]),
-	output:
-		OutputFile = "results/Plotting_DNA/ENA_Submision/ManifestFile_all_samplelaneplatform.txt",
-	log:
-		err = "logs/Plotting_DNA/ENA_Submision_all.err",
-		out = "logs/Plotting_DNA/ENA_Submision_all.out"
-	benchmark:
-		"benchmarks/Plotting_DNA/ENA_Submision_all.txt"
-	conda:
-		'../envs/ENAsubmission.yaml'
-	params:
-		time = '1:00:00',
-		name = "ENA_all",
-		threads = 1,
-		mem = 5000,
-	shell:
-		"""
-		echo "ManifestFile\tExperimentAccession\tRunAccession" > {output.OutputFile} 2> {log.err}
-		for run in {input.ManifestFiles_HiSeq4000} {input.ManifestFiles_NovaSeq6000_1} {input.ManifestFiles_NovaSeq6000_2}; do
-			samplelaneplatform=$(basename $run | cut -f3,4,5 -d'_' | sed 's/.txt//g')
-			expid=$(cat $run | grep 'The following experiment accession was assigned to the submission:' | rev | cut -f1 -d' ' | rev) 2> {log.err}
-			runid=$(cat $run | grep 'The following run accession was assigned to the submission:' | rev | cut -f1 -d' ' | rev) 2> {log.err}
-			echo "$run\t$expid\t$runid" >> {output.OutputFile} 2> {log.err}
-		done
-		"""
-#
-
+		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
 
 ############################
 #### Deprecated plots

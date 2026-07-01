@@ -212,10 +212,10 @@ rule r4_call_short_variants_GATK_PerChr_PerSample:
 	params:
 		time = '20:00:00',
 		name = "VC{chr}{sample}",
-		threads = 32,
+		threads = 8,
 		mem = 10000
 	shell:
-		"./scripts/VariantCalling_DNA/4_call_short_variants_GATK_chromosome.sh {wildcards.chr} {input.samplechrBAMmarkdup} {input.genomeFA} {output.samplechrGVCF} > {log.out} 2> {log.err}"
+		"./scripts/VariantCalling_DNA/4_call_short_variants_GATK_chromosome.sh {wildcards.chr} {input.samplechrBAMmarkdup} {input.genomeFA} {output.samplechrGVCF} {params.threads} > {log.out} 2> {log.err}"
 rule r5_join_sample_calls_PerChr:
 	'''
 	Joining sample short variants calls with GATK GenomicsDBImport & GenotypeGVCFs per each chr

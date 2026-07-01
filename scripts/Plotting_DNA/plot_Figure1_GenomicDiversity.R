@@ -92,9 +92,10 @@ plot_Comparison_diversity_estimates <- function(df, categ, meth, pch, mypivalues
 	midp <- c()
 	for(c in categ){
 		print(c)
-		points(pos+c(1:length(df[which(df$class==c),1])), df$Diversity[which(df$class==c)], pch=df$pch[which(df$class==c)], col=df$colors[which(df$class==c)], cex=1.5)
+		points(pos+c(1:length(df$Diversity[which(df$class==c)])), df$Diversity[which(df$class==c)], pch=df$pch[which(df$class==c)], col=df$colors[which(df$class==c)], cex=1.5)
 		midp <- c(midp, pos+(length(df[which(df$class==c),1]))/2)
 		pos <- pos+length(df[which(df$class==c),1])+distbewcateg
+
 	}
 	abline(h=mypivalues[1], lty=2) 
 	points(pos, mypivalues[2], pch=16, col=population.colors[1], cex=2)
@@ -439,19 +440,54 @@ writePlotLabel("B")
 
 ### C
 ## % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)
-print("D - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
+print("C - % of variant sites on different regions (Exons, Introns, Promoters, Intergenic)")
 par(mar=c(7,7,2,2))
 plot_DifferenceOfPercOfVarSites_FunctionalRegions(FeatSpan, "% of variability - genome average", c(-5,5), RegionTypes)
 writePlotLabel("C")
 ### D
 ## Comparison with other diversity estimates
-print("C - Comparison with other diversity estimates")
+print("D - Comparison with other diversity estimates")
 par(mar=c(7,7,2,2))
 PiTAll <- read.table(grep("Observed_Data.*Callable.*AllSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTAtl <- read.table(grep("Observed_Data.*Callable.*AtlSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 PiTMed <- read.table(grep("Observed_Data.*Callable.*MedSamples", PiTotalFiles, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)[1,1]
 plot_Comparison_diversity_estimates(unif, class, method, method.pch, c(PiTAll,PiTAtl,PiTMed)*100, c("Branchiostoma floridae", "Branchiostoma belcheri", "Branchiostoma belcheri", "Schizophyllum commune", "Caenorhabditis brenneri", "Galeolaria caespitosa", "Echinometra sp. EZ", "Ciona savignyi"))
 writePlotLabel("D")
+
+
+
+####################################################################
+## Comparison with other diversity estimates by method
+print("C - Comparison with other diversity estimates")
+par(mar=c(7,7,2,2))
+layout(matrix(c(1,1,1,2,2,2),nrow=2,ncol=3,byrow=T), widths=c(1,1,1), heights=c(1,1), TRUE)
+plot_Comparison_diversity_estimates(unif, class, method, method.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes", "Transcriptome")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes", "Transcriptome", "Single chromosome")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes", "Transcriptome", "Single chromosome", "Non-coding")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Whole-genome, multiple individuals", "Whole-genome, single individual")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Whole-genome, multiple individuals")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, c("Branchiostoma floridae", "Branchiostoma belcheri", "Branchiostoma belcheri", "Schizophyllum commune", "Caenorhabditis brenneri", "Galeolaria caespitosa", "Echinometra sp. EZ", "Ciona savignyi"))
+
+
+
+
+dev.off()
 
 ######################################################################
 ## Figure S3
@@ -506,6 +542,36 @@ for(s in c(1:length(AtlSamples))){
 for(s in c(1:length(MedSamples))){
 	plot_Heterozygous_Sites_in_Windows(HetRegAll.Fixed[,MedSamples[s]], MedSamples[s], population.colors[2], windowsize)
 }
+
+####################################################################
+## Comparison with other diversity estimates by method
+print("C - Comparison with other diversity estimates")
+par(oma=c(2,2,2,2))
+layout(matrix(c(1,2),nrow=2,ncol=1,byrow=T), widths=c(3), heights=c(2), TRUE)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes", "Transcriptome")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes", "Transcriptome", "Single chromosome")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Few loci (<1000)", "Silent sites in protein coding genes", "Transcriptome", "Single chromosome", "Non-coding")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Whole-genome, multiple individuals", "Whole-genome, single individual")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, NA)
+newmethod.pch <- method.pch
+newmethod.pch[!(which(method %in% c("Whole-genome, multiple individuals")))] <- NA
+plot_Comparison_diversity_estimates(unif, class, method, newmethod.pch, c(PiTAll,PiTAtl,PiTMed)*100, c("Branchiostoma floridae", "Branchiostoma belcheri", "Branchiostoma belcheri", "Schizophyllum commune", "Caenorhabditis brenneri", "Galeolaria caespitosa", "Echinometra sp. EZ", "Ciona savignyi"))
+
+
+
 
 dev.off()
 #############

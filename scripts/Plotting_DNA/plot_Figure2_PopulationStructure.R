@@ -243,7 +243,7 @@ writePlotLabel("B")
 ### C
 ## SHared Private variants analysis
 par(mar=c(7,7,2,2))
-plot_violin_SeveralRandomVsObserved(c("PrivateA", "PrivateM", "VariantShared"), OSharedPriv, RSharedPriv, c(9,20)*1000000, c(population.colors, "forestgreen"), 1000000, "Millions of variants", c("Private\nMediterranean", "Private\nAtlantic", "Shared"))
+plot_violin_SeveralRandomVsObserved(c("PrivateA", "PrivateM", "VariantShared"), OSharedPriv, RSharedPriv, c(9,20)*1000000, c(population.colors, "forestgreen"), 1000000, "Millions of variants", c("Private\nAtlantic", "Private\nMediterranean", "Shared"))
 writePlotLabel("C")
 
 ### D

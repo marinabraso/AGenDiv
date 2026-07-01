@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ANALYSIS_SET>
+  <ANALYSIS alias="VariantCalling">
+    <TITLE>Whole-genome variant calls</TITLE>
+
+    <DESCRIPTION>
+      Whole-genome SNP and indel calls generated from multisample variant calling (BWA MEM2 + GATK).
+    </DESCRIPTION>
+
+    <STUDY_REF accession="PRJEB115533"/>
+
+    <ANALYSIS_TYPE>
+      <SEQUENCE_VARIATION/>
+    </ANALYSIS_TYPE>
+
+    <FILES>
+
+      <FILE filename="ShortVariants_HardCallableFiltered.chr10.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="dfaa7a95a19c72bd923fa4a99bb21781"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr10.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="22357d8e68735e0897890f6d333bb16b"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr11.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="f1322f2151a3fc3352c9d9bd7231ca84"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr11.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="d8e3feb642a99567a4da7b4ec350df90"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr12.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="1142c816e7491fb8fa997326c034552e"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr12.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="47c7e87230b1ac326d396c2cdb0bce34"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr13.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="0a21c723d9eb1e5178fe4b30e462bb20"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr13.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="65912bdc6ee29e11a8b3fdb039151027"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr14.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="2868e40019e4c88c200f31c655bd7be6"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr14.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="fbeb3cf56084faf98af6767ace84635d"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr15.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="6d1a169d19eebc50dfc4b1f51836780e"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr15.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="5f7d2b40f76c97023c2521152e64cfd3"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr16.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="4c18a3e2805934a7adbfe2b3c620cb7e"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr16.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="0025b0016924380b6e02f684e7dc6cd4"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr17.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="b057463c3732065e5982a5e34a66109d"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr17.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="7a670bb69d87f57d74a23120e23f441b"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr18.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="1103fdad1b4c6173537aa05563c49cfa"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr18.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="f6e320e6b61b1f23f2bb9c197477f5b5"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr19.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="824d55981eb1eda21aa330c37a8e44c0"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr19.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="d71c8ef0216c62f9846c9dad6dc7051b"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr1.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="46d4495368e05b3c40d14607852fe536"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr1.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="eed452512dd8e0b955d392f52ec41f17"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr2.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="dde0e8ec27ea089620db82cb91d0cedc"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr2.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="1442df26e06249a1be62375fb0fa9483"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr3.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="c54b9b849a555372514824b906dc6d46"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr3.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="e3de9cb5bd9a7dbbf422e6dcf1473d61"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr4.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="3dfaf84730bfc48b6fbb9347c0af9ea6"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr4.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="a1e3fda4c39ed3d98cdd8c72272fe6cd"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr5.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="b200b8747aac7b62a7c8051ac724bd14"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr5.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="8c54774044129494e8303a5abe10fec1"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr6.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="75242ac8598cf592a026080f624313bf"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr6.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="f63974fac48d838fc9400bda3097f1ab"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr7.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="16f0a57b32e0a4a2fc205aabcccd633f"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr7.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="e874c5bcda446eea107302265faccade"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr8.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="01514eeb22693e0c812aa4e23e683bdc"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr8.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="ebaa6a8df8519bfe8e1ddbd2ab276eab"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr9.vcf.gz" filetype="vcf" checksum_method="MD5" checksum="f30ce67efd62e0dae835cdbe505807f2"/>
+      <FILE filename="ShortVariants_HardCallableFiltered.chr9.vcf.gz.tbi" filetype="vcf_index" checksum_method="MD5" checksum="eb93877756a95ecf5b46dd10fdfb1f14"/>
+
+    </FILES>
+
+  </ANALYSIS>
+
+</ANALYSIS_SET>

@@ -184,10 +184,10 @@ rule r4_call_short_variants_GATK_PerChr_PerSample_from_minimap2:
 	params:
 		time = '20:00:00',
 		name = "VC{chr}{sample}",
-		threads = 32,
+		threads = 4,
 		mem = 10000
 	shell:
-		"./scripts/VariantCalling_DNA/4_call_short_variants_GATK_chromosome.sh {wildcards.chr} {input.samplechrBAMmarkdup} {input.genomeFA} {output.samplechrGVCF} > {log.out} 2> {log.err}"
+		"./scripts/VariantCalling_DNA/4_call_short_variants_GATK_chromosome.sh {wildcards.chr} {input.samplechrBAMmarkdup} {input.genomeFA} {output.samplechrGVCF} {params.threads} > {log.out} 2> {log.err}"
 rule r5_join_sample_calls_PerChr_from_minimap2:
 	'''
 	Joining sample short variants calls with GATK GenomicsDBImport & GenotypeGVCFs per each chr
@@ -480,7 +480,7 @@ rule r4_call_short_variants_freebayes_PerChr_PerSample:
 	benchmark:
 		"benchmarks/AlternativeVariantCalling_DNA/4_call_short_variants_freebayes_PerChr_PerSample/{chr}_from_{mapper}.txt"
 	conda:
-d		'../envs/AlternativeVariantCalling_DNA.yaml'
+		'../envs/AlternativeVariantCalling_DNA.yaml'
 	params:
 		time = '60:00:00',
 		name = "freeb{chr}_{mapper}",

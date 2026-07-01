@@ -21,7 +21,7 @@ gzip -dk ${InputChrVCF}.gz
 
 echo "   ---> Extract genotypes" # only PASS variants are printed
 gatk VariantsToTable -V ${InputChrVCF} -O ${OutBasename}.genotype.tmp -GF GT
-cat ${OutBasename}.genotype.tmp | sed 's/[|\/]/:/g' | sed '1 s/\.GT//g' > ${OutBasename}.genotype
+cat ${OutBasename}.genotype.tmp | sed 's/[|\/]/:/g' | sed '1 s/\.GT//g' | sed 's/\t\.\t/\t.:.\t/g' | sed 's/\t\.\t/\t.:.\t/g' | sed 's/\t\.$/\t.:./g' | sed 's/^\.\t/.:.\t/g' > ${OutBasename}.genotype
 
 echo "   ---> Extract variants" # only PASS variants are printed
 gatk VariantsToTable -V ${InputChrVCF} -O ${OutBasename}.tmp.sites -F CHROM -F POS -F ID -F REF -F ALT

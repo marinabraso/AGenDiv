@@ -13,6 +13,8 @@ then
 	# index noncallable bed
 	echo "### index noncallable bed"; >&2 echo "### index noncallable bed"
 	gatk IndexFeatureFile -I $(dirname ${outVCF})/$(basename ${noncallable%.gz}) -O $(dirname ${outVCF})/$(basename ${noncallable%.gz}).idx
+	echo "### index vcf"; >&2 echo "### index vcf"
+	gatk IndexFeatureFile -I ${inVCF} -O ${inVCF}.tbi
 fi
 
 # VariantFiltration
