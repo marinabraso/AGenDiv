@@ -1428,6 +1428,7 @@ rule plot_FigureSX_CallableRegions:
 		Rconfig = config["Rconfig"],
 		ExtraCallableRegions = rules.r7_join_extra_callable_regions.output.ExtraCallableRegions,
 		ChrLengths="data/genomes/BraLan3/Branchiostoma_lanceolatum.BraLan3_chr_lengths.txt",
+		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
 		FunctionalRegionsTotalSpan = rules.get_FunctionalRegionsTotalSpan.output.out
 	output:
 		PDF = "results/Plotting_DNA/plot_FigureSX_CallableRegions.pdf",
@@ -1445,7 +1446,7 @@ rule plot_FigureSX_CallableRegions:
 		threads = 1,
 		mem = 10000,
 	shell:
-		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
+		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
 
 ############################
 #### Deprecated plots

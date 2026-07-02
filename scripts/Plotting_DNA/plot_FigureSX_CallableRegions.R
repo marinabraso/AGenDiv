@@ -11,10 +11,11 @@ library(RColorBrewer)
 args <- commandArgs(trailingOnly=TRUE)
 ExtraCallableRegions <- args[1]
 ChrLengths <- args[2]
-FunctionalRegionsTotalSpan <- args[3]
-PDF <- args[4]
-REPORT <- args[5]
-Rconfig <- args[6]
+FunctionalRegionsCallableSpan <- args[3]
+FunctionalRegionsTotalSpan <- args[4]
+PDF <- args[5]
+REPORT <- args[6]
+Rconfig <- args[7]
 script <- sub(".*=", "", commandArgs()[4])
 source(Rconfig)
 system(paste0("mkdir -p $(dirname ", PDF, ")"))
@@ -87,6 +88,26 @@ plot_density <- function(vec, lab, color, xlim, ylim, thresh=NULL, thresh2=NULL,
 	box()
 }
 
+plot_DiffInRelPropCallable_FunctionalRegions <- function(df, ylab, ylim){
+	w <- .3
+	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(.5, (length(df$Feature)-1)+.5), col=NA)
+	mtext(ylab, side = 2, line = 4, cex=1.5)
+	for(i in c(1:(length(df$Feature)-1))){
+		print(i)
+		print(df$Feature[i])
+		print(df$Diff[i])
+		if(df$Diff[i]>0){
+			polygon(c(i-w,i+w,i+w,i-w), c(0,0,df$Diff[i],df$Diff[i]), col="forestgreen", border="forestgreen")
+		}else{
+			polygon(c(i-w,i+w,i+w,i-w), c(df$Diff[i],df$Diff[i],0,0), col="forestgreen", border="forestgreen")
+		}
+	}
+	abline(h=0, col="black")
+	axis(1, at = c(1:(length(df$Feature)-1)), labels=df$Feature[1:(length(df$Feature)-1)], lwd.ticks=1, las=2, cex.axis=1.5)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/10), lwd.ticks=1, las=1, cex.axis=1.5)
+	box()
+}
+
 ######################################################################
 # Read data
 ERegions<-read.table(ExtraCallableRegions, sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
@@ -117,9 +138,19 @@ for(b in c(1:length(sbins))){
 head(ChrLen[,paste0("PercECallable", c(1,2,3,4,5,6,7))])
 
 
-# % of callable length & number of vairants of different features 
-FeatSpan <- read.table(FunctionalRegionsCallableSpan, sep="\t", header=FALSE)
-colnames(FeatSpan) <- c("Feature", "Callable")
+# % of callable length for the total length
+CallableSpan <- read.table(FunctionalRegionsCallableSpan, sep="\t", header=FALSE)
+FeatSpan <- read.table(FunctionalRegionsTotalSpan, sep="\t", header=FALSE)
+FeatSpan <- rbind(FeatSpan, c("Total", sum(ChrLen$Length)))
+FeatSpan <- cbind(FeatSpan, CallableSpan[,2])
+colnames(FeatSpan) <- c("Feature", "Total", "Callable")
+FeatSpan$Total <- as.numeric(FeatSpan$Total)
+FeatSpan$Callable <- as.numeric(FeatSpan$Callable)
+FeatSpan$PercCall <- FeatSpan$Callable*100/FeatSpan$Total
+FeatSpan$RelPropTotal <- FeatSpan$Total/FeatSpan$Total[which(FeatSpan$Feature=="Total")]
+FeatSpan$RelPropCallable <- FeatSpan$Callable/FeatSpan$Callable[which(FeatSpan$Feature=="Total")]
+FeatSpan$Diff <- FeatSpan$RelPropCallable - FeatSpan$RelPropTotal
+head(FeatSpan)
 
 ######################################################################
 # Plotting
@@ -136,6 +167,7 @@ barplot_chromosomes(unlist(lapply(ChrLen$Chr, function(x){substr(x, 4, nchar(x))
 
 plot_density(ERegions$len, "Extra callable regions length", "forestgreen", c(0,500), c(0,.02), sbins)
 
+plot_DiffInRelPropCallable_FunctionalRegions(FeatSpan, "% of callable length", c(-1,1))
 
 
 
