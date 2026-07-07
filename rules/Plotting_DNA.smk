@@ -110,13 +110,13 @@ def get_HetFiles(wildcards):
 		else:
 			raise ValueError("Unknown value for SimParam, Simulationtype or FiniteInfiniteAlleles get_HetFiles: %s, %s" % SimParam, FiniteInfiniteAlleles)
 	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="bwa_mem2", caller="freebayes", chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile, chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.HeterozygosityFile, chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="minimap2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="minimap2", caller="freebayes", chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_minimap2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="minimap2", caller="GATK", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.HeterozygosityFile, mapper="minimap2", caller="GATK", chr=config["bralan3subsetchrs"])
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_HetFiles: %s" % wildcards.ObsExp)
 
@@ -141,13 +141,13 @@ def get_GenoFiles(wildcards):
 		else:
 			raise ValueError("Unknown value for SimParam, Simulationtype or FiniteInfiniteAlleles get_GenoFiles: %s, %s" % SimParam, FiniteInfiniteAlleles)
 	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="bwa_mem2", caller="freebayes", chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPE, chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="minimap2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="minimap2", caller="freebayes", chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_minimap2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="minimap2", caller="GATK", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPE, mapper="minimap2", caller="GATK", chr=config["bralan3subsetchrs"])
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_GenoFiles: %s" % wildcards.ObsExp)
 
@@ -156,13 +156,13 @@ def get_GENOTYPEMatrices(wildcards):
 	if wildcards.ObsExp == "Observed_Data":
 		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3chrs"])
 	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="bwa_mem2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="bwa_mem2", caller="freebayes", chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_bwa_mem2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr.output.chrGENOTYPEMatrix, chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_minimap2_freebayes":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="minimap2", caller="freebayes", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="minimap2", caller="freebayes", chr=config["bralan3subsetchrs"])
 	elif wildcards.ObsExp == "Observed_minimap2_GATK":
-		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="minimap2", caller="GATK", chr="chr19")
+		return expand(rules.Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.output.chrGENOTYPEMatrix, mapper="minimap2", caller="GATK", chr=config["bralan3subsetchrs"])
 	else:
 		raise ValueError("Unknown value for ObsExp file in get_GENOTYPEMatrices: %s" % wildcards.ObsExp)
 
@@ -210,8 +210,14 @@ def get_bed_files_names_for_intersection(wildcards):
 	else:
 		raise ValueError("Unknown values for BED files in get_bed_files_names_for_intersection: %s & %s" % (wildcards.Name1, wildcards.Name2))
 #
-
-
+def get_chrs_forPCA(wildcards):
+	if wildcards.ObsExp == "Observed_Data":
+		return config["bralan3chrs"]
+	elif wildcards.ObsExp == "Observed_bwa_mem2_freebayes" or wildcards.ObsExp == "Observed_bwa_mem2_GATK" or wildcards.ObsExp == "Observed_minimap2_freebayes" or wildcards.ObsExp == "Observed_minimap2_GATK":
+		return config["bralan3subsetchrs"]
+	else:
+		raise ValueError("Unknown value for ObsExp in get_chrs_forPCA: %s" % wildcards.ObsExp)
+#
 
 
 ########################################
@@ -690,14 +696,14 @@ rule Heterozygosity_Total_inBEDregions_PerSample:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '03:00:00',
-		name = "het{BED}",
+		name = "het{BED}_{ObsExp}",
 		threads = 1,
 		mem = 10000
 	shell:
 		"""
 		output={output.out}
 		mkdir -p $(dirname ${{output}}) 2> {log.err}
-		awk '{{if(NR==FNR){{Tlen+=$3-$2;next}} if(FNR==1){{nsamples=NF}}for(i=1; i<=NF; i++){{a[i]+=$i}}}}END{{str=""; for(i=1; i<=nsamples;i++){{str=str"\t"a[i]/Tlen}} print str}}' <(zcat {input.BED}) <(bedtools intersect -a <(zcat {input.HetFiles}) -b <(zcat {input.BED}) | cut -f5-) | sed 's/^\t//g' > ${{output}} 2>> {log.err}
+		awk '{{if(NR==FNR){{Tlen+=$3-$2;next}} if(FNR==1){{nsamples=NF}}for(i=1; i<=NF; i++){{a[i]+=$i}}}}END{{str=""; for(i=1; i<=nsamples;i++){{str=str"\t"a[i]/Tlen}} print str}}' <(zcat {input.BED} | grep -E "^($(zcat {input.HetFiles} | cut -f1 | sort | uniq | paste -sd'|' -))\\b") <(bedtools intersect -a <(zcat {input.HetFiles}) -b <(zcat {input.BED}) | cut -f5-) | sed 's/^\t//g' > ${{output}} 2>> {log.err}
 		"""
 
 # Compute heterozygosity for each one of a set of BED regions for each sample
@@ -1004,20 +1010,29 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '10:00:00',
-		name = "cPCA_{BED}_{GroupSamples}",
+		name = "cPCA_{BED}_{GroupSamples}_{ObsExp}",
 		threads = 1,
 		mem = 500000,
 		samples = get_group_of_samples,
-		chrs = config["bralan3chrs"]
+		chrs = get_chrs_forPCA #config["bralan3chrs"]
 	shell:
 		"""
 		outputS={output.PCA_PerSample}
 		outputV={output.PCA_PerVariant}
+		for c in {params.chrs};do
+			lastchr=$c
+		done
+		for c in {input.chrsGENOTYPEMatrices};do
+			lastmat=$c
+		done
+		for c in {input.GenoFiles};do
+			lastgenof=$c
+		done
 		mkdir -p $(dirname ${{outputV%.gz}}) 2> {log.err}
-		nummat1=$(echo {input.chrsGENOTYPEMatrices} | awk '{{split($1,a,"chr1"); print a[1]}}')
-		nummat2=$(echo {input.chrsGENOTYPEMatrices} | awk '{{split($1,a,"chr1"); print a[2]}}')
-		genof1=$(echo {input.GenoFiles} | awk '{{split($1,a,"chr1"); print a[1]}}')
-		genof2=$(echo {input.GenoFiles} | awk '{{split($1,a,"chr1"); print a[2]}}')
+		nummat1=$(echo ${{lastmat}} | awk  -v chr=${{lastchr}} '{{split($1,a,chr); print a[1]}}')
+		nummat2=$(echo ${{lastmat}} | awk -v chr=${{lastchr}} '{{split($1,a,chr); print a[2]}}')
+		genof1=$(echo ${{lastgenof}} | awk -v chr=${{lastchr}} '{{split($1,a,chr); print a[1]}}')
+		genof2=$(echo ${{lastgenof}} | awk -v chr=${{lastchr}} '{{split($1,a,chr); print a[2]}}')
 		for c in {params.chrs}
 		do
 			echo $c > {log.out}
@@ -1383,8 +1398,8 @@ rule plot_FigureSX_AlternativeMappingAndVariantCalling:
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr.output.PCA_PerSample, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples", chr="chr19"),
-		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples_PerChr.output.PCA_PropVariance, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples", chr="chr19"),
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable", GroupSamples="AllSamples"),
 		HetTotalFiles = expand(rules.Heterozygosity_Total_inBEDregions_PerSample.output.out, ObsExp=["Observed_bwa_mem2_freebayes", "Observed_minimap2_freebayes", "Observed_bwa_mem2_GATK", "Observed_minimap2_GATK"], BED="Callable"),
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
@@ -1444,7 +1459,7 @@ rule plot_FigureSX_CallableRegions:
 		time = '10:00:00',
 		name = "pCallableReg",
 		threads = 1,
-		mem = 10000,
+		mem = 15000,
 	shell:
 		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
 

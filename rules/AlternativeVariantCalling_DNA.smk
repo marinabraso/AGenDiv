@@ -512,21 +512,21 @@ rule Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings:
 		chrVCF = get_AlternativeFilteredVCFFiles,
 		SamplesOrderInVCF = rules.r8_filter_VCF_for_callable_regions_PerChr.output.SamplesOrderInVCF
 	output:
-		chrGENOTYPE = "results/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/ShortVariants.filtered.{mapper}_{caller}.{chr}.genotype.bed.gz",
-		chrGENOTYPEMatrix = "results/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/ShortVariants.filtered.{mapper}_{caller}.{chr}.genotype.numericmatrix.gz",
-		HeterozygosityFile = "results/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/ShortVariants.filtered.{mapper}_{caller}.{chr}.0hom1het.bed.gz"
+		chrGENOTYPE = "results/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/ShortVariants.filtered.{mapper}_{caller}.{chr}.genotype.bed.gz",
+		chrGENOTYPEMatrix = "results/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/ShortVariants.filtered.{mapper}_{caller}.{chr}.genotype.numericmatrix.gz",
+		HeterozygosityFile = "results/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/ShortVariants.filtered.{mapper}_{caller}.{chr}.0hom1het.bed.gz"
 	log:
-		err = "logs/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.{mapper}_{caller}.{chr}.err",
-		out = "logs/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.{mapper}_{caller}.{chr}.out"
+		err = "logs/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.{mapper}_{caller}.{chr}.err",
+		out = "logs/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.{mapper}_{caller}.{chr}.out"
 	benchmark:
-		"benchmarks/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.{mapper}_{caller}.{chr}.txt"
+		"benchmarks/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings/Prepare_basic_analysis_files_PerChr_from_AlternativeVariantCallings.{mapper}_{caller}.{chr}.txt"
 	conda:
-		'../envs/VariantAnalysis_DNA.yaml'
+		'../envs/AlternativeVariantCalling_DNA.yaml'
 	params:
 		time = '5:00:00',
 		name = "{mapper}_{caller}Genotype{chr}",
 		threads = 1,
 		mem = 25000
 	shell:
-		"./scripts/VariantAnalysis_DNA/Prepare_basic_analysis_files_PerChr.sh {input.chrVCF} {output.chrGENOTYPE} > {log.out} 2> {log.err}"
+		"./scripts/AlternativeVariantCalling_DNA/Prepare_basic_analysis_files_PerChr_Alternative.sh {input.chrVCF} {output.chrGENOTYPE} > {log.out} 2> {log.err}"
 #

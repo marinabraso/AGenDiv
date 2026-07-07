@@ -43,7 +43,7 @@ plot_all_chr_rows_len_bins <- function(lenDF, regDF, ss, es, cs){
 		}
 		polygon(c(0,lenDF$Length[c]/max(lenDF$Length)*10,lenDF$Length[c]/max(lenDF$Length)*10,0), c(pos-height/2,pos-height/2,pos+height/2,pos+height/2), col=NA, border="black")
 	}
-	axis(2, at = c(1:length(lenDF$Chr))-1, labels=rev(lenDF$Chr), lwd=NA, lwd.ticks=NA, las=1, cex.axis=1)
+	axis(2, at = c(1:length(lenDF$Chr))-1, labels=rev(lenDF$Chr), lwd=NA, lwd.ticks=NA, las=1, cex.axis=2)
 	legend("bottomright", paste(ss, "<= x <", es), pch=19, text.col="black", col=cs, bty = "n", cex=1, xjust = 0, yjust = 0)
 }
 
@@ -93,19 +93,43 @@ plot_DiffInRelPropCallable_FunctionalRegions <- function(df, ylab, ylim){
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(.5, (length(df$Feature)-1)+.5), col=NA)
 	mtext(ylab, side = 2, line = 4, cex=1.5)
 	for(i in c(1:(length(df$Feature)-1))){
-		print(i)
-		print(df$Feature[i])
-		print(df$Diff[i])
 		if(df$Diff[i]>0){
-			polygon(c(i-w,i+w,i+w,i-w), c(0,0,df$Diff[i],df$Diff[i]), col="forestgreen", border="forestgreen")
+			polygon(c(i-w,i+w,i+w,i-w), c(0,0,df$Diff[i],df$Diff[i]), col="black", border="black")
 		}else{
-			polygon(c(i-w,i+w,i+w,i-w), c(df$Diff[i],df$Diff[i],0,0), col="forestgreen", border="forestgreen")
+			polygon(c(i-w,i+w,i+w,i-w), c(df$Diff[i],df$Diff[i],0,0), col="black", border="black")
 		}
 	}
 	abline(h=0, col="black")
 	axis(1, at = c(1:(length(df$Feature)-1)), labels=df$Feature[1:(length(df$Feature)-1)], lwd.ticks=1, las=2, cex.axis=1.5)
 	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/10), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
+}
+
+Fisher.test_Feature_SpanTotalVsCallable <- function(df, feat) {
+	spfeat_total <- df[which(df$Feature==feat), "Total"]
+	spfeat_callable <- df[which(df$Feature==feat), "Callable"]
+	total <- df[which(df$Feature=="Total"), "Total"]
+	callable <- df[which(df$Feature=="Total"), "Callable"]
+	a <- spfeat_callable
+	b <- callable - spfeat_callable
+	c <- spfeat_total - spfeat_callable
+	d <- total - callable - spfeat_total + spfeat_callable
+
+	Contingency.table <- matrix(c(	a, b,
+									c, d),
+		nrow = 2,
+		byrow = TRUE,
+		dimnames = list(
+			Feature = c("Callable", "Not_callable"),
+			Status  = c("Feature", "Not_feature")
+		)
+	)
+	print(Contingency.table)
+	fisher <- fisher.test(Contingency.table)
+	return(list(
+		pval = format.pval(fisher$p.value, digits = 5),
+		OR   = unname(fisher$estimate)
+	))
 }
 
 ######################################################################
@@ -152,22 +176,34 @@ FeatSpan$RelPropCallable <- FeatSpan$Callable/FeatSpan$Callable[which(FeatSpan$F
 FeatSpan$Diff <- FeatSpan$RelPropCallable - FeatSpan$RelPropTotal
 head(FeatSpan)
 
+for(feature in c("Exons", "Introns", "Promoters", "Intergenic")){
+	print(feature)
+	test <- Fisher.test_Feature_SpanTotalVsCallable(FeatSpan, feature)
+	FeatSpan$pval[which(FeatSpan$Feature==feature)] <- test$pval
+	FeatSpan$OR[which(FeatSpan$Feature==feature)] <- test$OR
+}
+
 ######################################################################
 # Plotting
+png(filename = "Rplot%03d.png", width = 1500, height = 1000)
 pdf(PDF, width=15, height=10)
-par(mar=c(0,5,1,1),oma=c(4,4,4,4))
-layout(matrix(c(1),nrow=1,ncol=1,byrow=T), TRUE)
-
-#plot_all_chr_rows_len_bins(ChrLen, ERegions, sbins, Eebins, cbins)
-
 par(mar=c(5,5,2,2),oma=c(1,1,1,1))
-layout(matrix(c(1),nrow=1,ncol=1,byrow=T), widths=c(2), heights=c(1), TRUE)
+layout(matrix(c(1,2,1,3,1,4),nrow=3,ncol=2,byrow=T), widths=c(3,3), heights=c(1), TRUE)
+
+plot_all_chr_rows_len_bins(ChrLen, ERegions, sbins, Eebins, cbins)
+writePlotLabel("A")
+
+layout(matrix(c(1,2,1,3,1,4),nrow=3,ncol=2,byrow=T), widths=c(3,3), heights=c(1), TRUE)
+plot.new()
 
 barplot_chromosomes(unlist(lapply(ChrLen$Chr, function(x){substr(x, 4, nchar(x))})), ChrLen, "ECallable", sbins, Eebins, cbins, "% of length", c(0,60))
+writePlotLabel("B")
 
-plot_density(ERegions$len, "Extra callable regions length", "forestgreen", c(0,500), c(0,.02), sbins)
+plot_density(ERegions$len, "Extra callable regions length", "black", c(0,500), c(0,.02), sbins)
+writePlotLabel("C")
 
-plot_DiffInRelPropCallable_FunctionalRegions(FeatSpan, "% of callable length", c(-1,1))
+plot_DiffInRelPropCallable_FunctionalRegions(FeatSpan, "% of callable length", c(-0.2,0.2))
+writePlotLabel("D")
 
 
 
@@ -176,3 +212,7 @@ plot_DiffInRelPropCallable_FunctionalRegions(FeatSpan, "% of callable length", c
 
 dev.off()
 
+#############
+## Report
+write("### Feature span in callable regions", file = REPORT, append = FALSE)
+write.table(FeatSpan, file = REPORT, append = TRUE, row.names=FALSE, sep="\t", quote = FALSE)

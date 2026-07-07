@@ -218,6 +218,11 @@ bralan3chrs:
     - chr17
     - chr18
     - chr19
+bralan3subsetchrs:
+    - chr16
+    - chr17
+    - chr18
+    - chr19
 ATACseq_SRA_ID_Marletaz2018:
   - SRR6245277
   - SRR6245278
@@ -318,9 +323,6 @@ SimulationsRangeMuNe:
   - 1.5e-6_5000
 SimulationsRangeMigration: [ 0, 0.1 ]
 TimesRandomTest: 50
-ENAjavafile: "scripts/Plotting_DNA/webin-cli-9.0.1.jar"
-ENAuserName: "Webin-60987"
-ENApassword: "enaMRRG.26"
 
 
 
