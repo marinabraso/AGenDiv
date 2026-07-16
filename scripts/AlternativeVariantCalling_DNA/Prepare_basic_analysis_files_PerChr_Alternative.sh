@@ -16,16 +16,16 @@ mkdir -p $(dirname ${OutBasename})
 rm ${OutBasename}* 2> ~/null
 
 echo "----> Extrancting genotypes and variant info with bcftools query -f '%CHROM\t%POS[\t%GT]\n'"
-bcftools view -f PASS ${InputChrVCF}.gz | bcftools query -f '%CHROM\t%POS[\t%GT]\n' > ${OutBasename}.genotype.tmp
+bcftools view -f PASS ${InputChrVCF}.gz | bcftools query -f '%CHROM\t%POS[\t%GT]\n' | sed 's/\//:/g' | sed 's/|/:/g' > ${OutBasename}.genotype.tmp
 cat ${OutBasename}.genotype.tmp | awk 'BEGIN{num=1}{print $1"\t"$2"\t"$2"\t"num;num++}' > ${OutBasename}.bed
 paste <(cut -f1,2,3,4 ${OutBasename}.bed) <(cat ${OutBasename}.genotype.tmp | cut -f3-) > ${OutBasename}.genotype.bed
 
 echo "----> Create genotype numeric matrix (#alleles-1 lines for each site) for PCA plotting"
-cat ${OutBasename}.genotype.bed | sed 's/:/ /g' | awk -F' ' '{for(i=5;i<=NF;i+=2){a[$i][i]++; j=i+1; a[$j][i]++; b[$j]++;	b[$i]++;} maxal="XX"; maxval=0;	for(al in b){if(b[al]>maxval){ maxal = al; maxval = b[al];}}for(al in a){if(maxal!=al){	str="";	for(i=5;i<=NF;i+=2){if(a[al][i]){n=a[al][i]}else{n=0}str=str" "n} print NR""str}} delete a; delete b;}' > ${OutBasename}.genotype.numericmatrix
+cat ${OutBasename}.genotype.bed | grep -v '\.' | sed 's/:/ /g' | awk -F' ' '{for(i=5;i<=NF;i+=2){a[$i][i]++; j=i+1; a[$j][i]++; b[$j]++;	b[$i]++;} maxal="XX"; maxval=0;	for(al in b){if(b[al]>maxval){ maxal = al; maxval = b[al];}}for(al in a){if(maxal!=al){	str="";	for(i=5;i<=NF;i+=2){if(a[al][i]){n=a[al][i]}else{n=0}str=str" "n} print NR""str}} delete a; delete b;}' > ${OutBasename}.genotype.numericmatrix
 
 echo "----> Heterozygosity format conversion"
-cat ${OutBasename}.genotype.bed | cut -f5- | awk -F '\t' '{str=""; for(i=1;i<=NF;i++){split($i,a,"/"); if(a[1]==a[2]){str=str"\t0"}else{str=str"\t1"}} print str}' | sed 's/^\t//g' > ${OutBasename}.0hom1het
-paste <(cut -f1,2,3,4 ${OutBasename}.bed) ${OutBasename}.0hom1het > ${OutBasename}.0hom1het.bed
+cat ${OutBasename}.genotype.bed | cut -f5- | grep -v '\.' | awk -F '\t' '{str=""; for(i=1;i<=NF;i++){split($i,a,":"); if(a[1]==a[2]){str=str"\t0"}else{str=str"\t1"}} print str}' | sed 's/^\t//g' > ${OutBasename}.0hom1het
+paste <(cat ${OutBasename}.genotype.bed | grep -v '\.' | cut -f1,2,3,4) ${OutBasename}.0hom1het > ${OutBasename}.0hom1het.bed
 
 gzip ${OutBasename}.genotype.bed
 gzip ${OutBasename}.genotype.numericmatrix

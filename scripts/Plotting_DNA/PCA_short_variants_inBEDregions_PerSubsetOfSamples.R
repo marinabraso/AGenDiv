@@ -47,6 +47,7 @@ cat("----> Reading gentoype matrices\n")
 Data <- data.frame(matrix(ncol = length(SamplesOrder), nrow = 0))
 for(c in chrs){
 	print(c)
+	print(paste0(GENOTYPEMatricesTMPfile, "_", c, ".tmp.gz"))
 	mat <- read.table(paste0(GENOTYPEMatricesTMPfile, "_", c, ".tmp.gz"), sep=" ", header=FALSE, check.names = F, stringsAsFactors = F)
 	Data <- rbind(Data, mat[,c(2:length(colnames(mat)))])
 }

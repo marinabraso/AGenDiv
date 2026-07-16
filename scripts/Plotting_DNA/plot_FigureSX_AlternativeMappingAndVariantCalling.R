@@ -41,11 +41,11 @@ plot_PCA <- function(vec1, lab1, vec2, lab2, main, cexplot, colors, shapes, poin
 	linelab <- 4
 	cexlab <- 1.5
 	cexpoints <- 3
-	if(cexplot == 1){
-		linelab <- 0
-		cexlab <- 0.8
-		cexpoints <- 1.5
-	}
+	#if(cexplot == 1){
+	#	linelab <- 0
+	#	cexlab <- 0.8
+	#	cexpoints <- 1.5
+	#}
 	vec1 <- as.numeric(vec1)
 	vec2 <- as.numeric(vec2)
 	ylim <- c(min(vec2), max(vec2))
@@ -70,8 +70,8 @@ plot_HetPerPop <- function(Hetdf, atls, meds, main, ylab, xlabs, ylim){
 	w <- 0.05
 	flanking <- 0.2
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(0, flanking*3+(length(atls)+length(meds))*w), col=NA)
-	mtext(ylab, side = 2, line = 4, cex=1.5)
-	mtext(main, side = 3, line = 4, cex=1.5)
+	mtext(ylab, side = 2, line = 4, cex=1)
+	mtext(main, side = 3, line = 4, cex=1)
 	pos <- flanking
 	hetsA <- Hetdf[1,atls]
 	hetsM <- Hetdf[1,meds]
@@ -144,23 +144,23 @@ layout(matrix(c(1,2,3),nrow=1,ncol=3,byrow=T), widths=c(1), heights=c(1), TRUE)
 ## Heterozygosity per sample
 print("Heterozygosity per sample")
 layout(matrix(c(1,2,3,4,5,6,7,8),nrow=2,ncol=4,byrow=T), widths=c(1), heights=c(1), TRUE)
-par(mar=c(3,3,1,1))
+par(mar=c(4,4,2,2))
 Het_bwa_gatk <- read.table(grep("Observed_bwa_mem2_GATK.*Callable", HetTotal_files, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 colnames(Het_bwa_gatk) <- AllSamples
 print(Het_bwa_gatk)
-plot_HetPerPop(Het_bwa_gatk*100, AtlSamples, MedSamples, "bwa mem2 + GATK", "Heterozygosity (%)", populations, c(2.5,3))
+plot_HetPerPop(Het_bwa_gatk*100, AtlSamples, MedSamples, "bwa mem2 + GATK", "Heterozygosity (%)", populations, c(2,3.5))
 Het_minm_gatk <- read.table(grep("Observed_minimap2_GATK.*Callable", HetTotal_files, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 colnames(Het_minm_gatk) <- AllSamples
 print(Het_minm_gatk)
-plot_HetPerPop(Het_minm_gatk*100, AtlSamples, MedSamples, "minimap2 + GATK", "Heterozygosity (%)", populations, c(2.5,3))
+plot_HetPerPop(Het_minm_gatk*100, AtlSamples, MedSamples, "minimap2 + GATK", "Heterozygosity (%)", populations, c(2,3.5))
 Het_bwa_freeb <- read.table(grep("Observed_bwa_mem2_freebayes.*Callable", HetTotal_files, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 colnames(Het_bwa_freeb) <- AllSamples
 print(Het_bwa_freeb)
-plot_HetPerPop(Het_bwa_freeb*100, AtlSamples, MedSamples, "bwa mem2 + freebayes", "Heterozygosity (%)", populations, c(2.5,3))
+plot_HetPerPop(Het_bwa_freeb*100, AtlSamples, MedSamples, "bwa mem2 + freebayes", "Heterozygosity (%)", populations, c(2,3.5))
 Het_minm_freeb <- read.table(grep("Observed_minimap2_freebayes.*Callable", HetTotal_files, value = TRUE), sep="\t", header=FALSE, check.names = F, stringsAsFactors = F)
 colnames(Het_minm_freeb) <- AllSamples
 print(Het_minm_freeb)
-plot_HetPerPop(Het_minm_freeb*100, AtlSamples, MedSamples, "minimap2 + freebayes", "Heterozygosity (%)", populations, c(2.5,3))
+plot_HetPerPop(Het_minm_freeb*100, AtlSamples, MedSamples, "minimap2 + freebayes", "Heterozygosity (%)", populations, c(2,3.5))
 
 ## PCA
 print("PCA")
@@ -179,6 +179,9 @@ plot_PCA(	PCAresults$minimap2_freebayes_Callable_Comp1, paste("PC1", round(PCApr
 
 
 dev.off()
+#############
+## Report
+write("### Mapping and calling comparison", file = REPORT, append = FALSE)
 #############
 
 

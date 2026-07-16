@@ -1029,16 +1029,19 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 			lastgenof=$c
 		done
 		mkdir -p $(dirname ${{outputV%.gz}}) 2> {log.err}
+		echo $(dirname ${{outputV%.gz}}) > {log.out}
 		nummat1=$(echo ${{lastmat}} | awk  -v chr=${{lastchr}} '{{split($1,a,chr); print a[1]}}')
 		nummat2=$(echo ${{lastmat}} | awk -v chr=${{lastchr}} '{{split($1,a,chr); print a[2]}}')
 		genof1=$(echo ${{lastgenof}} | awk -v chr=${{lastchr}} '{{split($1,a,chr); print a[1]}}')
 		genof2=$(echo ${{lastgenof}} | awk -v chr=${{lastchr}} '{{split($1,a,chr); print a[2]}}')
 		for c in {params.chrs}
 		do
-			echo $c > {log.out}
+			echo $c >> {log.out}
+			echo ${{genof1}}${{c}}${{genof2}}  >> {log.out}
+			echo ${{nummat1}}${{c}}${{nummat2}}  >> {log.out}
 			awk '{{if(NR==FNR){{a[$1]=1; next}}if(a[$1]){{print $0}}}}' <(bedtools intersect -a <(zcat ${{genof1}}${{c}}${{genof2}} | cut -f1,2,3,4) -b <(zcat {input.BED} | cut -f1,2,3 | grep -w ${{c}}) -wa | cut -f4) <(zcat ${{nummat1}}${{c}}${{nummat2}}) | gzip > ${{outputV%.txt.gz}}_IncludedVariants_${{c}}.tmp.gz 2> {log.err}
 		done
-		zcat ${{outputV%.txt.gz}}_IncludedVariants* | wc -l
+		zcat ${{outputV%.txt.gz}}_IncludedVariants* | wc -l  >> {log.out}
 		./scripts/Plotting_DNA/PCA_short_variants_inBEDregions_PerSubsetOfSamples.R \
 		${{outputV%.txt.gz}}_IncludedVariants \
 		{input.SamplesOrderInVCF} \
@@ -1046,7 +1049,7 @@ rule PCA_short_variants_inBEDregions_PerSubsetOfSamples:
 		${{outputV%.gz}} \
 		{output.PCA_PropVariance} \
 		\"{params.chrs}\" \
-		\"{params.samples}\" > {log.out} 2> {log.err}
+		\"{params.samples}\" >> {log.out} 2>> {log.err}
 		gzip ${{outputS%.gz}} ${{outputV%.gz}}
 		rm ${{outputV%.txt.gz}}_IncludedVariants*
 		"""
@@ -1447,6 +1450,7 @@ rule plot_FigureSX_CallableRegions:
 		FunctionalRegionsTotalSpan = rules.get_FunctionalRegionsTotalSpan.output.out
 	output:
 		PDF = "results/Plotting_DNA/plot_FigureSX_CallableRegions.pdf",
+		PNG = "results/Plotting_DNA/plot_FigureSX_CallableRegions.png",
 		REPORT = "results/Plotting_DNA/plot_FigureSX_CallableRegions_report.txt"
 	log:
 		err = "logs/Plotting_DNA/plot_FigureSX_CallableRegions.err",
@@ -1461,7 +1465,7 @@ rule plot_FigureSX_CallableRegions:
 		threads = 1,
 		mem = 15000,
 	shell:
-		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
+		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.PNG} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
 
 ############################
 #### Deprecated plots

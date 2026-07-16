@@ -14,8 +14,9 @@ ChrLengths <- args[2]
 FunctionalRegionsCallableSpan <- args[3]
 FunctionalRegionsTotalSpan <- args[4]
 PDF <- args[5]
-REPORT <- args[6]
-Rconfig <- args[7]
+PNG <- args[6]
+REPORT <- args[7]
+Rconfig <- args[8]
 script <- sub(".*=", "", commandArgs()[4])
 source(Rconfig)
 system(paste0("mkdir -p $(dirname ", PDF, ")"))
@@ -43,8 +44,8 @@ plot_all_chr_rows_len_bins <- function(lenDF, regDF, ss, es, cs){
 		}
 		polygon(c(0,lenDF$Length[c]/max(lenDF$Length)*10,lenDF$Length[c]/max(lenDF$Length)*10,0), c(pos-height/2,pos-height/2,pos+height/2,pos+height/2), col=NA, border="black")
 	}
-	axis(2, at = c(1:length(lenDF$Chr))-1, labels=rev(lenDF$Chr), lwd=NA, lwd.ticks=NA, las=1, cex.axis=2)
-	legend("bottomright", paste(ss, "<= x <", es), pch=19, text.col="black", col=cs, bty = "n", cex=1, xjust = 0, yjust = 0)
+	axis(2, at = c(1:length(lenDF$Chr))-1, labels=rev(lenDF$Chr), lwd=NA, lwd.ticks=NA, las=1, cex.axis=0.5)
+	legend("bottomright", paste(ss, "<= x <", es), pch=19, text.col="black", col=cs, bty = "n", cex=0.5, xjust = 0, yjust = 0)
 }
 
 
@@ -185,7 +186,15 @@ for(feature in c("Exons", "Introns", "Promoters", "Intergenic")){
 
 ######################################################################
 # Plotting
-png(filename = "Rplot%03d.png", width = 1500, height = 1000)
+png(PNG, width = 1500, height = 1000, res = 300)
+par(mar=c(3,3,1,1),oma=c(1,1,1,1))
+layout(matrix(c(1,2,1,3,1,4),nrow=3,ncol=2,byrow=T), widths=c(3,3), heights=c(1), TRUE)
+
+plot_all_chr_rows_len_bins(ChrLen, ERegions, sbins, Eebins, cbins)
+writePlotLabel("A")
+
+dev.off()
+
 pdf(PDF, width=15, height=10)
 par(mar=c(5,5,2,2),oma=c(1,1,1,1))
 layout(matrix(c(1,2,1,3,1,4),nrow=3,ncol=2,byrow=T), widths=c(3,3), heights=c(1), TRUE)
@@ -195,6 +204,7 @@ writePlotLabel("A")
 
 layout(matrix(c(1,2,1,3,1,4),nrow=3,ncol=2,byrow=T), widths=c(3,3), heights=c(1), TRUE)
 plot.new()
+writePlotLabel("A")
 
 barplot_chromosomes(unlist(lapply(ChrLen$Chr, function(x){substr(x, 4, nchar(x))})), ChrLen, "ECallable", sbins, Eebins, cbins, "% of length", c(0,60))
 writePlotLabel("B")
