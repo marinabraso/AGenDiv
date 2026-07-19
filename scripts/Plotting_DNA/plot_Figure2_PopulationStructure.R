@@ -259,6 +259,9 @@ print("Plotting Supplementary figure 3")
 par(oma=c(1,1,1,1))
 layout(matrix(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16),nrow=4,ncol=4,byrow=T), widths=c(1), heights=c(1), TRUE)
 par(mar=c(3,3,1,1))
+plot_PCA(	PCAresults$Callable_Comp3, paste("PC3", round(PCApropvar$Callable[3], digits = 2), "%"), 
+			PCAresults$Callable_Comp4, paste("PC4", round(PCApropvar$Callable[4], digits = 2), "%"), 
+			"All", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
 plot_PCA(	PCAresults$SNPs_Comp1, paste("PC1", round(PCApropvar$SNPs[1], digits = 2), "%"), 
 			PCAresults$SNPs_Comp2, paste("PC2", round(PCApropvar$SNPs[2], digits = 2), "%"), 
 			"SNPs", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
@@ -280,7 +283,7 @@ plot_PCA(	PCAresults$Intergenic_Comp1, paste("PC1", round(PCApropvar$Intergenic[
 plot_PCA(	PCAresults$BiAllelic_Comp1, paste("PC1", round(PCApropvar$BiAllelic[1], digits = 2), "%"),
 			PCAresults$BiAllelic_Comp2, paste("PC2", round(PCApropvar$BiAllelic[2], digits = 2), "%"), 
 			"Biallelic variants", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
-plot.new()
+
 plot_PCA(	PCAresults[["AbsFreq_36-40_AllVariants_Comp1"]], paste("PC1", round(PCApropvar[["AbsFreq_36-40_AllVariants"]][1], digits = 2), "%"), 
 			PCAresults[["AbsFreq_36-40_AllVariants_Comp2"]], paste("PC2", round(PCApropvar[["AbsFreq_36-40_AllVariants"]][2], digits = 2), "%"), 
 			"AAF in the interval [36,40)", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
@@ -299,9 +302,12 @@ plot_PCA(	PCAresults[["AbsFreq_55-60_AllVariants_Comp1"]], paste("PC1", round(PC
 plot_PCA(	PCAresults[["AbsFreq_60-65_AllVariants_Comp1"]], paste("PC1", round(PCApropvar[["AbsFreq_60-65_AllVariants"]][1], digits = 2), "%"), 
 			PCAresults[["AbsFreq_60-65_AllVariants_Comp2"]], paste("PC2", round(PCApropvar[["AbsFreq_60-65_AllVariants"]][2], digits = 2), "%"), 
 			"AAF in the interval [60,65)", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
-plot_PCA(	PCAresults[["AbsFreq_65-73_AllVariants_Comp1"]], paste("PC1", round(PCApropvar[["AbsFreq_65-73_AllVariants"]][1], digits = 2), "%"), 
-			PCAresults[["AbsFreq_65-73_AllVariants_Comp2"]], paste("PC2", round(PCApropvar[["AbsFreq_65-73_AllVariants"]][2], digits = 2), "%"),
-			"AAF in the interval [65,71]", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
+plot_PCA(	PCAresults[["AbsFreq_65-71_AllVariants_Comp1"]], paste("PC1", round(PCApropvar[["AbsFreq_65-71_AllVariants"]][1], digits = 2), "%"), 
+			PCAresults[["AbsFreq_65-71_AllVariants_Comp2"]], paste("PC2", round(PCApropvar[["AbsFreq_65-71_AllVariants"]][2], digits = 2), "%"),
+			"AAF in the interval [65,71)", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
+plot_PCA(	PCAresults[["AbsFreq_71-73_AllVariants_Comp1"]], paste("PC1", round(PCApropvar[["AbsFreq_71-73_AllVariants"]][1], digits = 2), "%"), 
+			PCAresults[["AbsFreq_71-73_AllVariants_Comp2"]], paste("PC2", round(PCApropvar[["AbsFreq_71-73_AllVariants"]][2], digits = 2), "%"),
+			"Singletons", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
 
 
 dev.off()

@@ -1297,8 +1297,8 @@ rule plot_Figure2_PopulationStructure:
 	'''
 	input:
 		Rconfig = config["Rconfig"],
-		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-73_AllVariants"), GroupSamples="AllSamples"),
-		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-73_AllVariants"), GroupSamples="AllSamples"),
+		PCAValues_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PerSample, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-71_AllVariants", "AbsFreq_71-73_AllVariants"), GroupSamples="AllSamples"),
+		PCAPropVar_files = expand(rules.PCA_short_variants_inBEDregions_PerSubsetOfSamples.output.PCA_PropVariance, ObsExp="Observed_Data", BED=("Callable", "SNPs", "INDELs", "Exons", "Introns", "Promoters", "Intergenic", "BiAllelic", "AbsFreq_36-40_AllVariants", "AbsFreq_40-45_AllVariants", "AbsFreq_45-50_AllVariants", "AbsFreq_50-55_AllVariants", "AbsFreq_55-60_AllVariants", "AbsFreq_60-65_AllVariants", "AbsFreq_65-71_AllVariants", "AbsFreq_71-73_AllVariants"), GroupSamples="AllSamples"),
 		ObsShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots="Observed"),
 		RandShPriv = expand(rules.SharedPrivatePopulation_BEDs.output.Numbers, ObsOrBoots=["Rand_%d" % i for i in range(config["BootsRandPop"])]),
 		jpsmc= rules.Join_PSMC_results.output.jpsmc,
@@ -1396,7 +1396,7 @@ rule plot_Figure3_vsSimulations:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 #
-rule plot_FigureSX_AlternativeMappingAndVariantCalling:
+rule plot_FigureS2_AlternativeMappingAndVariantCalling:
 	'''
 	'''
 	input:
@@ -1407,25 +1407,25 @@ rule plot_FigureSX_AlternativeMappingAndVariantCalling:
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
 	output:
-		PDF = "results/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.pdf",
-		REPORT = "results/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling_report.txt"
+		PDF = "results/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.pdf",
+		REPORT = "results/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling_report.txt"
 	log:
-		err = "logs/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.err",
-		out = "logs/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.out"
+		err = "logs/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.err",
+		out = "logs/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.txt"
+		"benchmarks/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '1:00:00',
-		name = "pFigSX",
+		name = "pFigS2",
 		threads = 1,
 		mem = 50000,
 		AtlSamples=config["AtlSamples"],
 		MedSamples=config["MedSamples"]
 	shell:
 		"""
-		./scripts/Plotting_DNA/plot_FigureSX_AlternativeMappingAndVariantCalling.R \
+		./scripts/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.R \
 		\"{input.PCAValues_files}\" \
 		\"{input.PCAPropVar_files}\" \
 		\"{input.HetTotalFiles}\" \
@@ -1438,7 +1438,7 @@ rule plot_FigureSX_AlternativeMappingAndVariantCalling:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 # 
-rule plot_FigureSX_CallableRegions:
+rule plot_FigureS3_CallableRegions:
 	'''
 	
 	'''
@@ -1449,14 +1449,14 @@ rule plot_FigureSX_CallableRegions:
 		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
 		FunctionalRegionsTotalSpan = rules.get_FunctionalRegionsTotalSpan.output.out
 	output:
-		PDF = "results/Plotting_DNA/plot_FigureSX_CallableRegions.pdf",
-		PNG = "results/Plotting_DNA/plot_FigureSX_CallableRegions.png",
-		REPORT = "results/Plotting_DNA/plot_FigureSX_CallableRegions_report.txt"
+		PDF = "results/Plotting_DNA/plot_FigureS3_CallableRegions.pdf",
+		PNG = "results/Plotting_DNA/plot_FigureS3_CallableRegions.png",
+		REPORT = "results/Plotting_DNA/plot_FigureS3_CallableRegions_report.txt"
 	log:
-		err = "logs/Plotting_DNA/plot_FigureSX_CallableRegions.err",
-		out = "logs/Plotting_DNA/plot_FigureSX_CallableRegions.out"
+		err = "logs/Plotting_DNA/plot_FigureS3_CallableRegions.err",
+		out = "logs/Plotting_DNA/plot_FigureS3_CallableRegions.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/plot_FigureSX_CallableRegions.txt"
+		"benchmarks/Plotting_DNA/plot_FigureS3_CallableRegions.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
@@ -1465,9 +1465,11 @@ rule plot_FigureSX_CallableRegions:
 		threads = 1,
 		mem = 15000,
 	shell:
-		"./scripts/Plotting_DNA/plot_FigureSX_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.PNG} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
+		"./scripts/Plotting_DNA/plot_FigureS3_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.PNG} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
 
-############################
+#
+#
+##########################
 #### Deprecated plots
 rule plot_PCA_short_variants_perGenomicFeature:
 	'''

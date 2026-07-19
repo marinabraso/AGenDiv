@@ -48,7 +48,6 @@ plot_all_chr_rows_len_bins <- function(lenDF, regDF, ss, es, cs){
 	legend("bottomright", paste(ss, "<= x <", es), pch=19, text.col="black", col=cs, bty = "n", cex=0.5, xjust = 0, yjust = 0)
 }
 
-
 barplot_chromosomes <- function(chrs, df, type, ss, es, cs, ylab, ylim){
 	print(paste("barplot_chromosomes",type))
 	w <- 0.8
@@ -89,7 +88,7 @@ plot_density <- function(vec, lab, color, xlim, ylim, thresh=NULL, thresh2=NULL,
 	box()
 }
 
-plot_DiffInRelPropCallable_FunctionalRegions <- function(df, ylab, ylim){
+plot_DiffInPercCallable_FunctionalRegions <- function(df, ylab, ylim){
 	w <- .3
 	plot(c(1:10), c(1:10), axes=F, xlab="", ylab="", ylim=ylim, xlim=c(.5, (length(df$Feature)-1)+.5), col=NA)
 	mtext(ylab, side = 2, line = 4, cex=1.5)
@@ -100,9 +99,9 @@ plot_DiffInRelPropCallable_FunctionalRegions <- function(df, ylab, ylim){
 			polygon(c(i-w,i+w,i+w,i-w), c(df$Diff[i],df$Diff[i],0,0), col="black", border="black")
 		}
 	}
-	abline(h=0, col="black")
+	abline(h=0, col="black", lty=3)
 	axis(1, at = c(1:(length(df$Feature)-1)), labels=df$Feature[1:(length(df$Feature)-1)], lwd.ticks=1, las=2, cex.axis=1.5)
-	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/10), lwd.ticks=1, las=1, cex.axis=1.5)
+	axis(2, at = seq(ylim[1],ylim[2],(ylim[2]-ylim[1])/6), lwd.ticks=1, las=1, cex.axis=1.5)
 	box()
 }
 
@@ -163,7 +162,7 @@ for(b in c(1:length(sbins))){
 head(ChrLen[,paste0("PercECallable", c(1,2,3,4,5,6,7))])
 
 
-# % of callable length for the total length
+# Diference in % of functional regions in callable regions vs. total genome
 CallableSpan <- read.table(FunctionalRegionsCallableSpan, sep="\t", header=FALSE)
 FeatSpan <- read.table(FunctionalRegionsTotalSpan, sep="\t", header=FALSE)
 FeatSpan <- rbind(FeatSpan, c("Total", sum(ChrLen$Length)))
@@ -172,9 +171,9 @@ colnames(FeatSpan) <- c("Feature", "Total", "Callable")
 FeatSpan$Total <- as.numeric(FeatSpan$Total)
 FeatSpan$Callable <- as.numeric(FeatSpan$Callable)
 FeatSpan$PercCall <- FeatSpan$Callable*100/FeatSpan$Total
-FeatSpan$RelPropTotal <- FeatSpan$Total/FeatSpan$Total[which(FeatSpan$Feature=="Total")]
-FeatSpan$RelPropCallable <- FeatSpan$Callable/FeatSpan$Callable[which(FeatSpan$Feature=="Total")]
-FeatSpan$Diff <- FeatSpan$RelPropCallable - FeatSpan$RelPropTotal
+FeatSpan$PercTotal <- FeatSpan$Total/FeatSpan$Total[which(FeatSpan$Feature=="Total")]*100
+FeatSpan$PercCallable <- FeatSpan$Callable/FeatSpan$Callable[which(FeatSpan$Feature=="Total")]*100
+FeatSpan$Diff <- FeatSpan$PercCallable - FeatSpan$PercTotal
 head(FeatSpan)
 
 for(feature in c("Exons", "Introns", "Promoters", "Intergenic")){
@@ -186,7 +185,7 @@ for(feature in c("Exons", "Introns", "Promoters", "Intergenic")){
 
 ######################################################################
 # Plotting
-png(PNG, width = 1500, height = 1000, res = 300)
+png(PNG, width = 15000, height = 10000, res = 300)
 par(mar=c(3,3,1,1),oma=c(1,1,1,1))
 layout(matrix(c(1,2,1,3,1,4),nrow=3,ncol=2,byrow=T), widths=c(3,3), heights=c(1), TRUE)
 
@@ -212,7 +211,7 @@ writePlotLabel("B")
 plot_density(ERegions$len, "Extra callable regions length", "black", c(0,500), c(0,.02), sbins)
 writePlotLabel("C")
 
-plot_DiffInRelPropCallable_FunctionalRegions(FeatSpan, "% of callable length", c(-0.2,0.2))
+plot_DiffInPercCallable_FunctionalRegions(FeatSpan, "% callable - % total", c(-12,12))
 writePlotLabel("D")
 
 
