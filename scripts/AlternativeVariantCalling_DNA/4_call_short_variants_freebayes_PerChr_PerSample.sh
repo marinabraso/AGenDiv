@@ -6,8 +6,7 @@ genome=$3
 outputVCF=$4
 
 mkdir -p $(dirname ${outputVCF})
-echo ${inputBAMs}
-quit 0
+
 freebayes -f ${genome} \
   --haplotype-length 0 \
   --use-best-n-alleles 10 \

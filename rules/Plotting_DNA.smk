@@ -1396,7 +1396,7 @@ rule plot_Figure3_vsSimulations:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 #
-rule plot_FigureS2_AlternativeMappingAndVariantCalling:
+rule plot_FigureS3_AlternativeMappingAndVariantCalling:
 	'''
 	'''
 	input:
@@ -1407,25 +1407,25 @@ rule plot_FigureS2_AlternativeMappingAndVariantCalling:
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
 	output:
-		PDF = "results/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.pdf",
-		REPORT = "results/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling_report.txt"
+		PDF = "results/Plotting_DNA/plot_FigureS3_AlternativeMappingAndVariantCalling.pdf",
+		REPORT = "results/Plotting_DNA/plot_FigureS3_AlternativeMappingAndVariantCalling_report.txt"
 	log:
-		err = "logs/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.err",
-		out = "logs/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.out"
+		err = "logs/Plotting_DNA/plot_FigureS3_AlternativeMappingAndVariantCalling.err",
+		out = "logs/Plotting_DNA/plot_FigureS3_AlternativeMappingAndVariantCalling.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.txt"
+		"benchmarks/Plotting_DNA/plot_FigureS3_AlternativeMappingAndVariantCalling.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '1:00:00',
-		name = "pFigS2",
+		name = "pFigS3",
 		threads = 1,
 		mem = 50000,
 		AtlSamples=config["AtlSamples"],
 		MedSamples=config["MedSamples"]
 	shell:
 		"""
-		./scripts/Plotting_DNA/plot_FigureS2_AlternativeMappingAndVariantCalling.R \
+		./scripts/Plotting_DNA/plot_FigureS3_AlternativeMappingAndVariantCalling.R \
 		\"{input.PCAValues_files}\" \
 		\"{input.PCAPropVar_files}\" \
 		\"{input.HetTotalFiles}\" \
@@ -1438,7 +1438,7 @@ rule plot_FigureS2_AlternativeMappingAndVariantCalling:
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
 # 
-rule plot_FigureS3_CallableRegions:
+rule plot_FigureS2_CallableRegions:
 	'''
 	
 	'''
@@ -1449,14 +1449,14 @@ rule plot_FigureS3_CallableRegions:
 		FunctionalRegionsCallableSpan = rules.get_FunctionalRegionsCallableSpan.output.out,
 		FunctionalRegionsTotalSpan = rules.get_FunctionalRegionsTotalSpan.output.out
 	output:
-		PDF = "results/Plotting_DNA/plot_FigureS3_CallableRegions.pdf",
-		PNG = "results/Plotting_DNA/plot_FigureS3_CallableRegions.png",
-		REPORT = "results/Plotting_DNA/plot_FigureS3_CallableRegions_report.txt"
+		PDF = "results/Plotting_DNA/plot_FigureS2_CallableRegions.pdf",
+		PNG = "results/Plotting_DNA/plot_FigureS2_CallableRegions.png",
+		REPORT = "results/Plotting_DNA/plot_FigureS2_CallableRegions_report.txt"
 	log:
-		err = "logs/Plotting_DNA/plot_FigureS3_CallableRegions.err",
-		out = "logs/Plotting_DNA/plot_FigureS3_CallableRegions.out"
+		err = "logs/Plotting_DNA/plot_FigureS2_CallableRegions.err",
+		out = "logs/Plotting_DNA/plot_FigureS2_CallableRegions.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/plot_FigureS3_CallableRegions.txt"
+		"benchmarks/Plotting_DNA/plot_FigureS2_CallableRegions.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
@@ -1465,7 +1465,7 @@ rule plot_FigureS3_CallableRegions:
 		threads = 1,
 		mem = 15000,
 	shell:
-		"./scripts/Plotting_DNA/plot_FigureS3_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.PNG} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
+		"./scripts/Plotting_DNA/plot_FigureS2_CallableRegions.R {input.ExtraCallableRegions} {input.ChrLengths} {input.FunctionalRegionsCallableSpan} {input.FunctionalRegionsTotalSpan} {output.PDF} {output.PNG} {output.REPORT} {input.Rconfig} > {log.out} 2> {log.err}"
 
 #
 #
