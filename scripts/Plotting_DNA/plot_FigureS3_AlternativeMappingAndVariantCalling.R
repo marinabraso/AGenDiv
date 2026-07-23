@@ -177,6 +177,21 @@ plot_PCA(	PCAresults$minimap2_freebayes_Callable_Comp1, paste("PC1", round(PCApr
 			PCAresults$minimap2_freebayes_Callable_Comp2, paste("PC2", round(PCApropvar$minimap2_freebayes_Callable[2], digits = 2), "%"), 
 			"minimap2 + freebayes", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), NA, NA, NA, NA)
 
+## PCA with sample labels
+print("PCA with sample labels")
+plot_PCA(	PCAresults$bwa_mem2_GATK_Callable_Comp1, paste("PC1", round(PCApropvar$bwa_mem2_GATK_Callable[1], digits = 2), "%"), 
+			PCAresults$bwa_mem2_GATK_Callable_Comp2, paste("PC2", round(PCApropvar$bwa_mem2_GATK_Callable[2], digits = 2), "%"), 
+			"bwa mem2 + GATK", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), MetData$Sample, NA, NA, NA)
+plot_PCA(	PCAresults$minimap2_GATK_Callable_Comp1, paste("PC1", round(PCApropvar$minimap2_GATK_Callable[1], digits = 2), "%"), 
+			PCAresults$minimap2_GATK_Callable_Comp2, paste("PC2", round(PCApropvar$minimap2_GATK_Callable[2], digits = 2), "%"), 
+			"minimap2 + GATK", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), MetData$Sample, NA, NA, NA)
+plot_PCA(	PCAresults$bwa_mem2_freebayes_Callable_Comp1, paste("PC1", round(PCApropvar$bwa_mem2_freebayes_Callable[1], digits = 2), "%"), 
+			PCAresults$bwa_mem2_freebayes_Callable_Comp2, paste("PC2", round(PCApropvar$bwa_mem2_freebayes_Callable[2], digits = 2), "%"), 
+			"bwa mem2 + freebayes", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), MetData$Sample, NA, NA, NA)
+plot_PCA(	PCAresults$minimap2_freebayes_Callable_Comp1, paste("PC1", round(PCApropvar$minimap2_freebayes_Callable[1], digits = 2), "%"), 
+			PCAresults$minimap2_freebayes_Callable_Comp2, paste("PC2", round(PCApropvar$minimap2_freebayes_Callable[2], digits = 2), "%"), 
+			"minimap2 + freebayes", 1, MetData$ColorP, unname(c(Female = 19, Male = 17)[MetData$Sex]), MetData$Sample, NA, NA, NA)
+
 
 dev.off()
 #############

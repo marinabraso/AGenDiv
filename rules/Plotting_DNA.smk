@@ -1220,10 +1220,10 @@ rule Population_Fst_Total:
 ################################################
 ## Figures
 ################################################
-#
+# Figure 1, Supplementary figures 4 and 7
 rule plot_Figure1_GenomicDiversity:
 	'''
-	Figure 1 + Supplementary figures 2 and 4
+	Figure 1 + Supplementary figures 4 and 7
 	'''
 	input:
 		Rconfig = config["Rconfig"],
@@ -1289,7 +1289,7 @@ rule plot_Figure1_GenomicDiversity:
 		\"{params.MedSamples}\"  \
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
-#
+# Figure 2, Supplementary figure 5
 rule plot_Figure2_PopulationStructure:
 	'''
 	Plotting PSMC Pairwise Sequentially Markovian Coalescent
@@ -1345,8 +1345,8 @@ rule plot_Figure2_PopulationStructure:
 		{params.Blangenerationtime} \
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
-# 
-rule plot_Figure3_vsSimulations:
+# Figure 4
+rule plot_Figure4_vsSimulations:
 	'''
 	'''
 	input:
@@ -1362,24 +1362,24 @@ rule plot_Figure3_vsSimulations:
 		SamplesOrderInVCF = "metadata/SamplesOrderInVCF.chr19.txt",
 		Metadata = "metadata/DNA_ReadGroups_Metadata_HiSeq4000_NovaSeq6000.txt",
 	output:
-		PDF = "results/Plotting_DNA/plot_Figure3_vsSimulations.pdf",
-		REPORT = "results/Plotting_DNA/plot_Figure3_vsSimulations_report.txt"
+		PDF = "results/Plotting_DNA/plot_Figure4_vsSimulations.pdf",
+		REPORT = "results/Plotting_DNA/plot_Figure4_vsSimulations_report.txt"
 	log:
-		err = "logs/Plotting_DNA/plot_Figure3_vsSimulations.err",
-		out = "logs/Plotting_DNA/plot_Figure3_vsSimulations.out"
+		err = "logs/Plotting_DNA/plot_Figure4_vsSimulations.err",
+		out = "logs/Plotting_DNA/plot_Figure4_vsSimulations.out"
 	benchmark:
-		"benchmarks/Plotting_DNA/plot_Figure3_vsSimulations.txt"
+		"benchmarks/Plotting_DNA/plot_Figure4_vsSimulations.txt"
 	conda:
 		'../envs/Plotting_DNA.yaml'
 	params:
 		time = '1:00:00',
-		name = "pFig3",
+		name = "pFig4",
 		threads = 1,
 		mem = 50000,
 		SimulationsSampleSize = config["SimulationsSampleSize"]
 	shell:
 		"""
-		./scripts/Plotting_DNA/plot_Figure3_vsSimulations.R \
+		./scripts/Plotting_DNA/plot_Figure4_vsSimulations.R \
 		{input.ObsHet} \
 		\"{input.SimHet}\" \
 		{input.ObsSFSAtl} \
@@ -1395,7 +1395,7 @@ rule plot_Figure3_vsSimulations:
 		{params.SimulationsSampleSize} \
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
-#
+# Supplementary figure 3
 rule plot_FigureS3_AlternativeMappingAndVariantCalling:
 	'''
 	'''
@@ -1437,7 +1437,7 @@ rule plot_FigureS3_AlternativeMappingAndVariantCalling:
 		\"{params.MedSamples}\"  \
 		{input.Rconfig} > {log.out} 2> {log.err}
 		"""
-# 
+# Supplementary figure 2
 rule plot_FigureS2_CallableRegions:
 	'''
 	
